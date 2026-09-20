@@ -7,6 +7,7 @@ import { WalletService } from "../services/wallet.js";
 import { TransactionService } from "../services/transaction.js";
 import { assertExecutable, attachSimulation, confirmPlan } from "../domain/action-plan.js";
 import type { ActionPlan } from "../domain/types.js";
+import { errorOutcome, outcome, textResult } from "./response.js";
 
 const apiKey = process.env.BINANCE_WEB3_API_KEY;
 const apiSecret = process.env.BINANCE_WEB3_API_SECRET;
@@ -33,7 +34,7 @@ server.registerTool("resolve_tokenized_stock", {
   }
 }, async ({ query, chainId, platformId }) => {
   const assets = await stocks.search(query, { chainId, platformId });
-  return { content: [{ type: "text", text: JSON.stringify({ summary: `Found ${assets.length} tokenized stock assets`, assets }, null, 2) }] };
+  return textResult(outcome({ summary: `Found ${assets.length} tokenized stock assets`, assets, count: assets.length }, assets.length ? "success" : "warning", assets.length ? "Select an asset and request market context" : "Try a broader ticker or omit platformId", { warnings: assets.length ? [] : ["No matching tokenized-stock asset was found"] }));
 });
 
 server.registerTool("get_stock_market_context", {
@@ -49,7 +50,7 @@ server.registerTool("get_stock_market_context", {
     underlyingTicker: input.underlyingTicker,
     underlyingName: input.underlyingName
   });
-  return { content: [{ type: "text", text: JSON.stringify(context, null, 2) }] };
+  return textResult(outcome({ ...context, summary: "Market context retrieved", warnings: context.dataWarnings }, context.dataWarnings.length ? "warning" : "success", context.dataWarnings.length ? "Review warnings before creating a plan" : "Compare context with another wrapper or create a plan", { warnings: context.dataWarnings }));
 });
 
 server.registerTool("compare_stock_wrappers", {
@@ -61,7 +62,7 @@ server.registerTool("compare_stock_wrappers", {
     (acc[asset.underlyingTicker || query.toUpperCase()] ??= []).push(asset);
     return acc;
   }, {});
-  return { content: [{ type: "text", text: JSON.stringify({ query, groups: grouped, count: assets.length }, null, 2) }] };
+  return textResult(outcome({ query, groups: grouped, count: assets.length, summary: `Compared ${assets.length} tokenized-stock representations` }, assets.length ? "success" : "warning", assets.length ? "Choose a platform-aware asset before requesting a quote" : "Try a broader ticker", { warnings: assets.length ? [] : ["No wrapper comparison result was found"] }));
 });
 
 server.registerTool("get_wallet_stock_exposure", {
@@ -71,7 +72,7 @@ server.registerTool("get_wallet_stock_exposure", {
   const holdings = await wallet.holdings(walletAddress, chainIds);
   const assets = query ? await stocks.search(query) : [];
   const resolved = holdings.map((holding) => ({ ...holding, asset: assets.find((asset) => asset.chainId === holding.chainId && asset.contractAddress.toLowerCase() === holding.contractAddress.toLowerCase()) }));
-  return { content: [{ type: "text", text: JSON.stringify({ walletAddress, holdings: resolved }, null, 2) }] };
+  return textResult(outcome({ walletAddress, holdings: resolved, count: resolved.length, summary: `Read ${resolved.length} wallet holdings` }, "success", "Review holdings and warnings before preparing an action"));
 });
 
 server.registerTool("simulate_stock_action", {
@@ -85,7 +86,7 @@ server.registerTool("simulate_stock_action", {
   }
 }, async ({ chainId, from, to, value, data }) => {
   const simulation = await transactions.simulateEvm(chainId, { from, to, value, data });
-  return { content: [{ type: "text", text: JSON.stringify({ summary: simulation.success ? "Simulation succeeded; nothing broadcast" : "Simulation failed", simulation }, null, 2) }] };
+  return textResult(outcome({ summary: simulation.success ? "Simulation succeeded; nothing broadcast" : "Simulation failed", simulation }, simulation.success ? "success" : "blocked", simulation.success ? "Review the simulation, then confirm the plan if appropriate" : "Inspect simulation warnings and revise the unsigned transaction", { warnings: simulation.warnings }));
 });
 
 server.registerTool("simulate_stock_action_plan", {
@@ -98,9 +99,10 @@ server.registerTool("simulate_stock_action_plan", {
     if (!tx) throw new Error("Plan has no unsigned EVM transaction");
     const simulation = await transactions.simulateEvm((plan as ActionPlan).intent.toAsset.chainId, tx);
     const updated = attachSimulation(plan as ActionPlan, simulation);
-    return { content: [{ type: "text", text: JSON.stringify({ summary: "Plan simulation completed; nothing broadcast", plan: updated, broadcasted: false }, null, 2) }] };
+    const simulationWarnings = (updated.simulation as { warnings?: string[] } | undefined)?.warnings ?? [];
+    return textResult(outcome({ summary: "Plan simulation completed; nothing broadcast", plan: updated, broadcasted: false }, updated.status === "simulated" ? "success" : "blocked", updated.status === "simulated" ? "Request explicit confirmation before signing" : "Resolve the blocking safety checks", { warnings: simulationWarnings }));
   } catch (error) {
-    return { content: [{ type: "text", text: JSON.stringify({ summary: "Plan simulation failed", error: error instanceof Error ? error.message : String(error), broadcasted: false }, null, 2) }] };
+    return textResult({ ...errorOutcome(error, "Provide a plan with an unsigned EVM transaction and retry", "simulation_failed"), broadcasted: false });
   }
 });
 
@@ -131,10 +133,10 @@ server.registerTool("create_stock_action_plan", {
     amountDecimals,
     toAsset: asset
   });
-  return { content: [{ type: "text", text: JSON.stringify({
+  return textResult(outcome({
     summary: plan.status === "failed" ? "Action plan could not be created" : "Action plan created; no transaction executed",
     plan
-  }, null, 2) }] };
+  }, plan.status === "failed" ? "blocked" : "success", plan.status === "failed" ? "Resolve the blocking reasons before simulation" : "Simulate the plan before requesting confirmation", { warnings: plan.assetContext?.dataWarnings ?? [], sideEffects: "none" }));
 });
 
 server.registerTool("confirm_stock_action_plan", {
@@ -143,9 +145,9 @@ server.registerTool("confirm_stock_action_plan", {
 }, async ({ plan, confirmationToken }) => {
   try {
     const confirmed = confirmPlan(plan as ActionPlan, confirmationToken);
-    return { content: [{ type: "text", text: JSON.stringify({ summary: "Plan confirmed; signing and broadcast are still separate", plan: confirmed, broadcasted: false }, null, 2) }] };
+    return textResult(outcome({ summary: "Plan confirmed; signing and broadcast are still separate", plan: confirmed, broadcasted: false }, "success", "Sign externally, then submit or broadcast the signed payload", { sideEffects: "external_signature_required" }));
   } catch (error) {
-    return { content: [{ type: "text", text: JSON.stringify({ summary: "Plan confirmation rejected", error: error instanceof Error ? error.message : String(error), broadcasted: false }, null, 2) }] };
+    return textResult({ ...errorOutcome(error, "Simulate the plan and resolve all blocking checks before confirming", "confirmation_rejected"), broadcasted: false });
   }
 });
 
@@ -161,9 +163,9 @@ server.registerTool("submit_signed_rfq_order", {
 }, async (input) => {
   try {
     const order = await stocks.submitRfqOrder(input);
-    return { content: [{ type: "text", text: JSON.stringify({ summary: "Signed RFQ submitted; poll status for settlement", order, privateKeyHandled: false }, null, 2) }] };
+    return textResult(outcome({ summary: "Signed RFQ submitted; poll status for settlement", order, privateKeyHandled: false }, "success", "Poll RFQ order status; do not replay the signed order blindly", { sideEffects: "broadcast_possible" }));
   } catch (error) {
-    return { content: [{ type: "text", text: JSON.stringify({ summary: "RFQ submission failed", error: error instanceof Error ? error.message : String(error), privateKeyHandled: false }, null, 2) }] };
+    return textResult({ ...errorOutcome(error, "Inspect the error and query order status before retrying", "rfq_submission_failed"), privateKeyHandled: false });
   }
 });
 
@@ -172,7 +174,7 @@ server.registerTool("get_rfq_order_status", {
   inputSchema: { orderId: z.string().min(1) }
 }, async ({ orderId }) => {
   const status = await stocks.rfqOrderStatus(orderId);
-  return { content: [{ type: "text", text: JSON.stringify({ orderId, status }, null, 2) }] };
+  return textResult(outcome({ orderId, status, summary: "RFQ order status retrieved" }, "success", "Use the returned settlement status to decide whether further action is required"));
 });
 
 server.registerTool("broadcast_confirmed_transaction", {
@@ -188,9 +190,9 @@ server.registerTool("broadcast_confirmed_transaction", {
     assertExecutable(plan as ActionPlan);
     if (address.toLowerCase() !== (plan as ActionPlan).intent.walletAddress.toLowerCase()) throw new Error("Broadcast address must match the confirmed plan wallet address");
     const result = await transactions.broadcastSigned((plan as ActionPlan).intent.toAsset.chainId, signedTransaction, address, enableMevProtection ?? false);
-    return { content: [{ type: "text", text: JSON.stringify({ summary: "Signed transaction broadcast; query orders for status", result, signedInternally: false }, null, 2) }] };
+    return textResult(outcome({ summary: "Signed transaction broadcast; query orders for status", result, signedInternally: false }, "success", "Query broadcast order status; do not replay the signed transaction blindly", { sideEffects: "broadcast_possible" }));
   } catch (error) {
-    return { content: [{ type: "text", text: JSON.stringify({ summary: "Broadcast rejected", error: error instanceof Error ? error.message : String(error), broadcasted: false }, null, 2) }] };
+    return textResult({ ...errorOutcome(error, "Resolve the plan or address rejection before attempting another broadcast", "broadcast_rejected"), broadcasted: false });
   }
 });
 
@@ -199,7 +201,7 @@ server.registerTool("get_broadcast_order_status", {
   inputSchema: { address: z.string().min(1), chainId: z.string().min(1), orderId: z.string().optional(), txStatus: z.string().optional() }
 }, async ({ address, chainId, orderId, txStatus }) => {
   const result = await transactions.broadcastOrders(address, chainId, { orderId, txStatus });
-  return { content: [{ type: "text", text: JSON.stringify({ address, chainId, result }, null, 2) }] };
+  return textResult(outcome({ address, chainId, result, summary: "Broadcast order status retrieved" }, "success", "Use the order status to determine whether the transaction settled"));
 });
 
 const transport = new StdioServerTransport();

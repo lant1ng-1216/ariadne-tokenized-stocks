@@ -59,6 +59,23 @@ The complete evidence model, audit output and reproducible figure inputs are mai
 - Record request attempts, latency, business codes and rate-limit headers.
 - Retry documented transient failures while keeping broadcast operations explicit and non-automatic.
 
+## MCP response contract
+
+Every MCP tool returns its domain payload together with an `outcome` object:
+
+```json
+{
+  "outcome": {
+    "status": "success",
+    "nextAction": "Review the simulation, then confirm the plan if appropriate",
+    "warnings": [],
+    "sideEffects": "none"
+  }
+}
+```
+
+`status` is one of `success`, `warning`, `blocked` or `error`. `nextAction` is an agent-readable continuation hint, while `sideEffects` makes external signing and broadcast boundaries explicit. Existing domain fields remain at the top level for compatibility.
+
 ## Safety model
 
 ```text

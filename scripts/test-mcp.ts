@@ -37,7 +37,10 @@ assert.ok(text && "text" in text);
 if (!text?.text) throw new Error("MCP did not return text content");
 assert.match(text.text, /NVDA/);
 
-const resolved = JSON.parse(text.text) as { assets: Array<any> };
+const resolved = JSON.parse(text.text) as { assets: Array<any>; outcome: { status: string; nextAction: string; sideEffects: string } };
+assert.equal(resolved.outcome.status, "success");
+assert.ok(resolved.outcome.nextAction);
+assert.equal(resolved.outcome.sideEffects, "none");
 const bstock = resolved.assets.find((asset) => asset.platformId === "bstock");
 assert.ok(bstock);
 const comparison = await client.callTool({ name: "compare_stock_wrappers", arguments: { query: "NVDA", chainId: "56" } });
@@ -61,6 +64,7 @@ const planText = planContent.find((item) => item.type === "text")?.text;
 if (!planText) throw new Error("MCP did not return action plan");
 assert.match(planText, /plan/);
 const parsedPlan = JSON.parse(planText) as { plan: any };
+assert.ok(JSON.parse(planText).outcome);
 assert.ok(["awaiting_confirmation", "failed"].includes(parsedPlan.plan.status));
 const simulationPlan = {
   planId: "real-simulation-plan",
@@ -80,6 +84,7 @@ const planSimulation = await client.callTool({ name: "simulate_stock_action_plan
 const planSimulationText = (planSimulation.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
 assert.ok(planSimulationText && /Plan simulation/.test(planSimulationText));
 const simulatedPayload = JSON.parse(planSimulationText!);
+assert.ok(simulatedPayload.outcome.nextAction);
 assert.equal(simulatedPayload.plan.status, "simulated");
 const planSimulationWritebackSucceeded = true;
 const successfulConfirmation = await client.callTool({ name: "confirm_stock_action_plan", arguments: { plan: simulatedPayload.plan, confirmationToken: simulatedPayload.plan.planId } });
