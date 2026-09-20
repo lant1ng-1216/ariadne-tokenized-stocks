@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "source": "docs/API_CAPABILITY_MATRIX.md",
+  "observedAt": "2026-09-20",
+  "capabilities": [
+    { "category": "Authentication", "status": "verified" },
+    { "category": "Runtime and observability", "status": "verified" },
+    { "category": "RWA discovery", "status": "verified" },
+    { "category": "Market data", "status": "verified" },
+    { "category": "Trading preparation", "status": "verified" },
+    { "category": "Wallet", "status": "verified" },
+    { "category": "Portfolio", "status": "verified" },
+    { "category": "Transaction and simulation", "status": "verified" },
+    { "category": "DeFi discovery", "status": "verified" },
+    { "category": "DeFi positions", "status": "blocked" },
+    { "category": "MCP integration", "status": "verified" }
+  ]
+}

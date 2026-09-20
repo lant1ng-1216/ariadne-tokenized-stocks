@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "source": "scripts/test-retry-policy.ts",
+  "observedAt": "2026-09-20",
+  "traces": [
+    {
+      "id": "deterministic-42900-retry",
+      "attempts": 2,
+      "firstResponse": "42900",
+      "finalResponse": "success",
+      "retryAfterHonored": true,
+      "elapsedMs": 127,
+      "environment": "local deterministic test server",
+      "classification": "verified-client-behavior"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+figure: figure-02-progressive-commitment
+question: How does the workflow move from read-only discovery to an explicit side effect?
+source_data: [research/data/acceptance-summary.json]
+style: science-nature-inspired
+outputs: [svg, pdf, png]

@@ -1,91 +1,93 @@
 # Ariadne
 
-Tokenized Stocks SDK + MCP for BSC.
+## Agent-native safety and execution infrastructure for tokenized assets
 
-Ariadne is not another trading agent. It is a semantic and safety layer that lets existing agents and applications understand, compare, plan and simulate tokenized-stock actions through a reusable SDK and MCP server.
+Ariadne is a TypeScript SDK and MCP server for applications and existing AI agents that need to discover, compare, understand and safely prepare tokenized-stock actions on BNB Chain.
 
-## What it does
+Ariadne is not an autonomous trading agent. It provides structured financial context, safety checks, simulation and an externally signed execution boundary that existing agents can use.
 
-- Resolves tokenized-stock identity by chain, contract, platform and underlying ticker;
-- Compares tokenized-stock wrappers such as Ondo and bStocks;
-- Returns market context with token price, reference price, market status and data warnings;
-- Creates platform-aware quotes and action plans;
-- Simulates EVM transactions before any broadcast;
-- Exposes high-level tools to existing MCP clients such as Codex and Claude Code, including read-only RFQ/order status and explicit signed-transaction boundaries.
+## Why Ariadne exists
 
-## Safety boundary
-
-The MVP separates planning from execution:
+Tokenized stocks are not a single uniform asset namespace. The same underlying ticker can be represented by different platforms, contracts, symbols, pricing references and execution modes. An agent that sees only a ticker is not ready to construct a safe action.
 
 ```text
-resolve → understand → quote → plan → simulate → user confirmation → sign → broadcast
+resolve identity → compare wrappers → read market context → build plan
+→ simulate → confirm → external wallet signature → broadcast
 ```
 
-The normal MCP demo does not broadcast a transaction. `broadcast_confirmed_transaction` is an explicit opt-in boundary: it requires a `confirmed` ActionPlan and an externally signed raw transaction. Ariadne never receives or stores a private key. Do not call it during a demo unless you intentionally want to send a real transaction.
+The SDK keeps discovery and execution separate. The MCP layer exposes the same domain model to existing clients such as Codex and Claude Code.
 
-## Local setup
+## System boundary
 
-1. Copy the values into the `.env` file in the project root.
-2. Optionally configure a network proxy if Binance Web3 API is not directly reachable:
-
-```env
-BINANCE_WEB3_PROXY_URL=
-# Optional; used only for read-only ERC-20 allowance checks on BSC.
-BINANCE_WEB3_EVM_RPC_URL=https://bsc-dataseed.binance.org
+```mermaid
+flowchart LR
+    A[Existing Agent] --> B[Ariadne MCP]
+    B --> C[Ariadne SDK]
+    C --> D[Normalization and safety policy]
+    D --> E[Binance Web3 API]
+    C --> F[External wallet signer]
+    F --> G[Signed order or transaction]
+    G --> E
 ```
 
-3. Install dependencies:
+The SDK never receives or stores a private key. RFQ signing and broadcast authorization remain explicit user-wallet responsibilities.
+
+## Verified project snapshot
+
+![Ariadne system architecture](research/figures/rendered/figure-01-system-architecture.svg)
+
+![Progressive commitment workflow](research/figures/rendered/figure-02-progressive-commitment.svg)
+
+![Capability evidence matrix](research/figures/rendered/figure-04-capability-evidence-map.svg)
+
+The current acceptance audit contains 88 items: 80 verified and 8 incomplete or externally blocked. The full evidence model and figure-generation inputs are maintained under [`research/`](research/).
+
+## Current capabilities
+
+- Resolve tokenized-stock identity by ticker, chain, platform and contract.
+- Compare wrappers such as Ondo and bStocks.
+- Normalize token price, reference price, market state, candles and data warnings.
+- Read wallet exposure, portfolio information and transaction context.
+- Create and simulate ActionPlans before execution.
+- Enforce allowance, balance, market-state, slippage and price-impact checks.
+- Prepare RFQ signing requests without handling private keys.
+- Expose 12 MCP tools for existing agents and applications.
+- Record request attempts, latency, business codes and rate-limit headers.
+- Retry documented transient failures while keeping broadcast operations explicit and non-automatic.
+
+## Safety model
+
+```text
+read → plan → simulate → confirm → sign externally → submit → poll status
+```
+
+`broadcast_confirmed_transaction` is the only explicit broadcast boundary. It requires a confirmed ActionPlan and an externally signed raw transaction. No private key handling is implemented in Ariadne.
+
+## Quickstart
 
 ```bash
 npm install
-```
-
-## Checks
-
-```bash
 npm run typecheck
 npm run test:domain
 npm run test:simulation
 npm run test:mcp
-npm run demo
 ```
 
-`test:simulation` uses a no-funds test transaction and never broadcasts. `test:mcp` starts the MCP server, discovers its tools, searches NVDA on BSC and creates a non-executing action plan.
+The no-funds simulation path does not broadcast a transaction. Copy [`docs/mcp-config.example.json`](docs/mcp-config.example.json) into the MCP client configuration and set its working directory to the absolute repository path.
 
-## MCP configuration
+## Evidence and limitations
 
-For a local MCP client, run:
+The complete evaluation protocol, observations, failure taxonomy and deferred tests are in [`docs/TECHNICAL_RESEARCH_REPORT.md`](docs/TECHNICAL_RESEARCH_REPORT.md). In particular:
 
-```bash
-npm run mcp
-```
-
-For Codex or Claude Code, copy `docs/mcp-config.example.json`, replace `cwd` with the absolute project path, and ensure the project-root `.env` contains the Binance Web3 credentials. The example contains no credentials.
-
-Before submission, use [docs/SUBMISSION_CHECKLIST.md](docs/SUBMISSION_CHECKLIST.md) for the reviewer run path, no-funds Preview expectations, verification commands and limitations that must be disclosed.
-
-The server currently exposes:
-
-- `resolve_tokenized_stock`
-- `get_stock_market_context`
-- `compare_stock_wrappers`
-- `get_wallet_stock_exposure`
-- `simulate_stock_action`
-- `simulate_stock_action_plan`
-- `create_stock_action_plan`
-- `confirm_stock_action_plan` (state transition only; never signs or broadcasts)
-- `submit_signed_rfq_order` (requires an externally produced EIP-712 signature)
-- `get_rfq_order_status` (read-only)
-- `broadcast_confirmed_transaction` (real side effect; requires confirmed plan and external signature)
-- `get_broadcast_order_status` (read-only)
+- Real RFQ settlement requires an external wallet signature and remains deferred.
+- Funded post-trade balance and successful broadcast validation remain deferred until a funded wallet is intentionally used.
+- Three documented DeFi Positions request variants returned upstream business code `50000`; Ariadne records this as an upstream blocker rather than an empty result.
+- Demo video and final submission material are intentionally outside the current implementation scope.
 
 ## Repository map
 
-- `src/binance-web3-client.ts` — signed Binance Web3 API client;
-- `src/domain/` — stable domain models, normalizers and safety checks;
-- `src/services/` — tokenized-stock and transaction services;
-- `src/mcp/server.ts` — MCP adapter;
-- `scripts/` — local tests and API probes;
-- `docs/DEVELOPER_EXPERIENCE_LOG.md` — factual API development log;
-- `docs/API_CAPABILITY_MATRIX.md` — verified API capability matrix;
-- `PRD.md` — product requirements document.
+- `src/` — SDK domain, services and MCP adapter;
+- `scripts/` — tests and API probes;
+- `research/` — evidence data and reproducible figure generation;
+- [`docs/TECHNICAL_RESEARCH_REPORT.md`](docs/TECHNICAL_RESEARCH_REPORT.md) — complete technical evaluation;
+- [`docs/DEVELOPER_EXPERIENCE_LOG.md`](docs/DEVELOPER_EXPERIENCE_LOG.md) — factual API development log.

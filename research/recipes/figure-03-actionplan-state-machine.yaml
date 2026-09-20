@@ -1,0 +1,5 @@
+figure: figure-03-actionplan-state-machine
+question: Which ActionPlan states are required before execution?
+source_data: [docs/PHASE_ACCEPTANCE.md]
+style: science-nature-inspired
+outputs: [svg, pdf, png]

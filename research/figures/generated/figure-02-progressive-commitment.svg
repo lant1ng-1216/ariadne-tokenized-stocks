@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
+<title id="title">Figure 2 | Progressive commitment workflow</title><desc id="desc">Read-only discovery progresses to explicit user-controlled signing and broadcast.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif;fill:#24313a}.title{font-size:24px;font-weight:600}.panel{font-size:18px;font-weight:600}.body{font-size:15px}.small{font-size:13px;fill:#60727c}.axis{stroke:#60727c;stroke-width:1.5}.hair{stroke:#a9b7bd;stroke-width:1}.arrow{fill:none;stroke:#60727c;stroke-width:2;marker-end:url(#arrow)}</style>
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#60727c"/></marker></defs>
+<text x="48" y="42" class="title">Figure 2 | Progressive commitment workflow</text>
+<text x="48" y="86" class="panel">(a) Permission and side-effect progression</text>
+<rect x="58" y="180" width="135" height="82" rx="4" fill="#fff" stroke="#176b87" stroke-width="1.5"/>
+<text x="125.5" y="211" class="body" text-anchor="middle">Resolve</text>
+<text x="125.5" y="236" class="small" text-anchor="middle">read-only</text>
+<path d="M195,221 L215,221" class="arrow"/>
+<rect x="222" y="180" width="135" height="82" rx="4" fill="#fff" stroke="#176b87" stroke-width="1.5"/>
+<text x="289.5" y="211" class="body" text-anchor="middle">Context</text>
+<text x="289.5" y="236" class="small" text-anchor="middle">read-only</text>
+<path d="M359,221 L379,221" class="arrow"/>
+<rect x="386" y="180" width="135" height="82" rx="4" fill="#fff" stroke="#176b87" stroke-width="1.5"/>
+<text x="453.5" y="211" class="body" text-anchor="middle">Plan</text>
+<text x="453.5" y="236" class="small" text-anchor="middle">no side effect</text>
+<path d="M523,221 L543,221" class="arrow"/>
+<rect x="550" y="180" width="135" height="82" rx="4" fill="#fff" stroke="#176b87" stroke-width="1.5"/>
+<text x="617.5" y="211" class="body" text-anchor="middle">Simulate</text>
+<text x="617.5" y="236" class="small" text-anchor="middle">no broadcast</text>
+<path d="M687,221 L707,221" class="arrow"/>
+<rect x="714" y="180" width="135" height="82" rx="4" fill="#fff" stroke="#c97927" stroke-width="1.5"/>
+<text x="781.5" y="211" class="body" text-anchor="middle">Confirm</text>
+<text x="781.5" y="236" class="small" text-anchor="middle">user decision</text>
+<path d="M851,221 L871,221" class="arrow"/>
+<rect x="878" y="180" width="135" height="82" rx="4" fill="#fff" stroke="#c97927" stroke-width="1.5"/>
+<text x="945.5" y="211" class="body" text-anchor="middle">Sign</text>
+<text x="945.5" y="236" class="small" text-anchor="middle">external wallet</text>
+<path d="M1015,221 L1035,221" class="arrow"/>
+<rect x="1042" y="180" width="135" height="82" rx="4" fill="#fff" stroke="#b64b4b" stroke-width="1.5"/>
+<text x="1109.5" y="211" class="body" text-anchor="middle">Broadcast</text>
+<text x="1109.5" y="236" class="small" text-anchor="middle">real side effect</text>
+<line x1="58" y1="340" x2="1142" y2="340" class="axis"/><text x="58" y="375" class="small">Lower commitment</text><text x="1142" y="375" class="small" text-anchor="end">Higher commitment</text>
+<circle cx="235" cy="340" r="7" fill="#176b87"/><circle cx="562" cy="340" r="7" fill="#c97927"/><circle cx="1060" cy="340" r="7" fill="#b64b4b"/>
+<text x="48" y="458" class="panel">(b) Boundary conditions</text>
+<line x1="60" y1="517" x2="1140" y2="517" class="hair"/>
+<text x="60" y="505" class="body">Automatic retry</text>
+<text x="420" y="505" class="body">Read and prepare operations</text>
+<text x="780" y="505" class="body">Allowed by policy</text>
+<line x1="60" y1="551" x2="1140" y2="551" class="hair"/>
+<text x="60" y="539" class="body">Automatic retry</text>
+<text x="420" y="539" class="body">Broadcast operation</text>
+<text x="780" y="539" class="body">Not allowed</text>
+<line x1="60" y1="585" x2="1140" y2="585" class="hair"/>
+<text x="60" y="573" class="body">Private key access</text>
+<text x="420" y="573" class="body">Ariadne SDK</text>
+<text x="780" y="573" class="body">Never</text>
+<line x1="60" y1="619" x2="1140" y2="619" class="hair"/>
+<text x="60" y="607" class="body">User confirmation</text>
+<text x="420" y="607" class="body">Confirmed ActionPlan</text>
+<text x="780" y="607" class="body">Required</text>
+</svg>

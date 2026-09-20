@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "source": "docs/DEVELOPER_EXPERIENCE_LOG.md and scripts/probe-defi-positions.ts",
+  "observedAt": "2026-09-20",
+  "observations": [
+    {
+      "id": "defi-positions-variants",
+      "subject": "DeFi Positions",
+      "requestVariants": 3,
+      "httpStatus": 200,
+      "businessCode": 50000,
+      "rateLimit": 5,
+      "rateLimitRemaining": 4,
+      "classification": "upstream-service-error",
+      "interpretation": "The response must not be converted into an empty position list."
+    },
+    {
+      "id": "retry-policy",
+      "subject": "42900 retry behavior",
+      "retryableCode": 42900,
+      "retryAfterHonored": true,
+      "evidence": "scripts/test-retry-policy.ts",
+      "classification": "verified-client-behavior"
+    },
+    {
+      "id": "rfq-signing-boundary",
+      "subject": "RFQ execution",
+      "signingScheme": "EIP-712",
+      "privateKeyHandledBySdk": false,
+      "externalSignatureRequired": true,
+      "classification": "explicit-external-boundary"
+    }
+  ]
+}

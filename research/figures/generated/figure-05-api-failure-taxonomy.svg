@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
+<title id="title">Figure 5 | API behavior and failure taxonomy</title><desc id="desc">Observed HTTP and business-code combinations mapped to Ariadne handling decisions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif;fill:#24313a}.title{font-size:24px;font-weight:600}.panel{font-size:18px;font-weight:600}.body{font-size:15px}.small{font-size:13px;fill:#60727c}.axis{stroke:#60727c;stroke-width:1.5}.hair{stroke:#a9b7bd;stroke-width:1}.arrow{fill:none;stroke:#60727c;stroke-width:2;marker-end:url(#arrow)}</style>
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#60727c"/></marker></defs>
+<text x="48" y="42" class="title">Figure 5 | API behavior and failure taxonomy</text>
+<text x="48" y="86" class="panel">(a) Response classification</text>
+<rect x="70" y="140" width="245" height="54" rx="4" fill="#fff" stroke="#176b87" stroke-width="1.5"/>
+<text x="192.5" y="171" class="body" text-anchor="middle">HTTP 200 + code 0</text>
+<text x="192.5" y="196" class="small" text-anchor="middle">observed response</text>
+<path d="M325,167 L435,167" class="arrow"/>
+<rect x="445" y="140" width="220" height="54" rx="4" fill="#fff" stroke="#176b87" stroke-width="1.5"/>
+<text x="555.0" y="171" class="body" text-anchor="middle">success</text>
+<text x="555.0" y="196" class="small" text-anchor="middle">classification</text>
+<path d="M675,167 L785,167" class="arrow"/>
+<rect x="795" y="140" width="335" height="54" rx="4" fill="#fff" stroke="#a9b7bd" stroke-width="1.5"/>
+<text x="962.5" y="171" class="body" text-anchor="middle">return normalized data</text>
+<text x="962.5" y="196" class="small" text-anchor="middle">client behavior</text>
+<rect x="70" y="214" width="245" height="54" rx="4" fill="#fff" stroke="#b64b4b" stroke-width="1.5"/>
+<text x="192.5" y="245" class="body" text-anchor="middle">HTTP 200 + code 50000</text>
+<text x="192.5" y="270" class="small" text-anchor="middle">observed response</text>
+<path d="M325,241 L435,241" class="arrow"/>
+<rect x="445" y="214" width="220" height="54" rx="4" fill="#fff" stroke="#b64b4b" stroke-width="1.5"/>
+<text x="555.0" y="245" class="body" text-anchor="middle">upstream error</text>
+<text x="555.0" y="270" class="small" text-anchor="middle">classification</text>
+<path d="M675,241 L785,241" class="arrow"/>
+<rect x="795" y="214" width="335" height="54" rx="4" fill="#fff" stroke="#a9b7bd" stroke-width="1.5"/>
+<text x="962.5" y="245" class="body" text-anchor="middle">preserve error; never return empty data</text>
+<text x="962.5" y="270" class="small" text-anchor="middle">client behavior</text>
+<rect x="70" y="288" width="245" height="54" rx="4" fill="#fff" stroke="#c97927" stroke-width="1.5"/>
+<text x="192.5" y="319" class="body" text-anchor="middle">42900</text>
+<text x="192.5" y="344" class="small" text-anchor="middle">observed response</text>
+<path d="M325,315 L435,315" class="arrow"/>
+<rect x="445" y="288" width="220" height="54" rx="4" fill="#fff" stroke="#c97927" stroke-width="1.5"/>
+<text x="555.0" y="319" class="body" text-anchor="middle">rate limit</text>
+<text x="555.0" y="344" class="small" text-anchor="middle">classification</text>
+<path d="M675,315 L785,315" class="arrow"/>
+<rect x="795" y="288" width="335" height="54" rx="4" fill="#fff" stroke="#a9b7bd" stroke-width="1.5"/>
+<text x="962.5" y="319" class="body" text-anchor="middle">retry according to policy</text>
+<text x="962.5" y="344" class="small" text-anchor="middle">client behavior</text>
+<rect x="70" y="362" width="245" height="54" rx="4" fill="#fff" stroke="#c97927" stroke-width="1.5"/>
+<text x="192.5" y="393" class="body" text-anchor="middle">HTTP 5xx</text>
+<text x="192.5" y="418" class="small" text-anchor="middle">observed response</text>
+<path d="M325,389 L435,389" class="arrow"/>
+<rect x="445" y="362" width="220" height="54" rx="4" fill="#fff" stroke="#c97927" stroke-width="1.5"/>
+<text x="555.0" y="393" class="body" text-anchor="middle">server failure</text>
+<text x="555.0" y="418" class="small" text-anchor="middle">classification</text>
+<path d="M675,389 L785,389" class="arrow"/>
+<rect x="795" y="362" width="335" height="54" rx="4" fill="#fff" stroke="#a9b7bd" stroke-width="1.5"/>
+<text x="962.5" y="393" class="body" text-anchor="middle">retry according to policy</text>
+<text x="962.5" y="418" class="small" text-anchor="middle">client behavior</text>
+<text x="48" y="490" class="panel">(b) DeFi Positions request variants</text>
+<text x="70" y="530" class="body">Variant</text>
+<text x="330" y="530" class="body">HTTP</text>
+<text x="460" y="530" class="body">Business code</text>
+<text x="650" y="530" class="body">Remaining</text>
+<text x="820" y="530" class="body">Classification</text>
+<text x="70" y="570" class="small">Variant 1</text>
+<text x="330" y="570" class="small">200</text>
+<text x="460" y="570" class="small">50000</text>
+<text x="650" y="570" class="small">4 / 5</text>
+<text x="820" y="570" class="small">upstream service error</text>
+<text x="70" y="605" class="small">Variant 2</text>
+<text x="330" y="605" class="small">200</text>
+<text x="460" y="605" class="small">50000</text>
+<text x="650" y="605" class="small">4 / 5</text>
+<text x="820" y="605" class="small">upstream service error</text>
+<text x="70" y="640" class="small">Variant 3</text>
+<text x="330" y="640" class="small">200</text>
+<text x="460" y="640" class="small">50000</text>
+<text x="650" y="640" class="small">4 / 5</text>
+<text x="820" y="640" class="small">upstream service error</text>
+</svg>

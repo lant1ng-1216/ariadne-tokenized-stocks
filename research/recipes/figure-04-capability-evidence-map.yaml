@@ -1,0 +1,5 @@
+figure: figure-04-capability-evidence-map
+question: Which capability areas are verified, partial, blocked or deferred?
+source_data: [research/data/capability-matrix.json]
+style: science-nature-inspired
+outputs: [svg, pdf, png]

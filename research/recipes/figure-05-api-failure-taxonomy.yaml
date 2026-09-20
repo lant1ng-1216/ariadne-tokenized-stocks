@@ -1,0 +1,5 @@
+figure: figure-05-api-failure-taxonomy
+question: How are HTTP status and business codes classified?
+source_data: [research/data/api-observations.json]
+style: science-nature-inspired
+outputs: [svg, pdf, png]
