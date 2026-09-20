@@ -9,7 +9,8 @@ const signingSecret = secret;
 function call(method: "GET" | "POST", path: string, body = "") {
   const timestamp = new Date().toISOString();
   const sign = createHmac("sha256", signingSecret).update(`${timestamp}${method}${path}${body}`).digest("base64");
-  const args = ["--silent", "--show-error", "--max-time", "20", "--proxy", "http://127.0.0.1:7897",
+  const proxy = process.env.BINANCE_WEB3_PROXY_URL;
+  const args = ["--silent", "--show-error", "--max-time", "20", ...(proxy ? ["--proxy", proxy] : []),
     "--header", `X-OC-APIKEY: ${key}`, "--header", `X-OC-TIMESTAMP: ${timestamp}`,
     "--header", `X-OC-SIGN: ${sign}`];
   if (body) args.push("--header", "Content-Type: application/json", "--data-raw", body);

@@ -14,7 +14,7 @@ export function evaluateSafety(input: {
     name: "asset_identity",
     passed: Boolean(asset.chainId && asset.contractAddress && asset.platformId),
     severity: "blocking",
-    message: "资产必须包含 chainId、contractAddress 和 platformId"
+    message: "Asset must include chainId, contractAddress and platformId"
   });
   const slippage = input.plan.intent.maxSlippageBps;
   if (slippage !== undefined) {
@@ -22,7 +22,7 @@ export function evaluateSafety(input: {
       name: "slippage_limit",
       passed: Number.isInteger(slippage) && slippage >= 0 && slippage <= 10_000,
       severity: "blocking",
-      message: `最大滑点：${slippage} bps`
+      message: `Maximum slippage: ${slippage} bps`
     });
   }
   if (input.market) {
@@ -30,7 +30,7 @@ export function evaluateSafety(input: {
       name: "market_data_freshness",
       passed: Boolean(input.market.tokenPriceUpdatedAt),
       severity: "warning",
-      message: input.market.tokenPriceUpdatedAt ? "价格包含更新时间" : "价格缺少更新时间"
+      message: input.market.tokenPriceUpdatedAt ? "Price includes an update timestamp" : "Price is missing an update timestamp"
     });
     const marketClosed = input.market.marketStatus === "closed" || input.market.openState === false;
     checks.push({
@@ -38,8 +38,8 @@ export function evaluateSafety(input: {
       passed: !marketClosed && input.market.marketStatus !== "unknown",
       severity: marketClosed ? "blocking" : "warning",
       message: marketClosed
-        ? "市场当前关闭或暂停，禁止创建可执行交易计划"
-        : input.market.marketStatus === "unknown" ? "平台没有提供可识别的市场状态" : `市场状态：${input.market.marketStatus}`
+        ? "Market is closed or halted; executable plans are blocked"
+        : input.market.marketStatus === "unknown" ? "Platform did not provide a recognized market status" : `Market status: ${input.market.marketStatus}`
     });
   }
   if (input.quote) {
@@ -47,7 +47,7 @@ export function evaluateSafety(input: {
       name: "quote_available",
       passed: input.quote.success && input.quote.routes.length > 0,
       severity: "blocking",
-      message: input.quote.success ? "存在可用报价" : input.quote.error?.message ?? "没有可用报价"
+      message: input.quote.success ? "A valid quote is available" : input.quote.error?.message ?? "No valid quote is available"
     });
     const route = input.quote.routes[0];
     if (route) {
@@ -57,19 +57,19 @@ export function evaluateSafety(input: {
         name: "price_impact",
         passed: parsedImpact === undefined || Number.isFinite(parsedImpact) && Math.abs(parsedImpact) <= 5,
         severity: parsedImpact === undefined ? "warning" : "blocking",
-        message: parsedImpact === undefined ? "报价未提供 price impact，需在确认前人工复核" : `报价 price impact: ${impact}%`
+        message: parsedImpact === undefined ? "Quote did not provide price impact; manual review is required before confirmation" : `Quote price impact: ${impact}%`
       });
       checks.push({
         name: "authorization_visibility",
         passed: !route.approvalTarget || (input.allowance !== undefined && input.requiredAllowance !== undefined && input.allowance >= input.requiredAllowance),
         severity: route.approvalTarget ? "blocking" : "info",
         message: !route.approvalTarget
-          ? "报价未声明额外 approval target"
+          ? "Quote did not declare an additional approval target"
           : input.allowance === undefined
-            ? `无法读取 ERC-20 allowance，spender=${route.approvalTarget}`
+            ? `Unable to read ERC-20 allowance, spender=${route.approvalTarget}`
             : input.allowance >= (input.requiredAllowance ?? 0n)
-              ? `ERC-20 allowance 足够，spender=${route.approvalTarget}`
-              : `ERC-20 allowance 不足，spender=${route.approvalTarget}`
+              ? `ERC-20 allowance is sufficient, spender=${route.approvalTarget}`
+              : `ERC-20 allowance is insufficient, spender=${route.approvalTarget}`
       });
     }
   }
@@ -78,7 +78,7 @@ export function evaluateSafety(input: {
       name: "simulation",
       passed: input.simulation.success,
       severity: "blocking",
-      message: input.simulation.success ? "交易模拟通过" : "交易模拟未通过"
+      message: input.simulation.success ? "Transaction simulation succeeded" : "Transaction simulation failed"
     });
   }
   return {

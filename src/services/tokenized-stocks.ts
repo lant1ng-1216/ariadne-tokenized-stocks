@@ -240,7 +240,7 @@ export class TokenizedStocksService {
         plan.safetyReport = {
           passed: false,
           checks: [],
-          blockingReasons: [`无法读取 ERC-20 allowance: ${error instanceof Error ? error.message : String(error)}`]
+          blockingReasons: [`Unable to read ERC-20 allowance: ${error instanceof Error ? error.message : String(error)}`]
         };
         plan.status = "failed";
         return plan;
@@ -258,7 +258,7 @@ export class TokenizedStocksService {
         plan.safetyReport = {
           ...plan.safetyReport,
           passed: false,
-          blockingReasons: [`未能构建未签名动作: ${error instanceof Error ? error.message : String(error)}`]
+          blockingReasons: [`Unable to build unsigned action: ${error instanceof Error ? error.message : String(error)}`]
         };
       }
     }

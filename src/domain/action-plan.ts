@@ -7,10 +7,10 @@ export function isPlanExpired(plan: ActionPlan, now = Date.now()): boolean {
 
 export function attachSimulation(plan: ActionPlan, simulation: SimulationResult, now = Date.now()): ActionPlan {
   if (isPlanExpired(plan, now)) {
-    return { ...plan, status: "failed", simulation, safetyReport: { passed: false, checks: [], blockingReasons: ["交易计划或报价已过期"] } };
+    return { ...plan, status: "failed", simulation, safetyReport: { passed: false, checks: [], blockingReasons: ["The action plan or quote has expired"] } };
   }
   if (!["draft", "awaiting_confirmation"].includes(plan.status)) {
-    return { ...plan, status: "failed", simulation, safetyReport: { passed: false, checks: [], blockingReasons: [`不能从 ${plan.status} 状态重新写入模拟结果`] } };
+    return { ...plan, status: "failed", simulation, safetyReport: { passed: false, checks: [], blockingReasons: [`Cannot attach a simulation from ${plan.status} state`] } };
   }
   const safetyReport = evaluateSafety({ plan, market: plan.assetContext, simulation });
   return { ...plan, simulation, safetyReport, status: safetyReport.passed && simulation.success ? "simulated" : "failed" };

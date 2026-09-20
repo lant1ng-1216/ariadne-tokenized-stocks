@@ -5,6 +5,7 @@ const apiKey = process.env.BINANCE_WEB3_API_KEY;
 const apiSecret = process.env.BINANCE_WEB3_API_SECRET;
 if (!apiKey || !apiSecret) throw new Error("Missing Binance Web3 credentials in .env");
 const secret = apiSecret;
+const proxy = process.env.BINANCE_WEB3_PROXY_URL;
 
 function get(path: string) {
   const timestamp = new Date().toISOString();
@@ -13,7 +14,7 @@ function get(path: string) {
     .digest("base64");
   return spawnSync("curl", [
   "--silent", "--show-error", "--max-time", "20",
-  "--proxy", "http://127.0.0.1:7897",
+  ...(proxy ? ["--proxy", proxy] : []),
   "--header", `X-OC-APIKEY: ${apiKey}`,
   "--header", `X-OC-TIMESTAMP: ${timestamp}`,
   "--header", `X-OC-SIGN: ${signature}`,
@@ -28,7 +29,7 @@ function post(path: string, body: string) {
     .digest("base64");
   return spawnSync("curl", [
     "--silent", "--show-error", "--max-time", "20",
-    "--proxy", "http://127.0.0.1:7897",
+    ...(proxy ? ["--proxy", proxy] : []),
     "--header", `X-OC-APIKEY: ${apiKey}`,
     "--header", `X-OC-TIMESTAMP: ${timestamp}`,
     "--header", `X-OC-SIGN: ${signature}`,

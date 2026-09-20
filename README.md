@@ -26,10 +26,10 @@ The normal MCP demo does not broadcast a transaction. `broadcast_confirmed_trans
 ## Local setup
 
 1. Copy the values into the `.env` file in the project root.
-2. Keep the Clash proxy setting if Binance Web3 API is not directly reachable:
+2. Optionally configure a network proxy if Binance Web3 API is not directly reachable:
 
 ```env
-BINANCE_WEB3_PROXY_URL=http://127.0.0.1:7897
+BINANCE_WEB3_PROXY_URL=
 # Optional; used only for read-only ERC-20 allowance checks on BSC.
 BINANCE_WEB3_EVM_RPC_URL=https://bsc-dataseed.binance.org
 ```
@@ -60,7 +60,7 @@ For a local MCP client, run:
 npm run mcp
 ```
 
-For Codex or Claude Code, copy `docs/mcp-config.example.json`, replace `cwd` with the absolute project path, and ensure the project-root `.env` contains the Binance Web3 credentials and optional Clash proxy URL. The example contains no credentials.
+For Codex or Claude Code, copy `docs/mcp-config.example.json`, replace `cwd` with the absolute project path, and ensure the project-root `.env` contains the Binance Web3 credentials. The example contains no credentials.
 
 Before submission, use [docs/SUBMISSION_CHECKLIST.md](docs/SUBMISSION_CHECKLIST.md) for the reviewer run path, no-funds Preview expectations, verification commands and limitations that must be disclosed.
 

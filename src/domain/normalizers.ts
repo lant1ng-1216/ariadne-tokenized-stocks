@@ -73,10 +73,10 @@ function decimalGapPercent(tokenPrice?: string, referencePrice?: string): string
 export function normalizeMarketContext(asset: StockAsset, input: any): MarketContext {
   const status = normalizeMarketStatus(input.statusInfo?.marketStatus);
   const warnings: string[] = [];
-  if (status === "unknown") warnings.push("平台未提供可识别的 marketStatus");
-  if (input.liquidity == null) warnings.push("当前接口未提供 liquidity，不能解释为零流动性");
-  if (input.tokenPrice == null) warnings.push("缺少 tokenPrice");
-  if (input.referencePrice == null) warnings.push("缺少 referencePrice");
+  if (status === "unknown") warnings.push("The platform did not provide a recognized marketStatus");
+  if (input.liquidity == null) warnings.push("Liquidity was not provided and must not be interpreted as zero");
+  if (input.tokenPrice == null) warnings.push("tokenPrice is missing");
+  if (input.referencePrice == null) warnings.push("referencePrice is missing");
 
   return {
     asset,
@@ -99,9 +99,9 @@ export function normalizeWalletHolding(input: any, asset?: StockAsset): WalletHo
   const balance = String(input.balance ?? "0");
   const isDust = Number(balance) > 0 && Number(balance) < 0.000001;
   const warnings: string[] = [];
-  if (input.tokenPrice === "" || input.tokenPrice == null) warnings.push("tokenPrice 不可用");
-  if (input.isRiskToken) warnings.push("资产被 Wallet API 标记为风险资产");
-  if (isDust) warnings.push("余额可能属于 dust，不应直接视为有意义持仓");
+  if (input.tokenPrice === "" || input.tokenPrice == null) warnings.push("tokenPrice is unavailable");
+  if (input.isRiskToken) warnings.push("Wallet API marked this asset as a risk token");
+  if (isDust) warnings.push("Balance may be dust and should not be treated as meaningful exposure");
 
   return {
     asset,
@@ -131,8 +131,8 @@ export function normalizeQuote(asset: StockAsset, input: any): QuoteResult {
   const isRfq = explicitMode === "RFQ" || (!explicitMode && ["ondo", "bstock", "xstocks"].includes(asset.platformId));
   const isStandard = explicitMode === "SWAP" || (!explicitMode && !isRfq);
   const warnings: string[] = [];
-  if (isRfq) warnings.push("该 RWA 报价使用 RFQ，需要 userWalletAddress 和外部 EIP-712 签名");
-  if (routes.some((route: any) => !route.minToTokenAmount)) warnings.push("报价未返回 minToTokenAmount");
+  if (isRfq) warnings.push("This RWA quote uses RFQ and requires a userWalletAddress and external EIP-712 signature");
+  if (routes.some((route: any) => !route.minToTokenAmount)) warnings.push("Quote did not return minToTokenAmount");
   return {
     asset,
     platformMode: isRfq ? "rfq" : isStandard ? "standard" : "unknown",

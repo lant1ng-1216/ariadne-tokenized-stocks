@@ -25,7 +25,7 @@ const market = normalizeMarketContext(asset, {
 assert.equal(market.priceGap, "0.0000000000000000001");
 assert.equal(market.priceGapPercent, "0.000000000000000033%");
 assert.equal(market.marketStatus, "offhours");
-assert.match(market.dataWarnings.join(" "), /liquidity/);
+assert.match(market.dataWarnings.join(" "), /Liquidity/);
 assert.equal(normalizeMarketContext(asset, { statusInfo: { marketStatus: "regular" } }).marketStatus, "open");
 assert.equal(normalizeMarketContext(asset, { statusInfo: { marketStatus: "halted" } }).marketStatus, "closed");
 
@@ -58,7 +58,7 @@ const closedMarket = normalizeMarketContext(asset, {
 });
 const closedSafety = evaluateSafety({ plan, market: closedMarket, quote, simulation });
 assert.equal(closedSafety.passed, false);
-assert.match(closedSafety.blockingReasons.join(" "), /关闭|暂停/);
+assert.match(closedSafety.blockingReasons.join(" "), /closed|halted/);
 const invalidSlippage = evaluateSafety({ plan: { ...plan, intent: { ...plan.intent, maxSlippageBps: 10_001 } }, market, quote, simulation });
 assert.equal(invalidSlippage.passed, false);
 const simulatedPlan = attachSimulation(plan, simulation);
