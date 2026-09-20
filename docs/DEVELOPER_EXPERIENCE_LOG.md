@@ -59,5 +59,5 @@ npm run test:domain
 npm run test:retry-policy
 npm run test:mcp-config
 npm run test:mcp
-npm run audit:phases
+npm run audit:experiments
 ```

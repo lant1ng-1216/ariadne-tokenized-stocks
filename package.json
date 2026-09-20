@@ -20,7 +20,7 @@
     "probe:broadcast-rejection": "node --env-file=.env --import tsx scripts/probe-broadcast-rejection.ts",
     "test:mcp-config": "node --import tsx scripts/check-mcp-config.ts",
     "test:sdk-example": "node --import tsx scripts/check-sdk-example.ts",
-    "audit:phases": "node --import tsx scripts/audit-phases.ts",
+    "audit:experiments": "node scripts/audit-experiment-records.mjs",
     "example:sdk": "node --env-file=.env --import tsx examples/sdk-usage.ts",
     "probe:post-transaction": "node --env-file=.env --import tsx scripts/probe-post-transaction.ts",
     "probe:approval": "node --env-file=.env --import tsx scripts/probe-approval.ts",

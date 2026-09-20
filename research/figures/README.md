@@ -3,16 +3,12 @@
 Run from the repository root:
 
 ```bash
-python3 research/figure_system.py
+python3 research/figures/nature-sample/render_experiment_figures.py
 ```
 
-The script reads evidence files under `research/data/` and writes each independent figure as SVG, PDF and PNG to `research/figures/rendered/`. Each figure has a separate recipe under `research/recipes/`.
+The script reads the append-only experiment records under `research/experiments/records/` and writes each figure as editable SVG/PDF plus 600 dpi PNG/TIFF to this directory.
 
-- `figure-01-system-architecture.*`
-- `figure-02-progressive-commitment.*`
-- `figure-03-actionplan-state-machine.*`
-- `figure-04-capability-evidence-map.*`
-- `figure-05-api-failure-taxonomy.*`
-- `figure-06-observability-trace.*`
+- `experiment-latency-ecdf.*`
+- `experiment-handling-heatmap.*`
 
-Figures are evidence views, not decorative illustrations. Do not change a plotted value manually; update the source evidence file and regenerate.
+Figures are evidence views, not decorative illustrations. Do not change a plotted value manually; update the source records and regenerate.

@@ -11,7 +11,6 @@ This directory contains the evidence and reproducibility assets used by the Aria
 
 ## Data files
 
-- `data/acceptance-summary.json` — phase acceptance totals and status definitions.
 - `data/api-observations.json` — selected API and safety observations.
 - `data/capability-matrix.json` — capability-level verification status.
 - `experiments/records/readonly.jsonl` — append-only read and preparation observations.

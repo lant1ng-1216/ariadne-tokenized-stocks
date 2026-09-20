@@ -1,5 +1,0 @@
-figure: figure-06-observability-trace
-question: Which request fields support reproducible diagnosis?
-source_data: [research/data/api-observations.json]
-style: science-nature-inspired
-outputs: [svg, pdf, png]
