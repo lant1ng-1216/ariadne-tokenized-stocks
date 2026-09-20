@@ -1,0 +1,6 @@
+observation,endpoint_or_boundary,code_or_signal,decision,evidence_count,source
+Rate-limit retry,HTTP client,42900,retry,1,scripts/test-retry-policy.ts and research/data/request-traces.json
+DeFi positions upstream failure,DeFi positions,HTTP 200 + business 50000,preserve error,3,research/data/api-observations.json
+RFQ quote,aggregator quote,executionMode RFQ,external signature,1,scripts/test-domain.ts and src/domain/normalizers.ts
+Insufficient allowance,ERC-20 allowance,allowance < required,block,1,dry-run observation and src/domain/safety.ts
+Successful normalized quote,aggregator quote,HTTP 200 + code 0,return normalized data,1,scripts/test-domain.ts

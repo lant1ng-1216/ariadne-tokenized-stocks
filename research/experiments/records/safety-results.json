@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-09-20",
+  "scope": "No-signing, no-broadcast safety validation",
+  "results": [
+    {
+      "scenarioId": "retry_policy",
+      "source": "scripts/test-retry-policy.ts",
+      "attempts": 2,
+      "retryAfterHonored": true,
+      "elapsedMs": 122,
+      "broadcasted": false
+    },
+    {
+      "scenarioId": "simulation_preview",
+      "source": "scripts/test-simulation.ts",
+      "success": true,
+      "status": "SUCCESS",
+      "warnings": [],
+      "previewAddress": "0x0000000000000000000000000000000000000000",
+      "broadcasted": false
+    },
+    {
+      "scenarioId": "allowance_read",
+      "source": "scripts/probe-approval.ts",
+      "quoteSuccess": true,
+      "allowanceReadSucceeded": true,
+      "allowance": "0",
+      "approvalActionBuilt": true,
+      "broadcasted": false
+    },
+    {
+      "scenarioId": "rfq_signing_boundary",
+      "source": "scripts/test-domain.ts",
+      "signingScheme": "EIP712",
+      "externalSignatureRequired": true,
+      "privateKeyHandledBySdk": false,
+      "broadcasted": false
+    },
+    {
+      "scenarioId": "unsafe_execution_guard",
+      "source": "scripts/test-domain.ts",
+      "broadcastGuardRejected": true,
+      "unconfirmedExecutionRejected": true,
+      "broadcasted": false
+    }
+  ]
+}

@@ -34,13 +34,17 @@ The SDK never receives or stores a private key. RFQ signing and broadcast author
 
 ## Verified project snapshot
 
-![Ariadne system architecture](research/figures/rendered/figure-01-system-architecture.svg)
+The current evidence package contains 105 audited request records, 40 result snapshots and 5 safety-result records. The audit passed with 105 unique record identifiers, no broadcasted records, no coverage gaps and no recorded failures.
 
-![Progressive commitment workflow](research/figures/rendered/figure-02-progressive-commitment.svg)
+![Observed latency distributions](research/figures/nature-sample/experiment-latency-ecdf.svg)
 
-![Capability evidence matrix](research/figures/rendered/figure-04-capability-evidence-map.svg)
+**Observed latency distributions.** Empirical cumulative distributions are shown for the audited development observations. The figure reports the full observed distribution rather than reducing performance to a single mean; it is not a production SLO claim.
 
-The current acceptance audit contains 88 items: 80 verified and 8 incomplete or externally blocked. The full evidence model and figure-generation inputs are maintained under [`research/`](research/).
+![Observed response classifications](research/figures/nature-sample/experiment-handling-heatmap.svg)
+
+**Observed response classifications.** The heatmap preserves the response classes actually recorded by the experiment harness across asset discovery, market context, quote preparation, safety reads, simulation, upstream error handling and retry behavior.
+
+The complete evidence model, audit output and reproducible figure inputs are maintained under [`research/`](research/).
 
 ## Current capabilities
 
@@ -88,6 +92,6 @@ The complete evaluation protocol, observations, failure taxonomy and deferred te
 
 - `src/` — SDK domain, services and MCP adapter;
 - `scripts/` — tests and API probes;
-- `research/` — evidence data and reproducible figure generation;
+- `research/` — evidence data, experiment records and reproducible figure generation;
 - [`docs/TECHNICAL_RESEARCH_REPORT.md`](docs/TECHNICAL_RESEARCH_REPORT.md) — complete technical evaluation;
 - [`docs/DEVELOPER_EXPERIENCE_LOG.md`](docs/DEVELOPER_EXPERIENCE_LOG.md) — factual API development log.

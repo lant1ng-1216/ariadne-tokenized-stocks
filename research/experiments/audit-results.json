@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "auditedFiles": [
+    "readonly.jsonl",
+    "safety.jsonl",
+    "readonly-results.jsonl",
+    "safety-results.json"
+  ],
+  "requestRecords": 105,
+  "resultSnapshots": 40,
+  "safetyResults": 5,
+  "uniqueRecordIds": 105,
+  "broadcastedRecords": 0,
+  "observedCounts": {
+    "asset_resolution_ondo": 11,
+    "asset_resolution_bstock": 11,
+    "market_context": 20,
+    "quote_standard": 10,
+    "quote_rfq": 10,
+    "allowance_read": 10,
+    "simulation_preview": 10,
+    "defi_error_handling": 3,
+    "retry_policy": 20
+  },
+  "coverageGaps": [],
+  "failures": []
+}

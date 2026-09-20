@@ -1,0 +1,23 @@
+field,domain,type,required,definition,validation_rule,provenance
+record_id,record,string,yes,Stable unique identifier for one observation,non-empty and unique,experiment recorder
+observed_at,record,string,yes,UTC observation timestamp,ISO-8601 timestamp,experiment recorder
+scenario_id,record,string,yes,Scenario from test matrix,must match test-matrix.csv,experiment protocol
+endpoint,request,string,yes,API path or local test identifier,non-empty,request trace
+request_variant,request,string,yes,Material request parameters or variant label,non-empty,request trace
+asset_platform,asset,string,no,Tokenized-stock platform identifier,controlled vocabulary when present,normalized asset
+underlying_ticker,asset,string,no,Underlying equity ticker,uppercase when present,normalized asset
+chain_id,asset,string,no,BNB Chain identifier,decimal string when present,normalized asset
+contract_address,asset,string,no,Token contract address,0x-prefixed address when present,normalized asset
+http_status,response,integer,no,HTTP response status,100-599 when present,raw response
+business_code,response,string,no,Binance business response code,non-empty when supplied,raw response
+response_class,response,string,yes,Semantic response classification,controlled vocabulary,classification policy
+latency_ms,response,number,no,Wall-clock request duration in milliseconds,finite and >= 0,request recorder
+attempt,response,integer,no,Zero-based attempt index,integer >= 0,request recorder
+retry_after_honored,response,boolean,no,Whether Retry-After was respected,boolean,request recorder
+handling_decision,ariadne,string,yes,Client action after classification,controlled vocabulary,policy evaluator
+warning_count,ariadne,integer,yes,Number of warnings attached to normalized result,integer >= 0,normalized result
+blocking_reasons,ariadne,array,no,Explicit reasons preventing progression,not empty when blocked,safety report
+simulation_status,ariadne,string,no,Simulation outcome when requested,controlled vocabulary,simulation result
+signature_required,boundary,boolean,no,Whether an external signature is required,boolean,execution boundary
+broadcasted,boundary,boolean,yes,Whether Ariadne broadcast a transaction,must remain false for this experiment,execution boundary
+source_ref,provenance,string,yes,File or command providing evidence,non-empty,experiment recorder

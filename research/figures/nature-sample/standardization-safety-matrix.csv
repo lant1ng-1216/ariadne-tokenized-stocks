@@ -1,0 +1,7 @@
+case,asset_identity,market_context,quote,allowance,simulation,execution_boundary,source
+Ondo NVDAon resolution,verified,warning,external_boundary,not_measured,not_measured,external_boundary,real API observation and domain normalization
+bStocks NVDAB resolution,verified,warning,verified,blocked,blocked,external_boundary,real API observation and dry-run plan
+bStocks 10 USDT buy plan,verified,warning,verified,blocked,blocked,external_boundary,dry-run output with insufficient allowance
+RFQ execution boundary,verified,not_applicable,external_boundary,not_applicable,not_measured,external_signature,domain test and normalizer warning
+DeFi positions variants,not_applicable,not_applicable,not_applicable,not_applicable,blocked,not_applicable,three real request variants with upstream business error
+42900 retry policy,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,verified,deterministic local retry test

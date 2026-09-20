@@ -1,0 +1,10 @@
+scenario_id,category,operation,variant,repeat_target,requires_funds,signing_allowed,broadcast_allowed,primary_measure,success_criteria
+asset_resolution_ondo,read,resolve_tokenized_stock,Ondo NVDAon on chain 56,10,no,no,no,identity completeness,asset identity fields are normalized or explicitly warned
+asset_resolution_bstock,read,resolve_tokenized_stock,bStocks NVDAB on chain 56,10,no,no,no,identity completeness,asset identity fields are normalized or explicitly warned
+market_context,read,market context,Ondo and bStocks assets,10,no,no,no,field completeness,missing fields become warnings and are not treated as zero
+quote_standard,prepare,quote,bStocks standard route,10,no,no,no,quote availability,quote and expiry fields are classified without signing
+quote_rfq,prepare,quote,RFQ route,10,no,no,no,execution boundary,external signature requirement is explicit
+allowance_read,safety,erc20 allowance,zero or preview wallet address,10,no,no,no,allowance classification,insufficient or unreadable allowance becomes a blocking reason
+simulation_preview,safety,simulate action,zero-value or preview transaction,10,no,no,no,simulation outcome,simulation result is recorded and no broadcast occurs
+defi_error_handling,read,DeFi positions,three documented request variants,3,no,no,no,error preservation,upstream business errors are preserved and not converted to empty lists
+retry_policy,client_behavior,retry policy,deterministic 42900 local server,10,no,no,no,retry latency and attempt count,Retry-After is honored and final classification is recorded
