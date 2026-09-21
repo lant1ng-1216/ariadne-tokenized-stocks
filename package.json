@@ -28,6 +28,7 @@
     "test:demo-mode": "node --import tsx scripts/test-demo-mode.ts",
     "test:onboarding": "node --import tsx scripts/test-onboarding.ts",
     "test:distribution": "node --import tsx scripts/test-distribution.ts",
+    "test:cleanroom": "node scripts/test-cleanroom-consumer.mjs",
     "test:jev-shadow": "node --import tsx scripts/test-jev-shadow.ts",
     "jev:shadow": "node --env-file=.env --import tsx scripts/run-jev-shadow.ts",
     "test:simulation": "node --env-file=.env --import tsx scripts/test-simulation.ts",

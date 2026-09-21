@@ -10,7 +10,7 @@ import type { ActionPlan } from "../domain/types.js";
 import { errorOutcome, outcome, textResult } from "./response.js";
 import { compareAgentAssets, toAgentAsset } from "../domain/agent-normalizers.js";
 import type { AssetPreference } from "../domain/agent-types.js";
-import { renderAssetCard, renderComparisonTable } from "../presentation/asset-view.js";
+import { renderAssetCard, renderComparisonTable, renderResearchBrief } from "../presentation/asset-view.js";
 import { DemoTokenizedStocksService } from "../services/demo-tokenized-stocks.js";
 
 const demoMode = process.env.ARIADNE_MODE === "demo";
@@ -124,7 +124,7 @@ server.registerTool("research_tokenized_stock", {
       chainId,
       assets: enriched,
       comparison,
-      presentation: enriched.map(renderAssetCard).join("\n\n---\n\n") + (enriched.length ? `\n\n${renderComparisonTable(comparison)}` : ""),
+      presentation: enriched.length ? renderResearchBrief(enriched, comparison) : "No representations available.",
       decisionBoundary: "Ariadne presents evidence and preference matches; it does not make an investment decision.",
       executionBoundary: "This workflow is read-only. No quote, signature, transaction or broadcast was performed."
     }, status, nextAction, { warnings }));

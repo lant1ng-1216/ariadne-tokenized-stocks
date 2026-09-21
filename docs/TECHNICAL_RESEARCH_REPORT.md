@@ -6,6 +6,8 @@ The MCP surface now includes `research_tokenized_stock`, a read-only orchestrati
 
 The distribution preparation adds separate Demo and Live MCP configuration examples, printable configuration commands, an npm-compatible package manifest, a public SDK entry point, declaration output and a dry-run package check. The package is prepared locally but has not been published to npm.
 
+A clean-room consumer test installed the local tarball outside the repository and verified runtime imports, TypeScript declarations and the package-root export map. This confirms that the SDK is consumable as a package rather than only working from the repository source tree.
+
 Validation on 2026-09-22: TypeScript typecheck, Demo Mode regression, Agent model regression and onboarding documentation checks passed. The first live MCP integration attempt returned a transient incomplete upstream response; a bounded retry passed with 18 tools discovered and safety rejection paths verified. No signing, broadcast or external write occurred.
 
 Ariadne is a TypeScript SDK and MCP server that gives existing AI agents structured access to tokenized-stock discovery, market context, portfolio information, simulation and explicitly bounded execution on BNB Chain. The system separates agent-readable planning from user-controlled signing.
@@ -321,5 +323,65 @@ The legacy architecture figures are generated from `research/data/`. The audited
 - Latency: `1800 ms`
 - Phase transition: `pause`
 - Transition reason: Both baseline and Jev must return passed.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T19:19:47.923Z
+- Phase: `cleanroom-consumer-validation`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.980`
+- Agreement: `true`
+- Latency: `1576 ms`
+- Phase transition: `advance`
+- Transition reason: Baseline and Jev agree on a low-risk continuation.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T19:19:48.887Z
+- Phase: `release-decision`
+- Jev provider: `native-jev`
+- Baseline: `passed_with_deferred_items` / `ask_user` / risk `high`
+- Jev: `passed_with_deferred_items` / `ask_user` / risk `high` / confidence `0.940`
+- Agreement: `true`
+- Latency: `688 ms`
+- Phase transition: `pause`
+- Transition reason: Both baseline and Jev must return passed.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T19:34:30.818Z
+- Phase: `product-presentation-upgrade`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.990`
+- Agreement: `true`
+- Latency: `1057 ms`
+- Phase transition: `advance`
+- Transition reason: Baseline and Jev agree on a low-risk continuation.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T19:35:30.456Z
+- Phase: `hosted-mcp-feasibility`
+- Jev provider: `deterministic-fallback`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: unavailable
+- Agreement: `unknown`
+- Latency: `92 ms`
+- Phase transition: `pause`
+- Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T19:35:45.143Z
+- Phase: `hosted-mcp-feasibility`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.890`
+- Agreement: `true`
+- Latency: `1049 ms`
+- Phase transition: `advance`
+- Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
 - Safety note: Jev does not control Codex and no external write was authorized.

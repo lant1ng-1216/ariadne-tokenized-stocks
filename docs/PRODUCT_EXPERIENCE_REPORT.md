@@ -10,6 +10,8 @@ The primary first-use path is now natural language rather than memorizing MCP to
 
 The interface remains explicit at the execution boundary: research is read-only, recommendations are not investment advice, and quotes, signatures, transactions and broadcasts are separate later steps.
 
+The presentation layer now uses a research-brief hierarchy: an at-a-glance count and warning summary, a cross-issuer comparison table, issuer-specific evidence cards, and a final execution-boundary statement. This is intended to make the interaction feel like an Agent-native research surface rather than a serialized API response.
+
 This document records the observed onboarding and Agent-interaction issues for Ariadne. It is intended to support future development, the Developer Experience Report and the Technical Research Report. It distinguishes observed facts from hypotheses and planned work.
 
 ## 1. Product positioning
@@ -359,5 +361,65 @@ Ariadne's core capability path is usable, but the product remains in a state whe
 - Latency: `1800 ms`
 - Phase transition: `pause`
 - Transition reason: Both baseline and Jev must return passed.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T19:19:47.923Z
+- Phase: `cleanroom-consumer-validation`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.980`
+- Agreement: `true`
+- Latency: `1576 ms`
+- Phase transition: `advance`
+- Transition reason: Baseline and Jev agree on a low-risk continuation.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T19:19:48.887Z
+- Phase: `release-decision`
+- Jev provider: `native-jev`
+- Baseline: `passed_with_deferred_items` / `ask_user` / risk `high`
+- Jev: `passed_with_deferred_items` / `ask_user` / risk `high` / confidence `0.940`
+- Agreement: `true`
+- Latency: `688 ms`
+- Phase transition: `pause`
+- Transition reason: Both baseline and Jev must return passed.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T19:34:30.818Z
+- Phase: `product-presentation-upgrade`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.990`
+- Agreement: `true`
+- Latency: `1057 ms`
+- Phase transition: `advance`
+- Transition reason: Baseline and Jev agree on a low-risk continuation.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T19:35:30.456Z
+- Phase: `hosted-mcp-feasibility`
+- Jev provider: `deterministic-fallback`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: unavailable
+- Agreement: `unknown`
+- Latency: `92 ms`
+- Phase transition: `pause`
+- Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T19:35:45.143Z
+- Phase: `hosted-mcp-feasibility`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.890`
+- Agreement: `true`
+- Latency: `1049 ms`
+- Phase transition: `advance`
+- Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
 - Safety note: Jev does not control Codex and no external write was authorized.

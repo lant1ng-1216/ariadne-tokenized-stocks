@@ -21,6 +21,10 @@ Make Ariadne straightforward to connect for a first-time user and prepare the Ty
 - `npm run test:distribution`: PASS;
 - `npm run build`: PASS;
 - `npm pack --dry-run`: PASS;
+- clean-room consumer install from local tarball: PASS;
+- clean-room runtime import: PASS;
+- clean-room TypeScript declaration check: PASS;
+- package-root export check: PASS;
 - package contents: 62 files, 28.2 kB compressed in the local dry-run;
 - no npm publish performed.
 
