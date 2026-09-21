@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "ariadne-tokenized-stocks": {
+      "command": "npm",
+      "args": ["run", "mcp:demo"],
+      "cwd": "/absolute/path/to/ariadne-tokenized-stocks"
+    }
+  }
+}

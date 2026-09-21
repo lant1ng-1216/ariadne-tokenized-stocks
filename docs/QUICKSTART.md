@@ -11,6 +11,14 @@ npm run mcp:demo
 
 Configure the MCP client to launch `npm run mcp:demo` with the repository as its working directory. No Binance account, API key or wallet is needed for this first run.
 
+You can print a client-ready configuration for the current directory with:
+
+```bash
+npm run mcp:config:demo
+```
+
+For Live Mode, use `npm run mcp:config:live` after creating `.env` from `.env.example` and adding your own credentials.
+
 Then ask in natural language:
 
 ```text

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "ariadne-tokenized-stocks": {
+      "command": "node",
+      "args": ["--env-file=.env", "--import", "tsx", "src/mcp/server.ts"],
+      "cwd": "/absolute/path/to/ariadne-tokenized-stocks"
+    }
+  }
+}

@@ -4,4 +4,5 @@
 records/
 node_modules/
 dist/
+dist-package/
 .DS_Store

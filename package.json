@@ -1,7 +1,23 @@
 {
   "name": "ariadne-tokenized-stocks",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
+  "description": "Agent-native TypeScript SDK and MCP server for tokenized stocks on BNB Chain",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lant1ng-1216/ariadne-tokenized-stocks.git"
+  },
+  "homepage": "https://github.com/lant1ng-1216/ariadne-tokenized-stocks",
+  "files": ["dist-package", "README.md", "LICENSE", "docs/SDK_USAGE.md", "docs/QUICKSTART.md"],
+  "main": "./dist-package/index.js",
+  "types": "./dist-package/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist-package/index.d.ts",
+      "import": "./dist-package/index.js"
+    }
+  },
   "type": "module",
   "scripts": {
     "check:api": "node --env-file=.env --import tsx scripts/check-api.ts",
@@ -11,6 +27,7 @@
     "test:core-hardening": "node --import tsx scripts/test-core-hardening.ts",
     "test:demo-mode": "node --import tsx scripts/test-demo-mode.ts",
     "test:onboarding": "node --import tsx scripts/test-onboarding.ts",
+    "test:distribution": "node --import tsx scripts/test-distribution.ts",
     "test:jev-shadow": "node --import tsx scripts/test-jev-shadow.ts",
     "jev:shadow": "node --env-file=.env --import tsx scripts/run-jev-shadow.ts",
     "test:simulation": "node --env-file=.env --import tsx scripts/test-simulation.ts",
@@ -28,11 +45,15 @@
     "test:mcp-config": "node --import tsx scripts/check-mcp-config.ts",
     "test:sdk-example": "node --import tsx scripts/check-sdk-example.ts",
     "audit:experiments": "node scripts/audit-experiment-records.mjs",
+    "build": "tsc -p tsconfig.build.json",
+    "pack:check": "npm run build && npm pack --dry-run",
     "example:sdk": "node --env-file=.env --import tsx examples/sdk-usage.ts",
     "probe:post-transaction": "node --env-file=.env --import tsx scripts/probe-post-transaction.ts",
     "probe:approval": "node --env-file=.env --import tsx scripts/probe-approval.ts",
     "mcp": "node --env-file=.env --import tsx src/mcp/server.ts",
     "mcp:demo": "node scripts/start-demo-mcp.mjs",
+    "mcp:config:demo": "node scripts/print-mcp-config.mjs demo",
+    "mcp:config:live": "node scripts/print-mcp-config.mjs live",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

@@ -4,6 +4,8 @@
 
 The MCP surface now includes `research_tokenized_stock`, a read-only orchestration tool that performs discovery, issuer-aware market enrichment, preference comparison and presentation in one call. This reduces first-use dependence on tool names while preserving lower-level SDK/MCP operations for developers who need explicit control. The workflow presents evidence without making an investment decision, requesting a signature or broadcasting.
 
+The distribution preparation adds separate Demo and Live MCP configuration examples, printable configuration commands, an npm-compatible package manifest, a public SDK entry point, declaration output and a dry-run package check. The package is prepared locally but has not been published to npm.
+
 Validation on 2026-09-22: TypeScript typecheck, Demo Mode regression, Agent model regression and onboarding documentation checks passed. The first live MCP integration attempt returned a transient incomplete upstream response; a bounded retry passed with 18 tools discovered and safety rejection paths verified. No signing, broadcast or external write occurred.
 
 Ariadne is a TypeScript SDK and MCP server that gives existing AI agents structured access to tokenized-stock discovery, market context, portfolio information, simulation and explicitly bounded execution on BNB Chain. The system separates agent-readable planning from user-controlled signing.
@@ -305,6 +307,18 @@ The legacy architecture figures are generated from `research/data/`. The audited
 - Jev: `passed_with_deferred_items` / `ask_user` / risk `high` / confidence `0.780`
 - Agreement: `true`
 - Latency: `819 ms`
+- Phase transition: `pause`
+- Transition reason: Both baseline and Jev must return passed.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T19:08:58.517Z
+- Phase: `distribution-readiness`
+- Jev provider: `native-jev`
+- Baseline: `passed_with_deferred_items` / `ask_user` / risk `high`
+- Jev: `passed_with_deferred_items` / `continue` / risk `low` / confidence `0.390`
+- Agreement: `false`
+- Latency: `1800 ms`
 - Phase transition: `pause`
 - Transition reason: Both baseline and Jev must return passed.
 - Action taken: `none`

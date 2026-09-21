@@ -23,6 +23,18 @@ Prefer these high-level MCP capabilities for user-facing Agent workflows:
 - `screen_assets_by_preferences` — apply explicit user criteria without presenting investment advice;
 - `analyze_portfolio_exposure` — summarize wallet exposure without rebalancing or execution.
 
+The shortest user-facing path is `research_tokenized_stock`: it combines discovery, market context, comparison and warnings in one read-only call. Use the lower-level tools when an application needs explicit orchestration.
+
+## Package build and local verification
+
+The repository is npm-package ready, but this project does not publish automatically. Run:
+
+```bash
+npm run pack:check
+```
+
+This builds `dist/`, emits TypeScript declarations and performs a dry-run package inspection without publishing. The public SDK entry point is `src/index.ts`, exposed as the package root after build.
+
 The lower-level tools remain available for developers, testing and specialized orchestration.
 
 ```ts
