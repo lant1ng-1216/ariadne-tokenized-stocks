@@ -1,0 +1,16 @@
+{
+  "phase": "evidence-and-report-synchronization",
+  "nextPhase": "final-local-review",
+  "objective": "Synchronize the new Agent-native workflow, onboarding evidence and bounded live-test results into the English technical and product-experience records.",
+  "checks": [
+    { "name": "typecheck", "passed": true },
+    { "name": "onboarding regression", "passed": true },
+    { "name": "live MCP retry", "passed": true },
+    { "name": "technical report synchronized", "passed": true },
+    { "name": "product experience report synchronized", "passed": true }
+  ],
+  "deferredItems": [],
+  "blockedItems": [],
+  "externalWriteRequested": false,
+  "highRiskActionRequested": false
+}

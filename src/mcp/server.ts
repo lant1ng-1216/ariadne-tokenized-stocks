@@ -85,6 +85,54 @@ server.registerTool("compare_asset_representations", {
   }
 });
 
+server.registerTool("research_tokenized_stock", {
+  description: "Run an Agent-native tokenized-stock research workflow in one call: discover issuer representations, enrich market context, compare evidence and return a human-readable brief with the next safe action. The Agent can use this instead of manually chaining search, market and comparison tools. Read-only; never signs or broadcasts.",
+  inputSchema: {
+    query: z.string().min(1),
+    chainId: z.string().optional(),
+    platforms: z.array(z.string()).optional(),
+    preference: z.object({
+      issuerIds: z.array(z.string()).optional(),
+      platforms: z.array(z.string()).optional(),
+      requireMarketPrice: z.boolean().optional(),
+      requireReferencePrice: z.boolean().optional(),
+      requireKnownMarketStatus: z.boolean().optional(),
+      maxPriceGapPercent: z.string().optional(),
+      sectors: z.array(z.string()).optional()
+    }).optional()
+  }
+}, async ({ query, chainId, platforms, preference }) => {
+  try {
+    const assets = await stocks.search(query, { chainId });
+    const filtered = platforms?.length ? assets.filter((asset) => platforms.includes(asset.platformId)) : assets;
+    const enriched = await Promise.all(filtered.map(async (asset) => toAgentAsset(asset, await stocks.marketContext(asset))));
+    const comparison = compareAgentAssets(enriched, (preference ?? {}) as AssetPreference);
+    const eligible = comparison.rows.filter((row) => !row.excludedReasons.length);
+    const warnings = [...new Set([
+      ...comparison.warnings,
+      ...enriched.flatMap((asset) => asset.dataQuality.warnings)
+    ])];
+    const status = !enriched.length ? "warning" : eligible.length ? warnings.length ? "warning" : "success" : "blocked";
+    const nextAction = !enriched.length
+      ? "Try a broader ticker or remove platform filters"
+      : eligible.length
+        ? "Review the evidence and request a quote only for an explicitly selected representation"
+        : "Review exclusion reasons or relax the preference filters";
+    return textResult(outcome({
+      summary: enriched.length ? `Research brief for ${query}: ${enriched.length} issuer representations compared` : `No tokenized-stock representations found for ${query}`,
+      query,
+      chainId,
+      assets: enriched,
+      comparison,
+      presentation: enriched.map(renderAssetCard).join("\n\n---\n\n") + (enriched.length ? `\n\n${renderComparisonTable(comparison)}` : ""),
+      decisionBoundary: "Ariadne presents evidence and preference matches; it does not make an investment decision.",
+      executionBoundary: "This workflow is read-only. No quote, signature, transaction or broadcast was performed."
+    }, status, nextAction, { warnings }));
+  } catch (error) {
+    return textResult(errorOutcome(error, "Check the query and API availability before retrying", "stock_research_failed"));
+  }
+});
+
 server.registerTool("prepare_action_from_intent", {
   description: "Translate a tokenized-stock purchase or sale intent into a platform-aware ActionPlan. If multiple representations exist and no explicit preference is provided, returns a comparison instead of choosing silently. Never signs or broadcasts.",
   inputSchema: {
@@ -152,7 +200,7 @@ server.registerTool("screen_assets_by_preferences", {
     const enriched = await Promise.all(assets.map(async (asset) => toAgentAsset(asset, await stocks.marketContext(asset))));
     const comparison = compareAgentAssets(enriched, preference as AssetPreference);
     const eligible = comparison.rows.filter((row) => !row.excludedReasons.length);
-    return textResult(outcome({ summary: `${eligible.length} representations match the requested preferences`, comparison, presentation: renderComparisonTable(comparison), recommendationBoundary: "This is preference-based screening, not investment advice" }, eligible.length ? "success" : "blocked", eligible.length ? "Review the evidence and choose whether to request a quote" : "Relax the preferences or inspect exclusion reasons", { warnings: comparison.warnings }));
+    return textResult(outcome({ summary: `${eligible.length} representations match the requested preferences`, comparison, presentation: renderComparisonTable(comparison), recommendationBoundary: "This is preference-based evidence screening, not investment advice", interpretation: "Eligibility reflects the supplied criteria and observed data; it is not a recommendation to buy or sell." }, eligible.length ? "success" : "blocked", eligible.length ? "Review the evidence and choose whether to request a quote" : "Relax the preferences or inspect exclusion reasons", { warnings: comparison.warnings }));
   } catch (error) {
     return textResult(errorOutcome(error, "Check the query and preference values before retrying", "asset_screening_failed"));
   }

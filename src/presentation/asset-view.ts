@@ -1,6 +1,7 @@
 import type { AssetComparison, AgentTokenizedAsset } from "../domain/agent-types.js";
 
 const value = (input: string | number | boolean | undefined, fallback = "Not available") => input === undefined || input === "" ? fallback : String(input);
+const compactAddress = (input: string | undefined) => input && input.length > 14 ? `${input.slice(0, 8)}…${input.slice(-6)}` : value(input);
 
 export function renderAssetCard(asset: AgentTokenizedAsset): string {
   const market = asset.market;
@@ -15,7 +16,7 @@ export function renderAssetCard(asset: AgentTokenizedAsset): string {
     `- Symbol: **${value(asset.tokenSymbol)}**`,
     `- Platform: **${value(asset.platformId)}**`,
     `- Chain: **${value(asset.chainId)}**`,
-    `- Contract: \`${value(asset.contractAddress)}\``,
+    `- Contract: \`${compactAddress(asset.contractAddress)}\``,
     `- Token price: **${value(market?.tokenPrice)}**`,
     `- Reference price: **${value(market?.referencePrice)}**`,
     `- Price gap: **${value(market?.priceGap)}** (${value(market?.priceGapPercent)})`,
@@ -33,20 +34,25 @@ export function renderAssetCard(asset: AgentTokenizedAsset): string {
 export function renderComparisonTable(comparison: AssetComparison): string {
   const rows = comparison.rows.map((row) => {
     const market = row.asset.market;
-    const status = row.excludedReasons.length ? `Excluded: ${row.excludedReasons.join("; ")}` : `Rank ${row.rank ?? "—"}`;
+    const status = row.excludedReasons.length ? `Excluded: ${row.excludedReasons.join("; ")}` : `Eligible · rank ${row.rank ?? "—"}`;
     return `| ${row.asset.issuer.name} | ${row.asset.tokenSymbol || "—"} | ${market?.tokenPrice || "—"} | ${market?.referencePrice || "—"} | ${market?.priceGapPercent || "—"} | ${market?.marketStatus || "unknown"} | ${status} |`;
   });
+  const contracts = comparison.rows.map((row) => `- ${row.asset.issuer.name} / ${row.asset.tokenSymbol || "—"}: \`${compactAddress(row.asset.contractAddress)}\``);
   return [
     `### ${comparison.underlyingName || comparison.underlyingTicker} representations`,
     "",
     comparison.summary,
     "",
-    "| Issuer | Symbol | Token price | Reference price | Gap | Market status | Eligibility |",
+    "| Issuer | Symbol | Observed price | Reference price | Gap | Market status | Eligibility |",
     "|---|---|---:|---:|---:|---|---|",
     ...rows,
     "",
+    "Contract references:",
+    ...contracts,
+    "",
     comparison.warnings.length ? `Warnings:\n${comparison.warnings.map((warning) => `- ${warning}`).join("\n")}` : "Warnings: none",
     "",
-    "Next: choose a representation or request an execution-readiness analysis. No transaction was created."
+    "Interpretation: eligibility and ranking reflect the supplied criteria and observed data only; they are not investment advice.",
+    "Next: inspect a chosen representation or request a quote. No transaction was created."
   ].join("\n");
 }

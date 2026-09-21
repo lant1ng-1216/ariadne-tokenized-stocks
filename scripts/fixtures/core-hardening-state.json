@@ -1,0 +1,15 @@
+{
+  "phase": "core-capability-hardening",
+  "nextPhase": "agent-native-workflow-expansion",
+  "objective": "Harden Demo Mode and Agent-native boundary paths",
+  "checks": [
+    { "name": "typecheck", "passed": true, "evidence": "npm run typecheck" },
+    { "name": "core hardening fixtures", "passed": true, "evidence": "unknown asset, missing data, closed market and issuer comparison" },
+    { "name": "demo mode safety", "passed": true, "evidence": "action plan blocked without execution" },
+    { "name": "agent model", "passed": true, "evidence": "issuer-aware normalization and ranking" }
+  ],
+  "deferredItems": [],
+  "blockedItems": [],
+  "externalWriteRequested": false,
+  "highRiskActionRequested": false
+}

@@ -1,0 +1,16 @@
+{
+  "phase": "agent-native-workflow-expansion",
+  "nextPhase": "evidence-and-report-synchronization",
+  "objective": "Reduce agent interaction friction by providing one high-level read-only research workflow while preserving explicit evidence, issuer comparison, and execution boundaries.",
+  "checks": [
+    { "name": "typecheck", "passed": true },
+    { "name": "high-level research tool registered", "passed": true },
+    { "name": "one-call discovery/market/comparison workflow", "passed": true },
+    { "name": "no-signing-or-broadcast boundary", "passed": true },
+    { "name": "deterministic demo and agent-model tests", "passed": true }
+  ],
+  "deferredItems": [],
+  "blockedItems": [],
+  "externalWriteRequested": false,
+  "highRiskActionRequested": false
+}

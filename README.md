@@ -60,7 +60,7 @@ The complete evidence model, audit output and reproducible figure inputs are mai
 - Create and simulate ActionPlans before execution.
 - Enforce allowance, balance, market-state, slippage and price-impact checks.
 - Prepare RFQ signing requests without handling private keys.
-- Expose 12 MCP tools for existing agents and applications.
+- Expose 18 MCP tools for existing agents and applications, including the one-call `research_tokenized_stock` workflow.
 - Record request attempts, latency, business codes and rate-limit headers.
 - Retry documented transient failures while keeping broadcast operations explicit and non-automatic.
 
@@ -108,7 +108,7 @@ npm run test:simulation
 npm run test:mcp
 ```
 
-The no-funds simulation path does not broadcast a transaction. Copy [`docs/mcp-config.example.json`](docs/mcp-config.example.json) into the MCP client configuration and set its working directory to the absolute repository path.
+The no-funds simulation path does not broadcast a transaction. Copy [`docs/mcp-config.example.json`](docs/mcp-config.example.json) into the MCP client configuration and set its working directory to the absolute repository path. For the lowest-friction first run, launch `npm run mcp:demo` and ask for a natural-language tokenized-stock research brief; the Agent can select `research_tokenized_stock` without the user naming a tool.
 
 ## Evidence and limitations
 

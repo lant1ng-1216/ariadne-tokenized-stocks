@@ -1,0 +1,12 @@
+{
+  "phase": "real-transaction-validation",
+  "nextPhase": "post-trade-verification",
+  "objective": "Attempt a funded transaction validation",
+  "checks": [
+    { "name": "simulation", "passed": true, "evidence": "pass" }
+  ],
+  "deferredItems": [],
+  "blockedItems": [],
+  "externalWriteRequested": true,
+  "highRiskActionRequested": true
+}

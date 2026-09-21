@@ -1,0 +1,20 @@
+{
+  "phase": "final-local-review",
+  "objective": "Complete the local final review of the Ariadne development changes without publishing, pushing, signing or broadcasting.",
+  "checks": [
+    { "name": "domain regression", "passed": true },
+    { "name": "transaction simulation", "passed": true },
+    { "name": "MCP config contract", "passed": true },
+    { "name": "SDK example contract", "passed": true },
+    { "name": "experiment audit", "passed": true },
+    { "name": "diff whitespace", "passed": true }
+  ],
+  "deferredItems": [
+    "Git push and public publication require explicit user authorization.",
+    "External wallet signing, funded broadcast and post-trade balance verification remain intentionally deferred.",
+    "Demo video and final competition submission materials remain intentionally deferred."
+  ],
+  "blockedItems": [],
+  "externalWriteRequested": true,
+  "highRiskActionRequested": true
+}

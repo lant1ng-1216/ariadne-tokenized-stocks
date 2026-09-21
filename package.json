@@ -8,7 +8,11 @@
     "check:api:proxy": "node --env-file=.env --import tsx scripts/check-api-proxy.ts",
     "test:domain": "node --import tsx scripts/test-domain.ts",
     "test:agent-model": "node --import tsx scripts/test-agent-model.ts",
+    "test:core-hardening": "node --import tsx scripts/test-core-hardening.ts",
     "test:demo-mode": "node --import tsx scripts/test-demo-mode.ts",
+    "test:onboarding": "node --import tsx scripts/test-onboarding.ts",
+    "test:jev-shadow": "node --import tsx scripts/test-jev-shadow.ts",
+    "jev:shadow": "node --env-file=.env --import tsx scripts/run-jev-shadow.ts",
     "test:simulation": "node --env-file=.env --import tsx scripts/test-simulation.ts",
     "test:mcp": "node --env-file=.env --import tsx scripts/test-mcp.ts",
     "measure:latency": "node --env-file=.env --import tsx scripts/measure-latency.ts",
@@ -38,6 +42,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
+    "ai": "^7.0.107",
     "undici": "^8.10.2"
   }
 }

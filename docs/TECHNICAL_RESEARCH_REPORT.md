@@ -2,6 +2,10 @@
 
 ## Abstract
 
+The MCP surface now includes `research_tokenized_stock`, a read-only orchestration tool that performs discovery, issuer-aware market enrichment, preference comparison and presentation in one call. This reduces first-use dependence on tool names while preserving lower-level SDK/MCP operations for developers who need explicit control. The workflow presents evidence without making an investment decision, requesting a signature or broadcasting.
+
+Validation on 2026-09-22: TypeScript typecheck, Demo Mode regression, Agent model regression and onboarding documentation checks passed. The first live MCP integration attempt returned a transient incomplete upstream response; a bounded retry passed with 18 tools discovered and safety rejection paths verified. No signing, broadcast or external write occurred.
+
 Ariadne is a TypeScript SDK and MCP server that gives existing AI agents structured access to tokenized-stock discovery, market context, portfolio information, simulation and explicitly bounded execution on BNB Chain. The system separates agent-readable planning from user-controlled signing.
 
 This report records the design rationale, evaluation method, observed API behavior, safety boundaries, reproducibility procedures and unresolved limitations. It does not treat an upstream failure, a local mock or an unexecuted transaction as a successful live capability.
@@ -173,3 +177,135 @@ The legacy architecture figures are generated from `research/data/`. The audited
 - [`docs/DEVELOPER_EXPERIENCE_LOG.md`](DEVELOPER_EXPERIENCE_LOG.md)
 - [`research/data/`](../research/data/)
 - [`research/figures/nature-sample/render_experiment_figures.py`](../research/figures/nature-sample/render_experiment_figures.py)
+
+### Jev phase-gate record — 2026-09-21T18:33:05.258Z
+- Phase: `fixture-readonly-validation`
+- Jev provider: `deterministic-fallback`
+- Baseline: `passed_with_deferred_items` / `continue` / risk `low`
+- Jev: unavailable
+- Agreement: `unknown`
+- Latency: `49 ms`
+- Phase transition: `pause`
+- Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T18:33:47.622Z
+- Phase: `fixture-readonly-validation`
+- Jev provider: `native-jev`
+- Baseline: `passed_with_deferred_items` / `continue` / risk `low`
+- Jev: `passed_with_deferred_items` / `continue` / risk `low` / confidence `0.910`
+- Agreement: `true`
+- Latency: `2484 ms`
+- Phase transition: `pause`
+- Transition reason: Both baseline and Jev must return passed.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T18:34:50.053Z
+- Phase: `ux-phase-01`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.980`
+- Agreement: `true`
+- Latency: `845 ms`
+- Phase transition: `advance`
+- Transition reason: Baseline and Jev agree on a low-risk continuation.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T18:34:51.651Z
+- Phase: `real-transaction-validation`
+- Jev provider: `native-jev`
+- Baseline: `passed_with_deferred_items` / `ask_user` / risk `high`
+- Jev: `passed` / `ask_user` / risk `high` / confidence `0.850`
+- Agreement: `false`
+- Latency: `1320 ms`
+- Phase transition: `pause`
+- Transition reason: Both baseline and Jev must return passed.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T18:38:29.329Z
+- Phase: `core-capability-hardening`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.880`
+- Agreement: `true`
+- Latency: `1285 ms`
+- Phase transition: `advance`
+- Transition reason: Baseline and Jev agree on a low-risk continuation.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T18:45:50.811Z
+- Phase: `agent-native-workflow-expansion`
+- Jev provider: `native-jev`
+- Baseline: `passed_with_deferred_items` / `continue` / risk `low`
+- Jev: `passed_with_deferred_items` / `continue` / risk `low` / confidence `0.330`
+- Agreement: `true`
+- Latency: `1130 ms`
+- Phase transition: `pause`
+- Transition reason: Both baseline and Jev must return passed.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T18:46:14.214Z
+- Phase: `agent-native-workflow-expansion`
+- Jev provider: `deterministic-fallback`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: unavailable
+- Agreement: `unknown`
+- Latency: `95 ms`
+- Phase transition: `pause`
+- Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T18:46:26.915Z
+- Phase: `agent-native-workflow-expansion`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.940`
+- Agreement: `true`
+- Latency: `850 ms`
+- Phase transition: `advance`
+- Transition reason: Baseline and Jev agree on a low-risk continuation.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T18:47:45.252Z
+- Phase: `agent-native-workflow-expansion`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.930`
+- Agreement: `true`
+- Latency: `867 ms`
+- Phase transition: `advance`
+- Transition reason: Baseline and Jev agree on a low-risk continuation.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T18:49:17.521Z
+- Phase: `evidence-and-report-synchronization`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `1.000`
+- Agreement: `true`
+- Latency: `894 ms`
+- Phase transition: `advance`
+- Transition reason: Baseline and Jev agree on a low-risk continuation.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T18:50:07.079Z
+- Phase: `final-local-review`
+- Jev provider: `native-jev`
+- Baseline: `passed_with_deferred_items` / `ask_user` / risk `high`
+- Jev: `passed_with_deferred_items` / `ask_user` / risk `high` / confidence `0.780`
+- Agreement: `true`
+- Latency: `819 ms`
+- Phase transition: `pause`
+- Transition reason: Both baseline and Jev must return passed.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.

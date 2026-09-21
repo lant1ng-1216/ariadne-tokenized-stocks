@@ -1,0 +1,13 @@
+{
+  "phase": "fixture-readonly-validation",
+  "nextPhase": "fixture-next-phase",
+  "objective": "Validate a read-only phase gate without external writes",
+  "checks": [
+    { "name": "typecheck", "passed": true, "evidence": "fixture pass" },
+    { "name": "domain tests", "passed": true, "evidence": "fixture pass" }
+  ],
+  "deferredItems": ["real wallet signing"],
+  "blockedItems": [],
+  "externalWriteRequested": false,
+  "highRiskActionRequested": false
+}
