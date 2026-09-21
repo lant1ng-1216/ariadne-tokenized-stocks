@@ -17,6 +17,8 @@ resolve identity → compare wrappers → read market context → build plan
 
 The SDK keeps discovery and execution separate. The MCP layer exposes the same domain model to existing clients such as Codex and Claude Code.
 
+The product is organized as an Agent-native interaction layer: users express intent, while Ariadne resolves issuer-aware assets, organizes market context, compares representations and prepares reviewable next steps.
+
 ## System boundary
 
 ```mermaid
@@ -49,6 +51,9 @@ The complete evidence model, audit output and reproducible figure inputs are mai
 ## Current capabilities
 
 - Resolve tokenized-stock identity by ticker, chain, platform and contract.
+- Discover and compare issuer-aware tokenized-stock representations through high-level Agent-native MCP tools.
+- Prepare an ActionPlan from a user intent without silently selecting between multiple issuers.
+- Screen assets by explicit preferences and summarize tokenized-stock wallet exposure without making investment recommendations.
 - Compare wrappers such as Ondo and bStocks.
 - Normalize token price, reference price, market state, candles and data warnings.
 - Read wallet exposure, portfolio information and transaction context.
@@ -86,6 +91,15 @@ read → plan → simulate → confirm → sign externally → submit → poll s
 
 ## Quickstart
 
+For a credential-free first experience, see [`docs/QUICKSTART.md`](docs/QUICKSTART.md) and run:
+
+```bash
+npm install
+npm run mcp:demo
+```
+
+Demo Mode is deterministic and read-only. It does not create executable plans, sign or broadcast.
+
 ```bash
 npm install
 npm run typecheck
@@ -110,5 +124,7 @@ The complete evaluation protocol, observations, failure taxonomy and deferred te
 - `src/` — SDK domain, services and MCP adapter;
 - `scripts/` — tests and API probes;
 - `research/` — evidence data, experiment records and reproducible figure generation;
+- [`docs/PRD_AGENT_NATIVE_RWA.md`](docs/PRD_AGENT_NATIVE_RWA.md) — Agent-native product requirements;
+- [`docs/CAPABILITY_MAP_AGENT_NATIVE_RWA.md`](docs/CAPABILITY_MAP_AGENT_NATIVE_RWA.md) — capability and Track mapping;
 - [`docs/TECHNICAL_RESEARCH_REPORT.md`](docs/TECHNICAL_RESEARCH_REPORT.md) — complete technical evaluation;
 - [`docs/DEVELOPER_EXPERIENCE_LOG.md`](docs/DEVELOPER_EXPERIENCE_LOG.md) — factual API development log.

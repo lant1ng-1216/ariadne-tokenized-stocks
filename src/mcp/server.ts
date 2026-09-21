@@ -8,22 +8,171 @@ import { TransactionService } from "../services/transaction.js";
 import { assertExecutable, attachSimulation, confirmPlan } from "../domain/action-plan.js";
 import type { ActionPlan } from "../domain/types.js";
 import { errorOutcome, outcome, textResult } from "./response.js";
+import { compareAgentAssets, toAgentAsset } from "../domain/agent-normalizers.js";
+import type { AssetPreference } from "../domain/agent-types.js";
+import { renderAssetCard, renderComparisonTable } from "../presentation/asset-view.js";
+import { DemoTokenizedStocksService } from "../services/demo-tokenized-stocks.js";
 
+const demoMode = process.env.ARIADNE_MODE === "demo";
 const apiKey = process.env.BINANCE_WEB3_API_KEY;
 const apiSecret = process.env.BINANCE_WEB3_API_SECRET;
-if (!apiKey || !apiSecret) throw new Error("Missing Binance Web3 credentials in .env");
+if (!demoMode && (!apiKey || !apiSecret)) throw new Error("Missing Binance Web3 credentials in .env. Set ARIADNE_MODE=demo for credential-free read-only exploration.");
 
 const client = new BinanceWeb3Client({
-  apiKey,
-  apiSecret,
+  apiKey: apiKey ?? "demo",
+  apiSecret: apiSecret ?? "demo",
   baseUrl: process.env.BINANCE_WEB3_BASE_URL,
   proxyUrl: process.env.BINANCE_WEB3_PROXY_URL
 });
-const stocks = new TokenizedStocksService(client);
+const stocks = demoMode ? new DemoTokenizedStocksService(client) : new TokenizedStocksService(client);
 const wallet = new WalletService(client);
 const transactions = new TransactionService(client);
 
 const server = new McpServer({ name: "ariadne-tokenized-stocks", version: "0.1.0" });
+
+server.registerTool("discover_tokenized_assets", {
+  description: "Discover and explain tokenized-stock representations for a natural-language ticker or company query. Returns issuer-aware asset views with market context, data quality and next actions.",
+  inputSchema: {
+    query: z.string().min(1),
+    chainId: z.string().optional(),
+    platforms: z.array(z.string()).optional(),
+    includeMarketContext: z.boolean().optional()
+  }
+}, async ({ query, chainId, platforms, includeMarketContext }) => {
+  try {
+    const assets = await stocks.search(query, { chainId });
+    const filtered = platforms?.length ? assets.filter((asset) => platforms.includes(asset.platformId)) : assets;
+    const enriched = await Promise.all(filtered.map(async (asset) => {
+      const market = includeMarketContext === false ? undefined : await stocks.marketContext(asset);
+      return toAgentAsset(asset, market);
+    }));
+    const warnings = enriched.flatMap((asset) => asset.dataQuality.warnings).filter((warning, index, all) => all.indexOf(warning) === index);
+    return textResult(outcome({
+      summary: enriched.length ? `Discovered ${enriched.length} tokenized-stock representations for ${query}` : `No tokenized-stock representations found for ${query}`,
+      query,
+      assets: enriched,
+      count: enriched.length,
+      presentation: enriched.map(renderAssetCard).join("\n\n---\n\n")
+    }, enriched.length ? warnings.length ? "warning" : "success" : "warning", enriched.length ? "Compare the representations or request a focused market summary" : "Try a broader ticker or remove platform filters", { warnings }));
+  } catch (error) {
+    return textResult(errorOutcome(error, "Check the query and API availability before retrying", "asset_discovery_failed"));
+  }
+});
+
+server.registerTool("compare_asset_representations", {
+  description: "Compare issuer-aware tokenized-stock representations using optional user preferences. The Agent can use this instead of manually calling low-level search and market tools.",
+  inputSchema: {
+    query: z.string().min(1),
+    chainId: z.string().optional(),
+    preference: z.object({
+      issuerIds: z.array(z.string()).optional(),
+      platforms: z.array(z.string()).optional(),
+      requireMarketPrice: z.boolean().optional(),
+      requireReferencePrice: z.boolean().optional(),
+      requireKnownMarketStatus: z.boolean().optional(),
+      maxPriceGapPercent: z.string().optional(),
+      sectors: z.array(z.string()).optional()
+    }).optional()
+  }
+}, async ({ query, chainId, preference }) => {
+  try {
+    const assets = await stocks.search(query, { chainId });
+    const enriched = await Promise.all(assets.map(async (asset) => toAgentAsset(asset, await stocks.marketContext(asset))));
+    const comparison = compareAgentAssets(enriched, (preference ?? {}) as AssetPreference);
+    return textResult(outcome({ summary: comparison.summary, comparison, presentation: renderComparisonTable(comparison) }, comparison.rows.some((row) => row.excludedReasons.length === 0) ? comparison.warnings.length ? "warning" : "success" : "blocked", comparison.rows.some((row) => row.excludedReasons.length === 0) ? "Review ranked representations and choose whether to request a quote" : "Relax the preference filters or inspect the exclusion reasons", { warnings: comparison.warnings }));
+  } catch (error) {
+    return textResult(errorOutcome(error, "Check the query and API availability before retrying", "asset_comparison_failed"));
+  }
+});
+
+server.registerTool("prepare_action_from_intent", {
+  description: "Translate a tokenized-stock purchase or sale intent into a platform-aware ActionPlan. If multiple representations exist and no explicit preference is provided, returns a comparison instead of choosing silently. Never signs or broadcasts.",
+  inputSchema: {
+    query: z.string().min(1),
+    type: z.enum(["buy", "sell", "swap"]),
+    walletAddress: z.string().min(1),
+    fromTokenAddress: z.string().min(1),
+    amount: z.string().regex(/^\d+$/),
+    amountDecimals: z.number().int().min(0).max(36),
+    chainId: z.string().optional(),
+    platformId: z.string().optional(),
+    selectionPolicy: z.enum(["explicit_platform", "lowest_price_gap"]).optional(),
+    maxSlippageBps: z.number().int().min(0).max(10_000).optional()
+  }
+}, async (input) => {
+  try {
+    const assets = await stocks.search(input.query, { chainId: input.chainId, platformId: input.platformId });
+    if (!assets.length) return textResult(outcome({ summary: `No tokenized-stock representation found for ${input.query}`, assets: [] }, "warning", "Try a broader ticker or remove the platform filter", { warnings: ["No matching asset was found"] }));
+    let selected = input.platformId ? assets.find((asset) => asset.platformId === input.platformId) : undefined;
+    if (!selected && input.selectionPolicy === "lowest_price_gap") {
+      const enriched = await Promise.all(assets.map(async (asset) => toAgentAsset(asset, await stocks.marketContext(asset))));
+      const comparison = compareAgentAssets(enriched, { requireMarketPrice: true, requireReferencePrice: true });
+      selected = comparison.rows.find((row) => !row.excludedReasons.length)?.asset;
+    }
+    if (!selected && assets.length > 1) {
+      const enriched = await Promise.all(assets.map(async (asset) => toAgentAsset(asset, await stocks.marketContext(asset))));
+      const comparison = compareAgentAssets(enriched, {});
+      return textResult(outcome({ summary: "Multiple tokenized-stock representations require an explicit choice", comparison, presentation: renderComparisonTable(comparison) }, "blocked", "Choose a platformId or provide selectionPolicy=lowest_price_gap before preparing the ActionPlan", { warnings: ["Ariadne did not silently choose between multiple issuers"] }));
+    }
+    selected ??= assets[0];
+    const plan = await stocks.createActionPlan({
+      type: input.type,
+      walletAddress: input.walletAddress,
+      fromTokenAddress: input.fromTokenAddress,
+      amount: input.amount,
+      amountDecimals: input.amountDecimals,
+      maxSlippageBps: input.maxSlippageBps,
+      toAsset: selected
+    });
+    const status = plan.status === "failed" ? "blocked" : plan.assetContext?.dataWarnings.length ? "warning" : "success";
+    return textResult(outcome({ summary: plan.status === "failed" ? "ActionPlan preparation was blocked by a readiness or safety condition" : "ActionPlan prepared; no signing or broadcast occurred", selectedAsset: selected, plan }, status, plan.status === "failed" ? "Resolve the blocking reasons before simulation" : "Simulate the ActionPlan before requesting confirmation", { warnings: plan.assetContext?.dataWarnings ?? [], sideEffects: "none" }));
+  } catch (error) {
+    return textResult(errorOutcome(error, "Inspect the error and revise the intent before retrying", "intent_preparation_failed"));
+  }
+});
+
+server.registerTool("screen_assets_by_preferences", {
+  description: "Screen tokenized-stock representations by explicit issuer, platform, market-data, market-status and price-gap preferences. This is evidence-based screening, not investment advice.",
+  inputSchema: {
+    query: z.string().min(1),
+    chainId: z.string().optional(),
+    preference: z.object({
+      issuerIds: z.array(z.string()).optional(),
+      platforms: z.array(z.string()).optional(),
+      requireMarketPrice: z.boolean().optional(),
+      requireReferencePrice: z.boolean().optional(),
+      requireKnownMarketStatus: z.boolean().optional(),
+      maxPriceGapPercent: z.string().optional(),
+      sectors: z.array(z.string()).optional()
+    })
+  }
+}, async ({ query, chainId, preference }) => {
+  try {
+    const assets = await stocks.search(query, { chainId });
+    const enriched = await Promise.all(assets.map(async (asset) => toAgentAsset(asset, await stocks.marketContext(asset))));
+    const comparison = compareAgentAssets(enriched, preference as AssetPreference);
+    const eligible = comparison.rows.filter((row) => !row.excludedReasons.length);
+    return textResult(outcome({ summary: `${eligible.length} representations match the requested preferences`, comparison, presentation: renderComparisonTable(comparison), recommendationBoundary: "This is preference-based screening, not investment advice" }, eligible.length ? "success" : "blocked", eligible.length ? "Review the evidence and choose whether to request a quote" : "Relax the preferences or inspect exclusion reasons", { warnings: comparison.warnings }));
+  } catch (error) {
+    return textResult(errorOutcome(error, "Check the query and preference values before retrying", "asset_screening_failed"));
+  }
+});
+
+server.registerTool("analyze_portfolio_exposure", {
+  description: "Read wallet holdings and summarize tokenized-stock exposure. Read-only; does not rebalance or execute anything.",
+  inputSchema: { walletAddress: z.string().min(1), chainIds: z.array(z.string()).min(1), query: z.string().optional() }
+}, async ({ walletAddress, chainIds, query }) => {
+  try {
+    const holdings = await wallet.holdings(walletAddress, chainIds);
+    const assets = query ? await stocks.search(query, { chainId: chainIds.length === 1 ? chainIds[0] : undefined }) : [];
+    const resolved = holdings.map((holding) => ({ ...holding, asset: assets.find((asset) => asset.chainId === holding.chainId && asset.contractAddress.toLowerCase() === holding.contractAddress.toLowerCase()) }));
+    const tokenized = resolved.filter((holding) => holding.asset);
+    const warnings = resolved.flatMap((holding) => holding.warnings).filter((warning, index, all) => all.indexOf(warning) === index);
+    return textResult(outcome({ walletAddress, holdings: resolved, tokenizedStockHoldings: tokenized, summary: `${tokenized.length} tokenized-stock holdings identified`, recommendationBoundary: "This is an exposure summary, not investment advice" }, warnings.length ? "warning" : "success", "Review exposure and warnings before considering a simulated action", { warnings }));
+  } catch (error) {
+    return textResult(errorOutcome(error, "Check the wallet address, chain IDs and API availability", "portfolio_analysis_failed"));
+  }
+});
 
 server.registerTool("resolve_tokenized_stock", {
   description: "Search BSC tokenized stocks and return platform-aware asset identities. Read-only.",

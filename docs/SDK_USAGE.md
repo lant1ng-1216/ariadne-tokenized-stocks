@@ -13,6 +13,18 @@ MCP responses preserve the domain payload and add a stable `outcome` envelope. A
 
 `outcome.sideEffects` is `none`, `external_signature_required`, or `broadcast_possible`. This field is intentionally explicit so an Agent can distinguish a read-only response from a wallet-controlled action boundary.
 
+## Agent-native entry points
+
+Prefer these high-level MCP capabilities for user-facing Agent workflows:
+
+- `discover_tokenized_assets` — discover issuer-aware representations and market context;
+- `compare_asset_representations` — compare platforms and preserve exclusion reasons;
+- `prepare_action_from_intent` — compose discovery and ActionPlan preparation without silently choosing between issuers;
+- `screen_assets_by_preferences` — apply explicit user criteria without presenting investment advice;
+- `analyze_portfolio_exposure` — summarize wallet exposure without rebalancing or execution.
+
+The lower-level tools remain available for developers, testing and specialized orchestration.
+
 ```ts
 import { BinanceWeb3Client, TokenizedStocksService } from "ariadne-tokenized-stocks";
 

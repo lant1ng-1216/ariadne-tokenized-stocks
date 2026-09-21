@@ -16,6 +16,7 @@ This directory contains the evidence and reproducibility assets used by the Aria
 - `experiments/records/readonly.jsonl` — append-only read and preparation observations.
 - `experiments/records/safety.jsonl` — append-only safety and simulation observations.
 - `experiments/audit-results.json` — machine-readable integrity and coverage audit.
+- `data/latency-decomposition.json` — repeated SDK and MCP timing measurements.
 
 ## Audited experiment snapshot
 
@@ -43,3 +44,7 @@ The audited experiment figures are stored in `figures/nature-sample/` in editabl
 - `experiment-handling-heatmap.*` — observed response classifications by scenario.
 
 Each figure has a contract describing its claim, evidence source and limitations. Values are generated from recorded observations rather than manually entered into the artwork.
+
+## Product upgrade records
+
+The staged Agent-native upgrade is documented in the Phase 1–7 review files under `docs/UPGRADE_PHASE_*.md`. These records distinguish completed work, validation evidence and explicit limitations; they are not a substitute for the final technical report.

@@ -7,8 +7,11 @@
     "check:api": "node --env-file=.env --import tsx scripts/check-api.ts",
     "check:api:proxy": "node --env-file=.env --import tsx scripts/check-api-proxy.ts",
     "test:domain": "node --import tsx scripts/test-domain.ts",
+    "test:agent-model": "node --import tsx scripts/test-agent-model.ts",
+    "test:demo-mode": "node --import tsx scripts/test-demo-mode.ts",
     "test:simulation": "node --env-file=.env --import tsx scripts/test-simulation.ts",
     "test:mcp": "node --env-file=.env --import tsx scripts/test-mcp.ts",
+    "measure:latency": "node --env-file=.env --import tsx scripts/measure-latency.ts",
     "demo": "node --env-file=.env --import tsx scripts/demo.ts",
     "probe:services": "node --env-file=.env --import tsx scripts/probe-services.ts",
     "probe:transaction": "node --env-file=.env --import tsx scripts/probe-transaction.ts",
@@ -25,6 +28,7 @@
     "probe:post-transaction": "node --env-file=.env --import tsx scripts/probe-post-transaction.ts",
     "probe:approval": "node --env-file=.env --import tsx scripts/probe-approval.ts",
     "mcp": "node --env-file=.env --import tsx src/mcp/server.ts",
+    "mcp:demo": "node scripts/start-demo-mcp.mjs",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

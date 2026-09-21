@@ -1,0 +1,21 @@
+{
+  "measuredAt": "2026-09-20T16:51:43.532Z",
+  "repeats": 3,
+  "directSdk": [
+    { "iteration": 1, "searchMs": 621, "marketMs": 944, "apiRequests": [621, 943] },
+    { "iteration": 2, "searchMs": 371, "marketMs": 861, "apiRequests": [370, 861] },
+    { "iteration": 3, "searchMs": 259, "marketMs": 841, "apiRequests": [259, 840] }
+  ],
+  "mcp": {
+    "connectMs": 363,
+    "runs": [
+      { "iteration": 1, "searchMs": 571, "marketMs": 405 },
+      { "iteration": 2, "searchMs": 262, "marketMs": 836 },
+      { "iteration": 3, "searchMs": 279, "marketMs": 427 }
+    ]
+  },
+  "limitations": [
+    "The measurement does not include Codex reasoning or final-answer rendering time.",
+    "No signing, broadcast or transaction side effect was performed."
+  ]
+}
