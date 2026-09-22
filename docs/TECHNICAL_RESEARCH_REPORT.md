@@ -423,3 +423,54 @@ The legacy architecture figures are generated from `research/data/`. The audited
 - Transition reason: Both baseline and Jev must return passed.
 - Action taken: `none`
 - Safety note: Jev does not control Codex and no external write was authorized.
+
+## Response-contract hardening — 2026-09-22
+
+### Research workflow contract
+
+The `research_tokenized_stock` workflow now returns the following additional fields alongside the existing normalized asset and comparison payloads:
+
+- `assets[].dataQuality.coverage.identity`: whether the tokenized-stock identity is confirmed;
+- `assets[].dataQuality.coverage.marketContext`: `fetched`, `not_requested` or `unavailable`;
+- `nextSteps`: explicit read-only continuation options, with issuer selection required where appropriate;
+- `timing`: search, market-context, comparison, presentation and total Ariadne workflow timings, plus `agentReasoningExcluded: true`.
+
+This contract is intentionally descriptive. It does not turn a price gap into an investment recommendation, and it does not infer liquidity, tradability or market status from missing fields.
+
+### Presentation normalization
+
+The former Markdown comparison table was replaced by a numbered list of representation records. This reduces dependence on downstream Agent-client table rendering and keeps the contract address, issuer and market fields in the same evidence unit. The full address remains available in the structured payload and the presentation, while compact display is used only in individual evidence cards.
+
+### Failure handling
+
+High-level enrichment now degrades per asset. If the identity search succeeds but a market-context request fails, the result retains the identity, marks market context as `unavailable`, emits a bounded warning and prevents the missing values from being interpreted as zero or as a positive signal. An identity-only request is marked `not_requested`, which is distinct from an upstream failure.
+
+### Reproducible validation
+
+The following checks passed on 2026-09-22:
+
+1. `npm run typecheck`;
+2. `npm run test:presentation`;
+3. `npm run test:agent-model`;
+4. `npm run test:core-hardening`;
+5. `npm run test:demo-mode`;
+6. `npm run test:hosted-demo` with loopback binding permitted;
+7. `npm run test:mcp` against the configured Live MCP path.
+
+The Live MCP suite registered 18 tools and retained the safety assertions for unready plans, simulations, explicit confirmation, address mismatch rejection, expiry rejection and non-automatic broadcast behavior. No private key was handled and no broadcast was authorized by this validation pass.
+
+### Measurement boundary
+
+`timing` measures the Ariadne MCP handler and SDK/API path. It does not measure the calling Agent's tool scheduling, internal reasoning, UI rendering or final summarization. The distinction is part of the product contract so a long Codex interaction is not incorrectly attributed to the Binance Web3 request layer.
+
+### Jev phase-gate record — 2026-09-22T13:45:55.076Z
+- Phase: `product-experience-ux-upgrade`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.960`
+- Agreement: `true`
+- Latency: `1021 ms`
+- Phase transition: `advance`
+- Transition reason: Baseline and Jev agree on a low-risk continuation.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.

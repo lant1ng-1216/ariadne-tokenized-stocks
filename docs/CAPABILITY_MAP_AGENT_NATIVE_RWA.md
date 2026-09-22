@@ -44,17 +44,17 @@ BSC and external-wallet execution layer
 
 ## 4. Tool layering
 
-### User-intent capabilities
+### Implemented high-level MCP capabilities
 
 - `discover_tokenized_assets`
 - `compare_asset_representations`
-- `explain_asset_identity`
-- `summarize_market_context`
+- `research_tokenized_stock`
 - `screen_assets_by_preferences`
 - `analyze_portfolio_exposure`
 - `prepare_action_from_intent`
-- `simulate_action_plan`
-- `explain_execution_readiness`
+- `simulate_stock_action_plan`
+
+These tools are deterministic MCP entry points. The calling Agent is responsible for converting natural language into the MCP schema. The future web product will provide a direct UI over the same semantic layer instead of requiring an Agent to perform the final presentation.
 
 ### Low-level adapter capabilities
 
@@ -72,13 +72,13 @@ Low-level tools remain available for developers and testing. End-user Agents sho
 
 ## 5. Output components
 
-### Asset card
+### Current evidence card
 
-Underlying logo, issuer/platform logo, ticker, token symbol, chain, contract, token price, reference price, premium/discount, market state, liquidity, volume, freshness, warnings, issuer/explorer links and compare/quote/simulate actions.
+Ticker, token symbol, issuer/platform, chain, contract, observed price, reference price, price gap, market state, coverage, missing fields, freshness when available, warnings and issuer/explorer links. Verified logos are rendered when available; unavailable metadata is labelled rather than invented.
 
-### Comparison table
+### Current comparison presentation
 
-Representations side by side, normalized units, explicit missing values, no silent conversion of unknown state, preference-based ordering and evidence for each conclusion.
+Numbered issuer-aware representation entries keep the contract and market evidence together. This avoids relying on downstream Agent clients to render a Markdown table correctly. A richer side-by-side visual comparison belongs to the future web product.
 
 ### Agent summary
 
@@ -103,9 +103,9 @@ One-line result, key differences, data gaps, risk context, suggested next action
 
 Discovery and comparison; asset cards; market context; percentage gaps; warnings and freshness; natural-language orchestration; unified outcomes; simulation and explicit boundaries.
 
-### P1
+### P1 — current expansion and product expression
 
-Theme baskets; portfolio exposure; preference screening; trading-session analysis; issuer metadata/logos; npm distribution and Demo Mode.
+Theme baskets; portfolio exposure; preference screening; trading-session analysis; issuer metadata/logos; web product cards and comparison views; npm distribution and Demo Mode.
 
 ### P2
 
@@ -125,5 +125,5 @@ Scheduled DCA; automatic rebalance; event calendar; DeFi positions and calldata;
 | Broadcast | Boundary implemented | Funded-wallet validation |
 | Wallet / portfolio | Basic capability verified | Portfolio view |
 | DeFi Positions | Upstream blocked | Re-test after service recovery |
-| Demo Mode | Not implemented | npm/hosted onboarding design |
+| Demo Mode | Implemented locally | Extend deterministic fixtures beyond the NVDA discovery path |
 | Asset logos / metadata | To be added | Source and caching strategy |

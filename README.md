@@ -19,6 +19,16 @@ The SDK keeps discovery and execution separate. The MCP layer exposes the same d
 
 The product is organized as an Agent-native interaction layer: users express intent, while Ariadne resolves issuer-aware assets, organizes market context, compares representations and prepares reviewable next steps.
 
+## Product surfaces
+
+Ariadne is designed as one semantic core with three access surfaces:
+
+- the TypeScript SDK for developers and institutional integrations;
+- the MCP server for existing Agents such as Codex and Claude Code;
+- a planned Ariadne web product for direct research, issuer comparison and read-only interaction without requiring a third-party Agent to summarize the result.
+
+The current repository implements the SDK and MCP core plus a local Hosted MCP proof of concept. The web product, public Hosted MCP and final distribution are subsequent product phases, not silently implied as complete by the current code.
+
 ## System boundary
 
 ```mermaid
@@ -61,6 +71,8 @@ The complete evidence model, audit output and reproducible figure inputs are mai
 - Enforce allowance, balance, market-state, slippage and price-impact checks.
 - Prepare RFQ signing requests without handling private keys.
 - Expose 18 MCP tools for existing agents and applications, including the one-call `research_tokenized_stock` workflow.
+- Return stable issuer-by-issuer evidence entries, explicit identity/market-data coverage and read-only next steps instead of relying on fragile Markdown tables.
+- Report Ariadne workflow timing with an explicit boundary that excludes calling-Agent reasoning and final-answer rendering.
 - Record request attempts, latency, business codes and rate-limit headers.
 - Retry documented transient failures while keeping broadcast operations explicit and non-automatic.
 
@@ -124,7 +136,7 @@ The complete evaluation protocol, observations, failure taxonomy and deferred te
 - `src/` — SDK domain, services and MCP adapter;
 - `scripts/` — tests and API probes;
 - `research/` — evidence data, experiment records and reproducible figure generation;
-- [`docs/PRD_AGENT_NATIVE_RWA.md`](docs/PRD_AGENT_NATIVE_RWA.md) — Agent-native product requirements;
 - [`docs/CAPABILITY_MAP_AGENT_NATIVE_RWA.md`](docs/CAPABILITY_MAP_AGENT_NATIVE_RWA.md) — capability and Track mapping;
 - [`docs/TECHNICAL_RESEARCH_REPORT.md`](docs/TECHNICAL_RESEARCH_REPORT.md) — complete technical evaluation;
+- [`docs/PRODUCT_SURFACE_ARCHITECTURE.md`](docs/PRODUCT_SURFACE_ARCHITECTURE.md) — product boundaries, surfaces and track maturity;
 - [`docs/DEVELOPER_EXPERIENCE_LOG.md`](docs/DEVELOPER_EXPERIENCE_LOG.md) — factual API development log.

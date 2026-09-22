@@ -33,23 +33,52 @@ export function assetLinks(asset: StockAsset, issuer: Issuer): AssetMetadata & {
   };
 }
 
-export function dataQualityFor(asset: StockAsset, market?: MarketContext, metadata?: AssetMetadata): DataQuality {
+export function dataQualityFor(
+  asset: StockAsset,
+  market?: MarketContext,
+  metadata?: AssetMetadata,
+  options: { marketContextRequested?: boolean; marketContextUnavailable?: boolean } = {}
+): DataQuality {
+  const marketContextRequested = options.marketContextRequested ?? market !== undefined;
   const missingFields: string[] = [];
   if (!asset.tokenSymbol) missingFields.push("tokenSymbol");
   if (!asset.underlyingTicker) missingFields.push("underlyingTicker");
-  if (!market?.tokenPrice) missingFields.push("tokenPrice");
-  if (!market?.referencePrice) missingFields.push("referencePrice");
-  if (market?.liquidity == null) missingFields.push("liquidity");
+  if (!market) {
+    missingFields.push("marketContext");
+  } else {
+    if (!market.tokenPrice) missingFields.push("tokenPrice");
+    if (!market.referencePrice) missingFields.push("referencePrice");
+    if (market.liquidity == null) missingFields.push("liquidity");
+  }
   if (!metadata?.underlyingLogoUrl) missingFields.push("underlyingLogoUrl");
   if (!metadata?.issuerLogoUrl) missingFields.push("issuerLogoUrl");
   const warnings = [...(market?.dataWarnings ?? [])];
+  if (!market) warnings.push(marketContextRequested
+    ? "Market context was requested but is unavailable"
+    : "Market context was not requested; prices, status and market warnings are unavailable");
   if (missingFields.includes("underlyingLogoUrl")) warnings.push("Underlying asset logo metadata is unavailable");
   if (missingFields.includes("issuerLogoUrl")) warnings.push("Issuer logo metadata is unavailable");
   const completeness = missingFields.length === 0 ? "complete" : missingFields.length <= 2 ? "partial" : "limited";
-  return { completeness, missingFields, warnings, lastUpdatedAt: market?.tokenPriceUpdatedAt };
+  const identityComplete = Boolean(asset.contractAddress && asset.tokenSymbol && asset.underlyingTicker);
+  return {
+    completeness,
+    coverage: {
+      identity: identityComplete ? "confirmed" : "partial",
+      marketContext: market ? "fetched" : options.marketContextUnavailable ? "unavailable" : marketContextRequested ? "unavailable" : "not_requested"
+    },
+    missingFields,
+    warnings: [...new Set(warnings)],
+    lastUpdatedAt: market?.tokenPriceUpdatedAt
+  };
 }
 
-export function toAgentAsset(asset: StockAsset, market?: MarketContext, issuerOverrides: Partial<Issuer> = {}, metadataOverrides: Partial<AssetMetadata> = {}): AgentTokenizedAsset {
+export function toAgentAsset(
+  asset: StockAsset,
+  market?: MarketContext,
+  issuerOverrides: Partial<Issuer> = {},
+  metadataOverrides: Partial<AssetMetadata> = {},
+  options: { marketContextRequested?: boolean; marketContextUnavailable?: boolean } = {}
+): AgentTokenizedAsset {
   const issuer = issuerFromPlatform(asset.platformId, issuerOverrides);
   const generated = assetLinks(asset, issuer);
   const metadata: AssetMetadata = { ...generated, ...metadataOverrides, tags: metadataOverrides.tags ?? generated.tags };
@@ -58,7 +87,7 @@ export function toAgentAsset(asset: StockAsset, market?: MarketContext, issuerOv
     issuer,
     metadata,
     market,
-    dataQuality: dataQualityFor(asset, market, metadata),
+    dataQuality: dataQualityFor(asset, market, metadata, options),
     links: generated.links
   };
 }

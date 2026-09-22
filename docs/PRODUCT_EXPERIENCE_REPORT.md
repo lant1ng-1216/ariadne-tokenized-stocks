@@ -459,3 +459,52 @@ Ariadne's core capability path is usable, but the product remains in a state whe
 - Transition reason: Both baseline and Jev must return passed.
 - Action taken: `none`
 - Safety note: Jev does not control Codex and no external write was authorized.
+
+## UX upgrade validation — 2026-09-22
+
+### Scope
+
+This iteration addressed the product issues observed in Codex testing: output that looked too close to a raw API wrapper, Markdown tables that could collapse in an Agent client, ambiguous coverage of identity versus market data, and the inability to separate Ariadne execution time from Agent reasoning time.
+
+### Implemented changes
+
+- Replaced high-level comparison tables with stable, numbered representation entries. Each entry keeps issuer, token, full contract, observed price, reference price, price gap, market status and evidence coverage together.
+- Added explicit coverage semantics: `confirmed` or `partial` identity, plus `fetched`, `not_requested` or `unavailable` market context.
+- Added a productized next-step list with explicit read-only boundaries and issuer selection requirements.
+- Added `timing` to the one-call research workflow. The timing covers search, market-context retrieval, comparison and presentation inside Ariadne; Agent reasoning and final answer rendering are explicitly excluded.
+- If a high-level market-context request fails, Ariadne preserves the verified asset identity and reports the market context as unavailable instead of guessing or discarding the asset.
+- Kept logo fields provenance-bound. When verified logo metadata is absent, the output says so rather than fabricating an image URL.
+
+### Validation evidence
+
+| Check | Result |
+|---|---|
+| TypeScript typecheck | PASS |
+| Presentation contract test | PASS |
+| Agent data-model test | PASS |
+| Core hardening and Demo Mode tests | PASS |
+| Hosted Demo health, remote MCP connection and read-only workflow | PASS |
+| Live MCP regression | PASS; 18 tools registered; plan, simulation, confirmation and broadcast rejection boundaries preserved |
+
+### Interpretation
+
+The product output is now a structured evidence surface rather than a Markdown table that depends on client rendering. Identity-only queries visibly state that market context was not requested. Research workflows visibly distinguish fetched data from missing data, provide explicit safe next steps and expose product-path timing without claiming to measure Codex reasoning.
+
+### Deferred items
+
+- Public Hosted MCP deployment remains intentionally paused until authentication, tenant isolation, rate limiting and operational monitoring are designed and reviewed.
+- Verified issuer and underlying-asset logos remain dependent on stable metadata sources from the upstream data model.
+- User-side Agent timing still requires client-level observation; Ariadne cannot measure internal Agent reasoning from inside the MCP server.
+- Real wallet signing, funded broadcast and post-trade balance validation remain deferred until the user intentionally supplies funds and authorization.
+
+### Jev phase-gate record — 2026-09-22T13:45:55.076Z
+- Phase: `product-experience-ux-upgrade`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.960`
+- Agreement: `true`
+- Latency: `1021 ms`
+- Phase transition: `advance`
+- Transition reason: Baseline and Jev agree on a low-risk continuation.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.

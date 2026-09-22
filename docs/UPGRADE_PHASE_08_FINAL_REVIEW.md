@@ -28,7 +28,7 @@ Run the complete regression suite, synchronize public documentation, verify the 
 - preference screening;
 - intent-to-ActionPlan preparation;
 - wallet tokenized-stock exposure analysis;
-- Markdown asset cards and comparison tables;
+- structured evidence cards and issuer-aware comparison entries;
 - structured `outcome` contract;
 - credential-free deterministic Demo Mode;
 - explicit no-signing/no-broadcast Demo Mode boundary.
@@ -45,6 +45,8 @@ Run the complete regression suite, synchronize public documentation, verify the 
 | `npm run test:mcp-config` | PASS |
 | `npm run test:sdk-example` | PASS |
 | `npm run test:mcp` | PASS |
+| `npm run test:presentation` | PASS |
+| `npm run test:hosted-demo` | PASS |
 | `npm run audit:experiments` | PASS |
 
 Final experiment audit:
@@ -69,9 +71,9 @@ Final experiment audit:
 These are explicitly deferred and are not represented as completed capabilities.
 
 The complete deferred and unfinished-item register is maintained in
-[`UPGRADE_DEFERRED_ITEMS.md`](UPGRADE_DEFERRED_ITEMS.md), with a Chinese reference
-version in [`UPGRADE_DEFERRED_ITEMS.zh-CN.md`](UPGRADE_DEFERRED_ITEMS.zh-CN.md).
+[`UPGRADE_DEFERRED_ITEMS.md`](UPGRADE_DEFERRED_ITEMS.md). Internal bilingual
+working notes are intentionally kept outside the public repository.
 
 ## Gate result
 
-All eight product-upgrade phases have completed internal work and validation. The reusable phase-gated long-task Skill was created in the Desktop folder as `agent-gated-long-task` and passed the official validator (`Skill is valid!`). No Git push is performed by this phase.
+The historical Phase 8 work completed internal validation. Subsequent work added local Hosted MCP validation and a further product-experience upgrade: stable representation entries, explicit coverage states and Ariadne-only timing instrumentation. The web product, public Hosted MCP, npm publication, funded execution and final competition materials remain separate later phases. No Git push is performed by this phase.

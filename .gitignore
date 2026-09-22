@@ -6,3 +6,18 @@ node_modules/
 dist/
 dist-package/
 .DS_Store
+
+# Internal planning, bilingual working notes and phase-gate fixtures stay local.
+docs/CAPABILITY_MAP_AGENT_NATIVE_RWA.zh-CN.md
+docs/HOSTED_MCP_FEASIBILITY.md
+docs/PRD_AGENT_NATIVE_RWA.md
+docs/PRD_AGENT_NATIVE_RWA.zh-CN.md
+docs/PRODUCT_EXPERIENCE_REPORT.zh-CN.md
+docs/UPGRADE_DEFERRED_ITEMS.zh-CN.md
+scripts/fixtures/cleanroom-consumer-state.json
+scripts/fixtures/hosted-demo-poc-state.json
+scripts/fixtures/hosted-deployment-decision-state.json
+scripts/fixtures/hosted-mcp-feasibility-state.json
+scripts/fixtures/product-experience-ux-upgrade-state.json
+scripts/fixtures/product-presentation-state.json
+scripts/fixtures/release-decision-state.json

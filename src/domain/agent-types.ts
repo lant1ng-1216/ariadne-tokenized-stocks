@@ -22,8 +22,14 @@ export type AssetMetadata = {
   updatedAt?: number;
 };
 
+export type CoverageStatus = {
+  identity: "confirmed" | "partial";
+  marketContext: "fetched" | "not_requested" | "unavailable";
+};
+
 export type DataQuality = {
   completeness: "complete" | "partial" | "limited";
+  coverage: CoverageStatus;
   missingFields: string[];
   warnings: string[];
   lastUpdatedAt?: number;
@@ -61,4 +67,22 @@ export type AssetComparison = {
   criteria: AssetPreference;
   summary: string;
   warnings: string[];
+};
+
+export type ResearchTiming = {
+  searchMs: number;
+  marketContextMs: number;
+  comparisonMs: number;
+  presentationMs: number;
+  totalMs: number;
+  marketContextRequests: number;
+  agentReasoningExcluded: true;
+};
+
+export type ResearchNextStep = {
+  id: "inspect_representation" | "request_read_only_quote" | "read_wallet_exposure" | "review_data_gaps";
+  title: string;
+  description: string;
+  sideEffects: "none";
+  requiresExplicitSelection?: boolean;
 };

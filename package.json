@@ -25,6 +25,7 @@
     "test:domain": "node --import tsx scripts/test-domain.ts",
     "test:agent-model": "node --import tsx scripts/test-agent-model.ts",
     "test:core-hardening": "node --import tsx scripts/test-core-hardening.ts",
+    "test:presentation": "node --import tsx scripts/test-presentation-contract.ts",
     "test:demo-mode": "node --import tsx scripts/test-demo-mode.ts",
     "test:onboarding": "node --import tsx scripts/test-onboarding.ts",
     "test:distribution": "node --import tsx scripts/test-distribution.ts",

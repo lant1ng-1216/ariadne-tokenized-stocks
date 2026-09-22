@@ -35,6 +35,11 @@ try {
   const payload = JSON.parse(text!);
   assert.equal(payload.assets.length, 2);
   assert.equal(payload.outcome.sideEffects, "none");
+  assert.equal(payload.timing.agentReasoningExcluded, true);
+  assert.equal(payload.timing.marketContextRequests, 2);
+  assert.ok(Number.isFinite(payload.timing.totalMs));
+  assert.doesNotMatch(payload.presentation, /\| Rank \| Issuer \|/);
+  assert.match(payload.presentation, /What Ariadne can do next/);
   assert.match(payload.presentation, /Ariadne research brief/);
   await transport.close();
   console.log(JSON.stringify({ healthcheck: true, remoteMcpConnection: true, researchWorkflow: true, demoOnly: true, sideEffects: "none", passed: true }, null, 2));

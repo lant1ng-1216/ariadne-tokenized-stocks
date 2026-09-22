@@ -10,8 +10,9 @@ import type { ActionPlan } from "../domain/types.js";
 import { errorOutcome, outcome, textResult } from "./response.js";
 import { compareAgentAssets, toAgentAsset } from "../domain/agent-normalizers.js";
 import type { AssetPreference } from "../domain/agent-types.js";
-import { renderAssetCard, renderComparisonTable, renderResearchBrief } from "../presentation/asset-view.js";
+import { renderAssetCard, renderComparisonTable, renderResearchBrief, researchNextSteps } from "../presentation/asset-view.js";
 import { DemoTokenizedStocksService } from "../services/demo-tokenized-stocks.js";
+import { performance } from "node:perf_hooks";
 
 const demoMode = process.env.ARIADNE_MODE === "demo";
 const apiKey = process.env.BINANCE_WEB3_API_KEY;
@@ -27,6 +28,17 @@ const client = new BinanceWeb3Client({
 const stocks = demoMode ? new DemoTokenizedStocksService(client) : new TokenizedStocksService(client);
 const wallet = new WalletService(client);
 const transactions = new TransactionService(client);
+const elapsedMs = (startedAt: number) => Math.max(0, Math.round((performance.now() - startedAt) * 100) / 100);
+
+async function enrichAgentAsset(asset: Parameters<typeof toAgentAsset>[0], requestMarketContext = true) {
+  if (!requestMarketContext) return toAgentAsset(asset);
+  try {
+    const market = await stocks.marketContext(asset);
+    return toAgentAsset(asset, market, {}, {}, { marketContextRequested: true });
+  } catch {
+    return toAgentAsset(asset, undefined, {}, {}, { marketContextRequested: true, marketContextUnavailable: true });
+  }
+}
 
 const server = new McpServer({ name: "ariadne-tokenized-stocks", version: "0.1.0" });
 
@@ -43,8 +55,7 @@ server.registerTool("discover_tokenized_assets", {
     const assets = await stocks.search(query, { chainId });
     const filtered = platforms?.length ? assets.filter((asset) => platforms.includes(asset.platformId)) : assets;
     const enriched = await Promise.all(filtered.map(async (asset) => {
-      const market = includeMarketContext === false ? undefined : await stocks.marketContext(asset);
-      return toAgentAsset(asset, market);
+      return enrichAgentAsset(asset, includeMarketContext !== false);
     }));
     const warnings = enriched.flatMap((asset) => asset.dataQuality.warnings).filter((warning, index, all) => all.indexOf(warning) === index);
     return textResult(outcome({
@@ -77,7 +88,7 @@ server.registerTool("compare_asset_representations", {
 }, async ({ query, chainId, preference }) => {
   try {
     const assets = await stocks.search(query, { chainId });
-    const enriched = await Promise.all(assets.map(async (asset) => toAgentAsset(asset, await stocks.marketContext(asset))));
+    const enriched = await Promise.all(assets.map((asset) => enrichAgentAsset(asset)));
     const comparison = compareAgentAssets(enriched, (preference ?? {}) as AssetPreference);
     return textResult(outcome({ summary: comparison.summary, comparison, presentation: renderComparisonTable(comparison) }, comparison.rows.some((row) => row.excludedReasons.length === 0) ? comparison.warnings.length ? "warning" : "success" : "blocked", comparison.rows.some((row) => row.excludedReasons.length === 0) ? "Review ranked representations and choose whether to request a quote" : "Relax the preference filters or inspect the exclusion reasons", { warnings: comparison.warnings }));
   } catch (error) {
@@ -103,10 +114,17 @@ server.registerTool("research_tokenized_stock", {
   }
 }, async ({ query, chainId, platforms, preference }) => {
   try {
+    const workflowStartedAt = performance.now();
+    const searchStartedAt = performance.now();
     const assets = await stocks.search(query, { chainId });
+    const searchMs = elapsedMs(searchStartedAt);
     const filtered = platforms?.length ? assets.filter((asset) => platforms.includes(asset.platformId)) : assets;
-    const enriched = await Promise.all(filtered.map(async (asset) => toAgentAsset(asset, await stocks.marketContext(asset))));
+    const marketContextStartedAt = performance.now();
+    const enriched = await Promise.all(filtered.map((asset) => enrichAgentAsset(asset)));
+    const marketContextMs = elapsedMs(marketContextStartedAt);
+    const comparisonStartedAt = performance.now();
     const comparison = compareAgentAssets(enriched, (preference ?? {}) as AssetPreference);
+    const comparisonMs = elapsedMs(comparisonStartedAt);
     const eligible = comparison.rows.filter((row) => !row.excludedReasons.length);
     const warnings = [...new Set([
       ...comparison.warnings,
@@ -118,13 +136,30 @@ server.registerTool("research_tokenized_stock", {
       : eligible.length
         ? "Review the evidence and request a quote only for an explicitly selected representation"
         : "Review exclusion reasons or relax the preference filters";
+    const nextSteps = researchNextSteps(enriched, comparison);
+    const presentationStartedAt = performance.now();
+    const timing = {
+      searchMs,
+      marketContextMs,
+      comparisonMs,
+      presentationMs: 0,
+      totalMs: 0,
+      marketContextRequests: filtered.length,
+      agentReasoningExcluded: true as const
+    };
+    if (enriched.length) renderResearchBrief(enriched, comparison, timing, nextSteps);
+    timing.presentationMs = elapsedMs(presentationStartedAt);
+    timing.totalMs = elapsedMs(workflowStartedAt);
+    const presentation = enriched.length ? renderResearchBrief(enriched, comparison, timing, nextSteps) : "No representations available.";
     return textResult(outcome({
       summary: enriched.length ? `Research brief for ${query}: ${enriched.length} issuer representations compared` : `No tokenized-stock representations found for ${query}`,
       query,
       chainId,
       assets: enriched,
       comparison,
-      presentation: enriched.length ? renderResearchBrief(enriched, comparison) : "No representations available.",
+      nextSteps,
+      timing,
+      presentation,
       decisionBoundary: "Ariadne presents evidence and preference matches; it does not make an investment decision.",
       executionBoundary: "This workflow is read-only. No quote, signature, transaction or broadcast was performed."
     }, status, nextAction, { warnings }));
@@ -153,12 +188,12 @@ server.registerTool("prepare_action_from_intent", {
     if (!assets.length) return textResult(outcome({ summary: `No tokenized-stock representation found for ${input.query}`, assets: [] }, "warning", "Try a broader ticker or remove the platform filter", { warnings: ["No matching asset was found"] }));
     let selected = input.platformId ? assets.find((asset) => asset.platformId === input.platformId) : undefined;
     if (!selected && input.selectionPolicy === "lowest_price_gap") {
-      const enriched = await Promise.all(assets.map(async (asset) => toAgentAsset(asset, await stocks.marketContext(asset))));
+      const enriched = await Promise.all(assets.map((asset) => enrichAgentAsset(asset)));
       const comparison = compareAgentAssets(enriched, { requireMarketPrice: true, requireReferencePrice: true });
       selected = comparison.rows.find((row) => !row.excludedReasons.length)?.asset;
     }
     if (!selected && assets.length > 1) {
-      const enriched = await Promise.all(assets.map(async (asset) => toAgentAsset(asset, await stocks.marketContext(asset))));
+      const enriched = await Promise.all(assets.map((asset) => enrichAgentAsset(asset)));
       const comparison = compareAgentAssets(enriched, {});
       return textResult(outcome({ summary: "Multiple tokenized-stock representations require an explicit choice", comparison, presentation: renderComparisonTable(comparison) }, "blocked", "Choose a platformId or provide selectionPolicy=lowest_price_gap before preparing the ActionPlan", { warnings: ["Ariadne did not silently choose between multiple issuers"] }));
     }
@@ -197,7 +232,7 @@ server.registerTool("screen_assets_by_preferences", {
 }, async ({ query, chainId, preference }) => {
   try {
     const assets = await stocks.search(query, { chainId });
-    const enriched = await Promise.all(assets.map(async (asset) => toAgentAsset(asset, await stocks.marketContext(asset))));
+    const enriched = await Promise.all(assets.map((asset) => enrichAgentAsset(asset)));
     const comparison = compareAgentAssets(enriched, preference as AssetPreference);
     const eligible = comparison.rows.filter((row) => !row.excludedReasons.length);
     return textResult(outcome({ summary: `${eligible.length} representations match the requested preferences`, comparison, presentation: renderComparisonTable(comparison), recommendationBoundary: "This is preference-based evidence screening, not investment advice", interpretation: "Eligibility reflects the supplied criteria and observed data; it is not a recommendation to buy or sell." }, eligible.length ? "success" : "blocked", eligible.length ? "Review the evidence and choose whether to request a quote" : "Relax the preferences or inspect exclusion reasons", { warnings: comparison.warnings }));
@@ -231,7 +266,15 @@ server.registerTool("resolve_tokenized_stock", {
   }
 }, async ({ query, chainId, platformId }) => {
   const assets = await stocks.search(query, { chainId, platformId });
-  return textResult(outcome({ summary: `Found ${assets.length} tokenized stock assets`, assets, count: assets.length }, assets.length ? "success" : "warning", assets.length ? "Select an asset and request market context" : "Try a broader ticker or omit platformId", { warnings: assets.length ? [] : ["No matching tokenized-stock asset was found"] }));
+  const assetViews = assets.map((asset) => toAgentAsset(asset));
+  return textResult(outcome({
+    summary: `Found ${assets.length} tokenized stock assets; identity only`,
+    assets,
+    assetViews,
+    count: assets.length,
+    coverage: { identity: assets.length ? "confirmed" : "unresolved", marketContext: "not_requested" },
+    presentation: assetViews.length ? assetViews.map(renderAssetCard).join("\n\n---\n\n") : "No representations available."
+  }, assets.length ? "success" : "warning", assets.length ? "Request market context before comparing prices or assessing tradability" : "Try a broader ticker or omit platformId", { warnings: assets.length ? [] : ["No matching tokenized-stock asset was found"] }));
 });
 
 server.registerTool("get_stock_market_context", {
