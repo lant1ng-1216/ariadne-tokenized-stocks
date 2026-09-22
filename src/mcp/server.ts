@@ -401,5 +401,9 @@ server.registerTool("get_broadcast_order_status", {
   return textResult(outcome({ address, chainId, result, summary: "Broadcast order status retrieved" }, "success", "Use the order status to determine whether the transaction settled"));
 });
 
-const transport = new StdioServerTransport();
-await server.connect(transport);
+export { server };
+
+if (process.env.ARIADNE_TRANSPORT !== "http") {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+}

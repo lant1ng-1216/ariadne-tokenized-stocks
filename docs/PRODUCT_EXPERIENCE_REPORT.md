@@ -423,3 +423,39 @@ Ariadne's core capability path is usable, but the product remains in a state whe
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
 - Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T19:49:19.898Z
+- Phase: `hosted-demo-poc`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.920`
+- Agreement: `true`
+- Latency: `888 ms`
+- Phase transition: `advance`
+- Transition reason: Baseline and Jev agree on a low-risk continuation.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T19:49:20.255Z
+- Phase: `hosted-deployment-decision`
+- Jev provider: `deterministic-fallback`
+- Baseline: `passed_with_deferred_items` / `ask_user` / risk `high`
+- Jev: unavailable
+- Agreement: `unknown`
+- Latency: `90 ms`
+- Phase transition: `pause`
+- Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T19:49:39.919Z
+- Phase: `hosted-deployment-decision`
+- Jev provider: `native-jev`
+- Baseline: `passed_with_deferred_items` / `ask_user` / risk `high`
+- Jev: `passed_with_deferred_items` / `ask_user` / risk `high` / confidence `0.500`
+- Agreement: `true`
+- Latency: `926 ms`
+- Phase transition: `pause`
+- Transition reason: Both baseline and Jev must return passed.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.

@@ -29,6 +29,7 @@
     "test:onboarding": "node --import tsx scripts/test-onboarding.ts",
     "test:distribution": "node --import tsx scripts/test-distribution.ts",
     "test:cleanroom": "node scripts/test-cleanroom-consumer.mjs",
+    "test:hosted-demo": "node --import tsx scripts/test-hosted-demo.ts",
     "test:jev-shadow": "node --import tsx scripts/test-jev-shadow.ts",
     "jev:shadow": "node --env-file=.env --import tsx scripts/run-jev-shadow.ts",
     "test:simulation": "node --env-file=.env --import tsx scripts/test-simulation.ts",
@@ -53,6 +54,7 @@
     "probe:approval": "node --env-file=.env --import tsx scripts/probe-approval.ts",
     "mcp": "node --env-file=.env --import tsx src/mcp/server.ts",
     "mcp:demo": "node scripts/start-demo-mcp.mjs",
+    "mcp:hosted-demo": "node --import tsx src/mcp/hosted-demo-server.ts",
     "mcp:config:demo": "node scripts/print-mcp-config.mjs demo",
     "mcp:config:live": "node scripts/print-mcp-config.mjs live",
     "typecheck": "tsc --noEmit"

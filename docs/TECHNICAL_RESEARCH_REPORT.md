@@ -8,6 +8,8 @@ The distribution preparation adds separate Demo and Live MCP configuration examp
 
 A clean-room consumer test installed the local tarball outside the repository and verified runtime imports, TypeScript declarations and the package-root export map. This confirms that the SDK is consumable as a package rather than only working from the repository source tree.
 
+A local Hosted Demo POC now exposes the same MCP surface through Streamable HTTP while forcing deterministic Demo Mode. The end-to-end test verified health, remote MCP connection, tool discovery and the `research_tokenized_stock` workflow with `sideEffects: none`. No live credentials, public endpoint, wallet or transaction path is enabled.
+
 Validation on 2026-09-22: TypeScript typecheck, Demo Mode regression, Agent model regression and onboarding documentation checks passed. The first live MCP integration attempt returned a transient incomplete upstream response; a bounded retry passed with 18 tools discovered and safety rejection paths verified. No signing, broadcast or external write occurred.
 
 Ariadne is a TypeScript SDK and MCP server that gives existing AI agents structured access to tokenized-stock discovery, market context, portfolio information, simulation and explicitly bounded execution on BNB Chain. The system separates agent-readable planning from user-controlled signing.
@@ -383,5 +385,41 @@ The legacy architecture figures are generated from `research/data/`. The audited
 - Latency: `1049 ms`
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T19:49:19.898Z
+- Phase: `hosted-demo-poc`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.920`
+- Agreement: `true`
+- Latency: `888 ms`
+- Phase transition: `advance`
+- Transition reason: Baseline and Jev agree on a low-risk continuation.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T19:49:20.255Z
+- Phase: `hosted-deployment-decision`
+- Jev provider: `deterministic-fallback`
+- Baseline: `passed_with_deferred_items` / `ask_user` / risk `high`
+- Jev: unavailable
+- Agreement: `unknown`
+- Latency: `90 ms`
+- Phase transition: `pause`
+- Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-21T19:49:39.919Z
+- Phase: `hosted-deployment-decision`
+- Jev provider: `native-jev`
+- Baseline: `passed_with_deferred_items` / `ask_user` / risk `high`
+- Jev: `passed_with_deferred_items` / `ask_user` / risk `high` / confidence `0.500`
+- Agreement: `true`
+- Latency: `926 ms`
+- Phase transition: `pause`
+- Transition reason: Both baseline and Jev must return passed.
 - Action taken: `none`
 - Safety note: Jev does not control Codex and no external write was authorized.
