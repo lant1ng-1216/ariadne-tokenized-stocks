@@ -37,6 +37,16 @@ Find tokenized NVIDIA stock on BSC. Give me the contract, issuer, token price, r
 
 Demo Mode never creates an executable action plan, signs, broadcasts or represents deterministic data as live market data.
 
+## Direct web Demo Mode
+
+If you want to inspect the product without asking Codex or Claude Code to render a second summary, start the local web surface:
+
+```bash
+npm run web:demo
+```
+
+Open `http://127.0.0.1:18901`. The page supports issuer comparison, field-level evidence, a public-address wallet-exposure preview and an explicit-issuer read-only quote preview. Use the deterministic Demo address shown on the page; it is not a real wallet. No private key, seed phrase, ActionPlan, signature or broadcast is accepted by this surface.
+
 ## Live Mode
 
 For live read-only data and quote preparation:
@@ -49,3 +59,11 @@ npm install
 Set the user's own Binance Web3 API credentials in `.env`, then configure the MCP client using `docs/mcp-config.example.json`. Real signing and broadcasting remain separate user-wallet operations.
 
 In Live Mode, use the same natural-language prompts. Ariadne resolves the appropriate read-only workflow; a user does not need to name an MCP tool. Any quote, signature, transaction or broadcast remains an explicit later boundary.
+
+For the controlled browser surface in Live Mode:
+
+```bash
+npm run web:live
+```
+
+This keeps Binance credentials on the local server and exposes only GET-based asset research, public-address exposure and read-only quote preview. It is not a public deployment.

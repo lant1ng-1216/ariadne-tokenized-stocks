@@ -54,7 +54,7 @@ BSC and external-wallet execution layer
 - `prepare_action_from_intent`
 - `simulate_stock_action_plan`
 
-These tools are deterministic MCP entry points. The calling Agent is responsible for converting natural language into the MCP schema. The future web product will provide a direct UI over the same semantic layer instead of requiring an Agent to perform the final presentation.
+These tools are deterministic MCP entry points. The calling Agent is responsible for converting natural language into the MCP schema. The local Ariadne web product now provides a direct UI over the same semantic layer instead of requiring an Agent to perform the final presentation.
 
 ### Low-level adapter capabilities
 
@@ -78,7 +78,7 @@ Ticker, token symbol, issuer/platform, chain, contract, observed price, referenc
 
 ### Current comparison presentation
 
-Numbered issuer-aware representation entries keep the contract and market evidence together. This avoids relying on downstream Agent clients to render a Markdown table correctly. A richer side-by-side visual comparison belongs to the future web product.
+Numbered issuer-aware representation entries keep the contract and market evidence together. This avoids relying on downstream Agent clients to render a Markdown table correctly. The local web product now renders the same comparison as issuer-aware cards with mechanical sorting and an evidence detail drawer.
 
 ### Agent summary
 

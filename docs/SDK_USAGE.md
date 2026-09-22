@@ -37,6 +37,10 @@ This builds `dist/`, emits TypeScript declarations and performs a dry-run packag
 
 The lower-level tools remain available for developers, testing and specialized orchestration.
 
+## Direct web surface
+
+The repository also contains a local web product that consumes the same normalized domain semantics without relying on an Agent transcript. `npm run web:demo` starts a deterministic browser workspace; `npm run web:live` starts a server-side credentialed, read-only workspace. The browser surface supports research/comparison, public-address exposure and explicit-issuer quote preview. It does not expose private-key input, ActionPlan creation, approval transactions, signing or broadcast.
+
 ```ts
 import { BinanceWeb3Client, TokenizedStocksService } from "ariadne-tokenized-stocks";
 

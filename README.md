@@ -25,9 +25,9 @@ Ariadne is designed as one semantic core with three access surfaces:
 
 - the TypeScript SDK for developers and institutional integrations;
 - the MCP server for existing Agents such as Codex and Claude Code;
-- a planned Ariadne web product for direct research, issuer comparison and read-only interaction without requiring a third-party Agent to summarize the result.
+- the Ariadne web product for direct research, issuer comparison, wallet context and read-only quote interaction without requiring a third-party Agent to summarize the result.
 
-The current repository implements the SDK and MCP core plus a local Hosted MCP proof of concept. The web product, public Hosted MCP and final distribution are subsequent product phases, not silently implied as complete by the current code.
+The current repository implements the SDK and MCP core, a local Hosted MCP proof of concept and a local web Demo/Live Read-only surface. The web surface is not a public deployment, and public Hosted MCP, npm publication and final distribution remain subsequent release decisions.
 
 ## System boundary
 
@@ -73,6 +73,7 @@ The complete evidence model, audit output and reproducible figure inputs are mai
 - Expose 18 MCP tools for existing agents and applications, including the one-call `research_tokenized_stock` workflow.
 - Return stable issuer-by-issuer evidence entries, explicit identity/market-data coverage and read-only next steps instead of relying on fragile Markdown tables.
 - Report Ariadne workflow timing with an explicit boundary that excludes calling-Agent reasoning and final-answer rendering.
+- Run a direct web research workspace with issuer comparison, metadata provenance, public-address exposure and explicit-issuer read-only quote preview.
 - Record request attempts, latency, business codes and rate-limit headers.
 - Retry documented transient failures while keeping broadcast operations explicit and non-automatic.
 
@@ -121,6 +122,14 @@ npm run test:mcp
 ```
 
 The no-funds simulation path does not broadcast a transaction. Copy [`docs/mcp-config.example.json`](docs/mcp-config.example.json) into the MCP client configuration and set its working directory to the absolute repository path. For the lowest-friction first run, launch `npm run mcp:demo` and ask for a natural-language tokenized-stock research brief; the Agent can select `research_tokenized_stock` without the user naming a tool.
+
+For a direct browser experience that does not depend on Codex or Claude Code summarization, run:
+
+```bash
+npm run web:demo
+```
+
+Then open `http://127.0.0.1:18901`. Demo Mode provides deterministic research, public-address exposure and read-only quote preview. It never accepts a private key, creates an ActionPlan or broadcasts. `npm run web:live` enables the same read-only browser surface with server-side Binance credentials from `.env`; it is still local-only.
 
 ## Evidence and limitations
 

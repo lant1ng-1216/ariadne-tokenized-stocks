@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { evaluateBaseline } from "../src/jev/baseline.js";
-import { runShadowGate } from "../src/jev/shadow-gate.js";
+import { isLowRiskContinuation, runShadowGate } from "../src/jev/shadow-gate.js";
 import { writeShadowDecisionRecord } from "../src/jev/record.js";
 import { mkdtemp, readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -16,9 +16,12 @@ const safe = {
   highRiskActionRequested: false,
 };
 const unsafe = { ...safe, highRiskActionRequested: true };
+const deferred = { ...safe, deferredItems: ["UI polish remains a later phase"] };
 
 assert.equal(evaluateBaseline(safe).status, "passed");
 assert.equal(evaluateBaseline(unsafe).nextAction, "ask_user");
+assert.equal(evaluateBaseline(deferred).status, "passed_with_deferred_items");
+assert.equal(isLowRiskContinuation(evaluateBaseline(deferred)), true);
 const record = await runShadowGate(safe);
 assert.equal(record.mode, "shadow");
 assert.equal(record.actionTaken, "none");

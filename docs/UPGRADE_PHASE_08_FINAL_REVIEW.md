@@ -76,4 +76,4 @@ working notes are intentionally kept outside the public repository.
 
 ## Gate result
 
-The historical Phase 8 work completed internal validation. Subsequent work added local Hosted MCP validation and a further product-experience upgrade: stable representation entries, explicit coverage states and Ariadne-only timing instrumentation. The web product, public Hosted MCP, npm publication, funded execution and final competition materials remain separate later phases. No Git push is performed by this phase.
+The historical Phase 8 work completed internal validation. Subsequent work added local Hosted MCP validation and a further product-experience upgrade: stable representation entries, explicit coverage states, Ariadne-only timing instrumentation and a local web research workspace with comparison, wallet exposure and read-only quote preview. Public Hosted MCP, npm publication, funded execution and final competition materials remain separate release decisions. No Git push is performed by this phase.

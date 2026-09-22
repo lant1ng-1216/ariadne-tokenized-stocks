@@ -30,7 +30,23 @@ The calling Agent may interpret natural language, select tools and explain resul
 - quote, allowance, ActionPlan and simulation boundaries;
 - explicit external-signature and broadcast constraints.
 
-The future web product will call the same semantic layer directly. It must not depend on Codex or Claude Code to perform a second summary before the user can understand the result.
+The local web product calls the same semantic layer directly. It does not depend on Codex or Claude Code to perform a second summary before the user can understand the result; public hosting remains a separate release decision.
+
+## Research workspace contract
+
+The first web surface should consume a structured research-workspace view rather than Markdown generated for an Agent transcript. The view contains:
+
+- query identity and chain context;
+- one representation object per issuer, including token identity, contract, market snapshot and comparison eligibility;
+- explicit logo availability and metadata source, so a missing logo is visible instead of guessed;
+- field-level metadata evidence explaining whether a logo or issuer reference was supplied or unavailable;
+- coverage, completeness, missing fields, warnings and verified links;
+- neutral next steps and an immutable read-only boundary;
+- optional Ariadne-only timing, excluding calling-Agent reasoning and final rendering.
+
+The direct web surface also exposes a separate public-address wallet context view. It reports holdings, matched tokenized-stock identities, unresolved holdings and unavailable prices as separate evidence states. This route is intentionally read-only and is not a wallet connection or execution surface. A separate quote-preview view requires an explicit issuer and displays route evidence without creating an ActionPlan or approval transaction.
+
+The TypeScript adapter is implemented in `src/web/research-workspace.ts`. It is a view-model boundary, not a second business service: the SDK and MCP remain the source of asset identity, market context, comparison and safety semantics.
 
 ## Surface responsibilities
 
@@ -38,7 +54,7 @@ The future web product will call the same semantic layer directly. It must not d
 |---|---|---|---|
 | TypeScript SDK | Developers, institutions and integrators | Typed access to Binance Web3 data, normalization and execution boundaries | Stable library with versioned domain contracts and examples |
 | MCP server | Users of existing Agents | Agent-callable research, comparison, portfolio and action-preparation tools | High-level intent tools first; low-level tools remain for control and testing |
-| Ariadne web product | Direct users and reviewers | Not implemented yet | Research workspace, issuer comparison, asset cards, provenance and guided read-only actions |
+| Ariadne web product | Direct users and reviewers | Local Demo Mode and controlled local Live Read-only Mode implemented | Research workspace, issuer comparison, asset cards, provenance, public-address exposure, quote preview and guided read-only actions |
 
 ## Product modes
 
@@ -80,7 +96,7 @@ Execution mode includes external wallet signing, RFQ settlement, funded broadcas
 | Market | Implemented and verified with data limitations | Research and comparison layer; missing liquidity/status remain visible |
 | Trading | Quote and unsigned preparation implemented | Read-only quote and preparation are mature; settlement remains final-stage |
 | Transaction | Simulation and rejection boundaries verified | Safe preparation layer; funded success remains deferred |
-| Wallet and portfolio | Read-only exposure implemented | Portfolio context exists; automated strategy is not yet complete |
+| Wallet and portfolio | Read-only exposure implemented across MCP and local web surfaces | Portfolio context exists; unmatched assets and missing prices remain visible; automated strategy is not yet complete |
 | DeFi | Protocol/investment discovery verified | Positions are upstream-blocked; deposit/redeem/LP flows are not implemented |
 | b402 Payments | Not implemented | Future paid data/service distribution layer |
 | Agent wallet / wallet skill | Not implemented | Future signing and delegated execution layer |
@@ -109,6 +125,7 @@ The current maturity boundary is:
 - technical prototype: passed;
 - local Agent integration: passed;
 - local Hosted MCP proof of concept: passed;
+- local web Demo Mode and controlled Live Read-only Mode: passed;
 - product expression: improving, not final;
 - public package and Hosted MCP: not released;
 - funded execution and post-trade verification: intentionally deferred;
