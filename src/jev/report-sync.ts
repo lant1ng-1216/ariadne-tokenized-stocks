@@ -17,6 +17,13 @@ export async function appendGateReportEntry(
     `- Latency: \`${record.durationMs} ms\``,
     `- Phase transition: \`${record.phaseTransition}\``,
     `- Transition reason: ${record.transitionReason}`,
+    ...(record.evidence.acceptanceCriteria?.length
+      ? ["- Acceptance criteria and supplied evidence:", ...record.evidence.acceptanceCriteria.map((criterion) => `  - ${criterion.id} (${criterion.checkNames.join(", ")}): ${criterion.requirement} Evidence: ${criterion.evidenceSummary}`)]
+      : []),
+    ...(record.jev?.questionConfidence
+      ? [`- Jev confidence by review item: ${Object.entries(record.jev.questionConfidence).map(([question, confidence]) => `${question}=${confidence.toFixed(3)}`).join(", ")}`]
+      : []),
+    ...(record.jev?.reasons?.length ? [`- Jev criterion findings: ${record.jev.reasons.join("; ")}`] : []),
     `- Action taken: \`${record.actionTaken}\``,
     "- Safety note: Jev does not control Codex and no external write was authorized.",
     "",

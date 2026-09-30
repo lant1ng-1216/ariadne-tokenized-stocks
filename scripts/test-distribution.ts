@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 
 const pkg = JSON.parse(await readFile("package.json", "utf8"));
 assert.equal(pkg.private, false);
+assert.equal(pkg.engines?.node, ">=22.19.0");
 assert.equal(pkg.main, "./dist-package/index.js");
 assert.equal(pkg.types, "./dist-package/index.d.ts");
 assert.ok(pkg.exports?.["."]?.import);

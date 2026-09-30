@@ -24,7 +24,7 @@ The decision is constrained to:
 
 The implementation is deliberately fail-closed for external or high-risk actions. Shadow mode records a decision but always reports `actionTaken: none`.
 
-When both the deterministic baseline and Jev return `passed` with `continue`, low risk, no blocked items, no external write request and Jev confidence at or above `JEV_MIN_CONFIDENCE` (default `0.85`), the runner records `phaseTransition: advance` and updates the local phase-state file. Otherwise it records `pause`. This transition does not modify Codex or execute code; it only records the Ariadne development phase state.
+When both the deterministic baseline and Jev return a low-risk continuation, every explicitly supplied acceptance criterion receives a sufficiently confident `met` verdict, deferred work is explicitly assessed as non-blocking, there are no blocked items or external write requests, and overall Jev confidence meets the hard minimum of `0.85`, the runner records `phaseTransition: advance` and updates the local phase-state file. Every gate must include unique acceptance criteria; missing or incomplete reviews fail closed. `JEV_MIN_CONFIDENCE` may raise the threshold but cannot lower it. Otherwise the runner records `pause`. This transition does not modify Codex or execute code; it only records the Ariadne development phase state.
 
 ## Local validation
 

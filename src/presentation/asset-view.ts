@@ -11,10 +11,13 @@ const statusLabel = (asset: AgentTokenizedAsset) => {
 };
 const completenessLabel = (asset: AgentTokenizedAsset) => asset.dataQuality.completeness === "complete" ? "Complete" : asset.dataQuality.completeness === "partial" ? "Partial" : "Limited";
 const updatedLabel = (timestamp: number | undefined) => timestamp ? new Date(timestamp).toISOString() : "Not available";
+const provenanceLabel = (market: AgentTokenizedAsset["market"]) => market?.provenance?.length
+  ? market.provenance.map((source) => `${source.provider} ${source.endpoint} [fields: ${source.fields.join(", ")}]${source.responseTimestampMs ? ` (response ${updatedLabel(source.responseTimestampMs)})` : ""}`).join("; ")
+  : "Not supplied";
 const coverageLabel = (asset: AgentTokenizedAsset) => `${asset.dataQuality.coverage.identity} identity · ${asset.dataQuality.coverage.marketContext.replaceAll("_", " ")} market context`;
 const unique = (values: string[]) => [...new Set(values)];
 
-export function researchNextSteps(assets: AgentTokenizedAsset[], comparison: AssetComparison): ResearchNextStep[] {
+export function researchNextSteps(assets: AgentTokenizedAsset[], comparison: AssetComparison, options: { allowQuoteFollowUp?: boolean; allowWalletExposureFollowUp?: boolean } = {}): ResearchNextStep[] {
   const eligible = comparison.rows.filter((row) => !row.excludedReasons.length);
   const hasGaps = assets.some((asset) => asset.dataQuality.coverage.marketContext !== "fetched" || asset.dataQuality.warnings.length > 0);
   const steps: ResearchNextStep[] = [];
@@ -35,7 +38,7 @@ export function researchNextSteps(assets: AgentTokenizedAsset[], comparison: Ass
       sideEffects: "none"
     });
   }
-  if (eligible.length && assets.some((asset) => asset.dataQuality.coverage.marketContext === "fetched")) {
+  if (options.allowQuoteFollowUp !== false && eligible.length && assets.some((asset) => asset.dataQuality.coverage.marketContext === "fetched")) {
     steps.push({
       id: "request_read_only_quote",
       title: "Request a read-only quote",
@@ -44,16 +47,18 @@ export function researchNextSteps(assets: AgentTokenizedAsset[], comparison: Ass
       requiresExplicitSelection: true
     });
   }
-  steps.push({
-    id: "read_wallet_exposure",
-    title: "Read wallet exposure",
-    description: "Provide a public BSC address to inspect holdings without sending a transaction or sharing a private key.",
-    sideEffects: "none"
-  });
+  if (options.allowWalletExposureFollowUp !== false) {
+    steps.push({
+      id: "read_wallet_exposure",
+      title: "Read wallet exposure",
+      description: "Provide a public BSC address to inspect holdings without sending a transaction or sharing a private key.",
+      sideEffects: "none"
+    });
+  }
   return steps.slice(0, 4);
 }
 
-export function renderAssetCard(asset: AgentTokenizedAsset): string {
+export function renderAssetCard(asset: AgentTokenizedAsset, options: { allowQuoteFollowUp?: boolean; includeWarnings?: boolean } = {}): string {
   const market = asset.market;
   const issuerLogo = asset.issuer.logoUrl ? asset.issuer.logoUrl : "not available from verified metadata";
   const underlyingLogo = asset.metadata.underlyingLogoUrl ? asset.metadata.underlyingLogoUrl : "not available from verified metadata";
@@ -74,19 +79,18 @@ export function renderAssetCard(asset: AgentTokenizedAsset): string {
     `- Observed price: **${value(market?.tokenPrice)}** · Reference price: **${value(market?.referencePrice)}**`,
     `- Price gap: **${value(market?.priceGapPercent, value(market?.priceGap))}** · Status: **${statusLabel(asset)}**`,
     `- Last update: **${updatedLabel(market?.tokenPriceUpdatedAt)}**`,
+    `- Data source: **${provenanceLabel(market)}**`,
     "",
     "**Data quality**",
     `- Completeness: **${completenessLabel(asset)}** · Missing fields: **${asset.dataQuality.missingFields.length ? asset.dataQuality.missingFields.join(", ") : "None reported"}**`,
     `- Links: ${links}`,
     "",
-    "Warnings:",
-    warnings,
-    "",
-    `Next safe step: compare this representation or request a quote after an explicit selection. Side effects: **none**.`
+    ...(options.includeWarnings === false ? [] : ["Warnings:", warnings, ""]),
+    `Next safe step: ${options.allowQuoteFollowUp === false ? "review the evidence and data gaps." : "compare this representation or request a quote after an explicit selection."} Side effects: **none**.`
   ].join("\n");
 }
 
-export function renderComparisonTable(comparison: AssetComparison): string {
+export function renderComparisonTable(comparison: AssetComparison, options: { allowQuoteFollowUp?: boolean; includeAggregateWarnings?: boolean } = {}): string {
   const rows = comparison.rows.map((row, index) => {
     const market = row.asset.market;
     const status = row.excludedReasons.length ? `Excluded: ${row.excludedReasons.join("; ")}` : `Eligible · rank ${row.rank ?? "—"}`;
@@ -96,6 +100,7 @@ export function renderComparisonTable(comparison: AssetComparison): string {
       `- Token: **${value(row.asset.tokenSymbol)}** · Contract: \`${row.asset.contractAddress}\``,
       `- Observed price: **${value(market?.tokenPrice)}** · Reference price: **${value(market?.referencePrice)}**`,
       `- Price gap: **${value(market?.priceGapPercent, value(market?.priceGap))}** · Market status: **${statusLabel(row.asset)}**`,
+      `- Data source: **${provenanceLabel(market)}**`,
       `- Evidence coverage: **${coverageLabel(row.asset)}** · Completeness: **${completenessLabel(row.asset)}**`,
       row.asset.dataQuality.warnings.length ? `- Data warnings: ${unique(row.asset.dataQuality.warnings).join("; ")}` : "- Data warnings: none"
     ].join("\n");
@@ -107,10 +112,12 @@ export function renderComparisonTable(comparison: AssetComparison): string {
     "",
     ...rows,
     "",
-    comparison.warnings.length ? `Warnings:\n${comparison.warnings.map((warning) => `- ${warning}`).join("\n")}` : "Warnings: none",
+    ...(options.includeAggregateWarnings === false ? [] : [comparison.warnings.length ? `Warnings:\n${comparison.warnings.map((warning) => `- ${warning}`).join("\n")}` : "Warnings: none"]),
     "",
     "Interpretation: eligibility and ranking reflect the supplied criteria and observed data only; they are not investment advice.",
-    "Next: inspect a chosen representation or request a quote. No transaction was created."
+    options.allowQuoteFollowUp === false
+      ? "Next: review the evidence or data gaps. No transaction was created."
+      : "Next: inspect a chosen representation or request a quote. No transaction was created."
   ].join("\n");
 }
 
@@ -118,7 +125,8 @@ export function renderResearchBrief(
   assets: AgentTokenizedAsset[],
   comparison: AssetComparison,
   timing?: ResearchTiming,
-  nextSteps = researchNextSteps(assets, comparison)
+  nextSteps = researchNextSteps(assets, comparison),
+  options: { allowQuoteFollowUp?: boolean } = {}
 ): string {
   const eligible = comparison.rows.filter((row) => !row.excludedReasons.length);
   const limited = assets.filter((asset) => asset.dataQuality.completeness !== "complete").length;
@@ -138,15 +146,15 @@ export function renderResearchBrief(
     `- **${assets.length}** issuer representations found · **${eligible.length}** match the supplied criteria · **${warnings.size}** distinct warnings`,
     `- Identity coverage: **${assets.filter((asset) => asset.dataQuality.coverage.identity === "confirmed").length}/${assets.length} confirmed** · market context: **${fetchedMarketContexts}/${assets.length} fetched**`,
     `- **${limited}** representation(s) have incomplete data; missing data is not treated as zero or as a positive signal`,
-    `- Preferred next step: **${eligible.length ? "review a specific representation before requesting a quote" : "inspect exclusions or relax the criteria"}**`,
+    `- Preferred next step: **${options.allowQuoteFollowUp === false ? eligible.length ? "review the evidence and data gaps" : "inspect exclusions or relax the criteria" : eligible.length ? "review a specific representation before requesting a quote" : "inspect exclusions or relax the criteria"}**`,
     "",
     "## Cross-issuer comparison",
     "",
-    renderComparisonTable(comparison),
+    renderComparisonTable(comparison, { allowQuoteFollowUp: options.allowQuoteFollowUp, includeAggregateWarnings: false }),
     "",
     "## Representation details",
     "",
-    assets.map(renderAssetCard).join("\n\n---\n\n"),
+    assets.map((asset) => renderAssetCard(asset, { ...options, includeWarnings: false })).join("\n\n---\n\n"),
     "",
     "## Execution boundary",
     "",

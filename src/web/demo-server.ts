@@ -1,22 +1,26 @@
 import { createServer, type Server, type ServerResponse } from "node:http";
 import { randomUUID } from "node:crypto";
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
 import { performance } from "node:perf_hooks";
 import { BinanceWeb3Client } from "../binance-web3-client.js";
 import { compareAgentAssets, toAgentAsset } from "../domain/agent-normalizers.js";
 import { researchNextSteps } from "../presentation/asset-view.js";
 import { DemoTokenizedStocksService } from "../services/demo-tokenized-stocks.js";
 import { TokenizedStocksService } from "../services/tokenized-stocks.js";
+import type { RepresentationIdentity } from "../services/asset-coverage-audit.js";
+import { TransactionService } from "../services/transaction.js";
 import { WalletService } from "../services/wallet.js";
 import { buildResearchWorkspaceView } from "./research-workspace.js";
+import { buildAssetDirectoryView } from "./asset-directory.js";
 import { buildWalletExposureView } from "./wallet-exposure.js";
 import type { QuoteResult, TradeIntent, WalletHolding } from "../domain/types.js";
+import { normalizeMarketCandles } from "./market-candles.js";
 
 const demoService = new DemoTokenizedStocksService({} as any);
-export type ResearchService = Pick<TokenizedStocksService, "search" | "marketContext">;
+export type ResearchService = Pick<TokenizedStocksService, "search" | "marketContext" | "marketContexts" | "list" | "listSnapshot" | "platforms"> & Partial<Pick<TokenizedStocksService, "candles" | "tokenPriceSnapshots">>;
 export type WalletExposureService = Pick<WalletService, "holdings">;
 export type ReadOnlyQuoteService = Pick<TokenizedStocksService, "quote">;
+export type ReadOnlyPreflightService = Pick<TokenizedStocksService, "createActionPlan">;
+export type ReadOnlySimulationService = Pick<TransactionService, "simulateEvm">;
 
 const demoWalletExposure: WalletExposureService = {
   async holdings(): Promise<WalletHolding[]> {
@@ -77,7 +81,8 @@ async function research(stocks: ResearchService, query: string, chainId: string)
   const assets = await stocks.search(query, { chainId });
   const searchMs = performance.now() - searchStartedAt;
   const marketStartedAt = performance.now();
-  const enriched = await Promise.all(assets.map(async (asset) => toAgentAsset(asset, await stocks.marketContext(asset))));
+  const markets = await stocks.marketContexts(assets);
+  const enriched = assets.map((asset, index) => toAgentAsset(asset, markets[index]));
   const marketContextMs = performance.now() - marketStartedAt;
   const comparisonStartedAt = performance.now();
   const comparison = compareAgentAssets(enriched);
@@ -90,7 +95,7 @@ async function research(stocks: ResearchService, query: string, chainId: string)
     comparisonMs: Math.round(comparisonMs),
     presentationMs: Math.round(performance.now() - presentationStartedAt),
     totalMs: Math.round(performance.now() - startedAt),
-    marketContextRequests: enriched.length,
+    marketContextAssets: enriched.length,
     agentReasoningExcluded: true as const
   };
   return buildResearchWorkspaceView(enriched, comparison, nextSteps, timing, {
@@ -100,27 +105,7 @@ async function research(stocks: ResearchService, query: string, chainId: string)
   });
 }
 
-async function serveStatic(pathname: string, response: ServerResponse): Promise<boolean> {
-  const files: Record<string, { path: string; contentType: string }> = {
-    "/": { path: resolve("web/index.html"), contentType: "text/html; charset=utf-8" },
-    "/index.html": { path: resolve("web/index.html"), contentType: "text/html; charset=utf-8" },
-    "/styles.css": { path: resolve("web/styles.css"), contentType: "text/css; charset=utf-8" },
-    "/app.js": { path: resolve("web/app.js"), contentType: "text/javascript; charset=utf-8" }
-  };
-  const file = files[pathname];
-  if (!file) return false;
-  try {
-    const body = await readFile(file.path);
-    response.writeHead(200, { "content-type": file.contentType, "cache-control": "no-store" });
-    response.end(body);
-  } catch {
-    response.writeHead(500, { "content-type": "text/plain; charset=utf-8" });
-    response.end("Ariadne Demo asset unavailable");
-  }
-  return true;
-}
-
-export function createWebServer(mode: "demo" | "live-readonly", stocks: ResearchService, exposure?: WalletExposureService, quotes?: ReadOnlyQuoteService): Server {
+export function createWebServer(mode: "demo" | "live-readonly", stocks: ResearchService, exposure?: WalletExposureService, quotes?: ReadOnlyQuoteService, preflight?: ReadOnlyPreflightService, simulator?: ReadOnlySimulationService): Server {
   return createServer((request, response) => {
     void (async () => {
       const requestId = randomUUID();
@@ -144,8 +129,72 @@ export function createWebServer(mode: "demo" | "live-readonly", stocks: Research
           sideEffects: "none",
           researchOnly: true,
           credentials: mode === "live-readonly" ? "server-only" : "none",
-          capabilities: { research: true, walletExposure: Boolean(exposure), quote: Boolean(quotes), signing: false, broadcast: false }
+          capabilities: { assetDirectory: true, research: true, walletExposure: Boolean(exposure), quote: Boolean(quotes), signing: false, broadcast: false }
         }, requestId);
+        return;
+      }
+      if (url.pathname === "/api/assets") {
+        const chainId = url.searchParams.get("chainId")?.trim() || "56";
+        const platformId = url.searchParams.get("platformId")?.trim() || undefined;
+        const text = url.searchParams.get("query")?.trim() || undefined;
+        const offset = Number(url.searchParams.get("offset") ?? "0");
+        const limit = Number(url.searchParams.get("limit") ?? "36");
+        try {
+          const catalog = await stocks.listSnapshot({ chainId, platformId });
+          const platforms = await stocks.platforms();
+          const view = buildAssetDirectoryView(catalog.listings, platforms, {
+            text,
+            chainId,
+            platformId,
+            offset: Number.isFinite(offset) ? offset : 0,
+            limit: Number.isFinite(limit) ? limit : 36,
+            sourceResponseTimestampMs: catalog.sourceResponseTimestampMs,
+            platformMetadataResponseTimestampMs: catalog.platformMetadataResponseTimestampMs
+          });
+          sendJson(response, 200, { mode, requestId, durationMs: Math.round(performance.now() - startedAt), view }, requestId);
+        } catch (error) {
+          console.warn(`[ariadne-web:${requestId}] asset directory unavailable: ${error instanceof Error ? error.message : String(error)}`);
+          sendJson(response, 502, {
+            mode,
+            requestId,
+            error: { code: "asset_directory_unavailable", message: "The asset directory is temporarily unavailable.", retryable: true },
+            sideEffects: "none"
+          }, requestId);
+        }
+        return;
+      }
+      if (url.pathname === "/api/asset-prices") {
+        const chainId = url.searchParams.get("chainId")?.trim() || "56";
+        const encoded = url.searchParams.getAll("representation");
+        const representations: RepresentationIdentity[] = [];
+        for (const item of encoded) {
+          const separator = item.indexOf(":");
+          if (separator <= 0) {
+            sendJson(response, 400, { error: { code: "invalid_representation", message: "Each representation must include a platform and contract address." }, sideEffects: "none" }, requestId);
+            return;
+          }
+          representations.push({
+            chainId,
+            platformId: item.slice(0, separator),
+            contractAddress: item.slice(separator + 1)
+          });
+        }
+        if (mode !== "live-readonly" || !stocks.tokenPriceSnapshots) {
+          sendJson(response, 501, { error: { code: "timestamped_prices_unavailable", message: "Timestamped provider prices are unavailable in this mode." }, sideEffects: "none" }, requestId);
+          return;
+        }
+        if (chainId !== "56" || representations.length < 1 || representations.length > 100 ||
+          representations.some((item) => !/^[a-z0-9_-]{1,32}$/i.test(item.platformId) || !/^0x[a-fA-F0-9]{40}$/.test(item.contractAddress))) {
+          sendJson(response, 400, { error: { code: "invalid_asset_price_request", message: "Request 1–100 BNB Chain representations with valid platform IDs and contract addresses." }, sideEffects: "none" }, requestId);
+          return;
+        }
+        try {
+          const items = await stocks.tokenPriceSnapshots(representations);
+          sendJson(response, 200, { mode, requestId, view: { kind: "timestamped_token_prices", items }, sideEffects: "none" }, requestId);
+        } catch (error) {
+          console.warn(`[ariadne-web:${requestId}] timestamped prices unavailable: ${error instanceof Error ? error.message : String(error)}`);
+          sendJson(response, 502, { error: { code: "asset_prices_unavailable", message: "Timestamped asset prices are temporarily unavailable.", retryable: true }, sideEffects: "none" }, requestId);
+        }
         return;
       }
       if (url.pathname === "/api/research") {
@@ -168,6 +217,36 @@ export function createWebServer(mode: "demo" | "live-readonly", stocks: Research
             sideEffects: "none",
             capabilities: { research: true, quote: false, signing: false, broadcast: false }
           }, requestId);
+        }
+        return;
+      }
+      if (url.pathname === "/api/candles") {
+        const query = url.searchParams.get("query")?.trim() ?? "";
+        const chainId = url.searchParams.get("chainId")?.trim() || "56";
+        const platformId = url.searchParams.get("platformId")?.trim() ?? "";
+        const contractAddress = url.searchParams.get("contractAddress")?.trim() ?? "";
+        const bar = url.searchParams.get("bar")?.trim() || "1m";
+        if (!query || chainId !== "56" || !/^[a-z0-9_-]{1,32}$/i.test(platformId) || !/^0x[a-fA-F0-9]{40}$/.test(contractAddress) || !["1m", "5m", "15m", "1h", "1d"].includes(bar)) {
+          sendJson(response, 400, { mode, requestId, error: { code: "invalid_candles_request", message: "Provide a BNB Chain ticker, exact platform and contract, and supported interval." }, sideEffects: "none" }, requestId);
+          return;
+        }
+        try {
+          const assets = await stocks.search(query, { chainId });
+          const asset = assets.find(item => item.underlyingTicker.toLowerCase() === query.toLowerCase() && item.platformId.toLowerCase() === platformId.toLowerCase() && item.contractAddress.toLowerCase() === contractAddress.toLowerCase());
+          if (!asset) {
+            sendJson(response, 404, { mode, requestId, error: { code: "representation_not_found", message: "The exact representation was not found." }, sideEffects: "none" }, requestId);
+            return;
+          }
+          if (mode === "demo" || !stocks.candles) {
+            sendJson(response, 200, { mode, requestId, view: { state: "unavailable", candles: [], bar, chainId, platformId: asset.platformId, contractAddress, source: "none", asOf: null, sourceResponseTimestampMs: null }, sideEffects: "none" }, requestId);
+            return;
+          }
+          const raw = await stocks.candles(asset, { bar, limit: 90 });
+          const candles = normalizeMarketCandles(raw);
+          sendJson(response, 200, { mode, requestId, view: { state: candles.length ? "ready" : "empty", candles, bar, chainId, platformId: asset.platformId, contractAddress, source: "binance_web3_market_api", asOf: candles.at(-1)?.time ?? null, sourceResponseTimestampMs: null }, sideEffects: "none" }, requestId);
+        } catch (error) {
+          console.warn(`[ariadne-web:${requestId}] candles unavailable: ${error instanceof Error ? error.message : String(error)}`);
+          sendJson(response, 502, { mode, requestId, error: { code: "candles_unavailable", message: "Market candles are temporarily unavailable.", retryable: true }, sideEffects: "none" }, requestId);
         }
         return;
       }
@@ -219,13 +298,14 @@ export function createWebServer(mode: "demo" | "live-readonly", stocks: Research
         const chainId = url.searchParams.get("chainId")?.trim() || "56";
         const query = url.searchParams.get("query")?.trim() || "NVDA";
         const platformId = url.searchParams.get("platformId")?.trim() ?? "";
+        const contractAddress = url.searchParams.get("contractAddress")?.trim() ?? "";
         const amount = url.searchParams.get("amount")?.trim() ?? "";
         if (!/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
           sendJson(response, 400, { mode, requestId, error: { code: "invalid_wallet_address", message: "Provide a valid public EVM wallet address." }, sideEffects: "none" }, requestId);
           return;
         }
-        if (!platformId || !/^\d+(\.\d+)?$/.test(amount) || Number(amount) <= 0) {
-          sendJson(response, 400, { mode, requestId, error: { code: "invalid_quote_request", message: "Provide a platform and a positive USDT amount." }, sideEffects: "none" }, requestId);
+        if (!platformId || (contractAddress && !/^0x[a-fA-F0-9]{40}$/.test(contractAddress)) || !/^\d{1,7}$/.test(amount) || Number(amount) <= 0 || Number(amount) > 1_000_000) {
+          sendJson(response, 400, { mode, requestId, error: { code: "invalid_quote_request", message: "Provide a valid contract, if specified, and a positive whole-USDT amount." }, sideEffects: "none" }, requestId);
           return;
         }
         if (!quotes) {
@@ -234,7 +314,9 @@ export function createWebServer(mode: "demo" | "live-readonly", stocks: Research
         }
         try {
           const assets = await stocks.search(query, { chainId, platformId });
-          const asset = assets[0];
+          const asset = contractAddress
+            ? assets.find(item => item.underlyingTicker.toLowerCase() === query.toLowerCase() && item.contractAddress.toLowerCase() === contractAddress.toLowerCase())
+            : assets.find(item => item.underlyingTicker.toLowerCase() === query.toLowerCase());
           if (!asset) {
             sendJson(response, 404, { mode, requestId, error: { code: "representation_not_found", message: "No matching tokenized-stock representation was found for that issuer." }, sideEffects: "none" }, requestId);
             return;
@@ -256,8 +338,54 @@ export function createWebServer(mode: "demo" | "live-readonly", stocks: Research
         }
         return;
       }
-      if (await serveStatic(url.pathname, response)) return;
-      sendJson(response, 404, { error: { code: "not_found", message: "Not found" }, requestId }, requestId);
+      if (url.pathname === "/api/preflight") {
+        const walletAddress = url.searchParams.get("walletAddress")?.trim() ?? "";
+        const chainId = url.searchParams.get("chainId")?.trim() ?? "";
+        const query = url.searchParams.get("query")?.trim() ?? "";
+        const platformId = url.searchParams.get("platformId")?.trim() ?? "";
+        const contractAddress = url.searchParams.get("contractAddress")?.trim() ?? "";
+        const amount = url.searchParams.get("amount")?.trim() ?? "";
+        if (!/^0x[a-fA-F0-9]{40}$/.test(walletAddress) || !/^0x[a-fA-F0-9]{40}$/.test(contractAddress) || chainId !== "56" || !query || !platformId || !/^\d{1,7}$/.test(amount) || Number(amount) <= 0 || Number(amount) > 1_000_000) {
+          sendJson(response, 400, { mode, requestId, error: { code: "invalid_preflight_request", message: "Provide a public wallet, exact BNB contract and positive whole-USDT amount." }, sideEffects: "none" }, requestId);
+          return;
+        }
+        if (!preflight || !simulator) {
+          sendJson(response, 501, { mode, requestId, error: { code: "preflight_unavailable", message: "Read-only preflight is not enabled." }, sideEffects: "none" }, requestId);
+          return;
+        }
+        try {
+          const assets = await stocks.search(query, { chainId, platformId });
+          const asset = assets.find(item => item.underlyingTicker.toLowerCase() === query.toLowerCase() && item.contractAddress.toLowerCase() === contractAddress.toLowerCase());
+          if (!asset) {
+            sendJson(response, 404, { mode, requestId, error: { code: "representation_not_found", message: "The exact representation was not found." }, sideEffects: "none" }, requestId);
+            return;
+          }
+          const plan = await preflight.createActionPlan({
+            type: "buy",
+            walletAddress,
+            fromTokenAddress: "0x55d398326f99059fF775485246999027B3197955",
+            toAsset: asset,
+            amount,
+            amountDecimals: 18
+          });
+          const action = plan.unsignedActions?.[0] as { kind?: string; payload?: { tx?: { from?: string; to?: string; value?: string; data?: string } } } | undefined;
+          let simulation: { state: "not_run" | "unsupported_route" | "completed"; success?: boolean; warnings?: string[] } = { state: "not_run" };
+          if (action?.kind === "rfq_order") simulation = { state: "unsupported_route", warnings: ["RFQ orders require an external signature and cannot be EVM-simulated here."] };
+          else if (action?.kind === "evm_transaction") {
+            const tx = action.payload?.tx;
+            if (tx && /^0x[a-fA-F0-9]{40}$/.test(tx.to ?? "") && /^\d+$/.test(tx.value ?? "") && (!tx.data || /^0x[0-9a-fA-F]*$/.test(tx.data))) {
+              const result = await simulator.simulateEvm(chainId, { from: walletAddress, to: tx.to!, value: tx.value!, data: tx.data });
+              simulation = { state: "completed", success: result.success, warnings: result.warnings };
+            }
+          }
+          sendJson(response, 200, { mode, requestId, view: { kind: "read_only_preflight", asset: { ticker: asset.underlyingTicker, issuer: asset.platformId, contractAddress }, status: plan.status, safety: plan.safetyReport ? { passed: plan.safetyReport.passed, checks: plan.safetyReport.checks, blockingReasons: plan.safetyReport.blockingReasons } : null, simulation, expiresAt: plan.expiresAt ?? null, boundary: { sideEffects: "none", signatureRequested: false, broadcastAttempted: false, unsignedActionReturned: false } } }, requestId);
+        } catch (error) {
+          console.warn(`[ariadne-web:${requestId}] preflight unavailable: ${error instanceof Error ? error.message : String(error)}`);
+          sendJson(response, 502, { mode, requestId, error: { code: "preflight_unavailable", message: "Read-only preflight could not complete.", retryable: true }, sideEffects: "none" }, requestId);
+        }
+        return;
+      }
+      sendJson(response, 404, { error: { code: "not_found", message: "API route not found" }, requestId }, requestId);
     })().catch((error) => {
       console.warn(`[ariadne-web] request failed: ${error instanceof Error ? error.message : String(error)}`);
       if (!response.headersSent) sendJson(response, 500, {
@@ -283,5 +411,5 @@ export function createWebLiveServer(): Server {
     proxyUrl: process.env.BINANCE_WEB3_PROXY_URL
   });
   const stocks = new TokenizedStocksService(client);
-  return createWebServer("live-readonly", stocks, new WalletService(client), stocks);
+  return createWebServer("live-readonly", stocks, new WalletService(client), stocks, stocks, new TransactionService(client));
 }

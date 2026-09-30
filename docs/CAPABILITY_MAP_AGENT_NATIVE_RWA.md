@@ -1,13 +1,13 @@
-# Ariadne Agent-Native RWA Capability Map
+# Ariadne AI-Native Onchain Finance Capability Map
 
 ## 1. Unified architecture
 
 ```text
 Natural-language user intent
         ↓
-Agent orchestration layer
+Agent or direct-user interaction
         ↓
-Ariadne semantic asset layer
+Ariadne interaction core
         ↓
 Binance Web3 API modules
         ↓
@@ -21,7 +21,7 @@ BSC and external-wallet execution layer
 | `TokenizedAsset` | Underlying, issuer, platform, chain and contract identity | RWA Data API |
 | `Issuer` | Platform, logo, links and explanation | RWA Data / metadata |
 | `MarketContext` | Prices, reference, state, timestamps and warnings | RWA Data + Market API |
-| `Comparison` | Differences and preference-filtered choices | Ariadne semantic layer |
+| `Comparison` | Differences and preference-filtered choices | Ariadne interaction core |
 | `Portfolio` | Wallet balance, exposure and target allocation | Wallet / Portfolio API |
 | `Strategy` | User preferences, themes and rebalance rules | Agent orchestration |
 | `ActionPlan` | Quote, approval, simulation and execution state | Trading / Transaction API |
@@ -54,7 +54,7 @@ BSC and external-wallet execution layer
 - `prepare_action_from_intent`
 - `simulate_stock_action_plan`
 
-These tools are deterministic MCP entry points. The calling Agent is responsible for converting natural language into the MCP schema. The local Ariadne web product now provides a direct UI over the same semantic layer instead of requiring an Agent to perform the final presentation.
+These tools are deterministic MCP entry points. The calling Agent converts natural language into the MCP schema. The local Ariadne web product provides a direct UI over the same interaction core instead of requiring an Agent to perform the final presentation.
 
 ### Low-level adapter capabilities
 
@@ -95,7 +95,7 @@ One-line result, key differences, data gaps, risk context, suggested next action
 | Inspect a portfolio | wallet → holdings → market | Portfolio summary |
 | Create a theme basket | screen → compare → portfolio | Basket preview |
 | Simulate rebalance | portfolio → strategy → quote → simulate | Simulated changes |
-| Execute | confirm → external sign → broadcast | Status tracking |
+| Execute a standard BSC EVM plan | register → simulate → explicit confirmation → external sign → guarded broadcast | Plan-bound signature/gas/current-balance/allowance checks and one-attempt broadcast; MCP or `GuardedEvmExecutionService` |
 
 ## 7. Priority
 
@@ -105,7 +105,7 @@ Discovery and comparison; asset cards; market context; percentage gaps; warnings
 
 ### P1 — current expansion and product expression
 
-Theme baskets; portfolio exposure; preference screening; trading-session analysis; issuer metadata/logos; web product cards and comparison views; npm distribution and Demo Mode.
+Theme baskets; preference screening; trading-session analysis; portfolio strategy; richer execution-readiness views; npm distribution and hosted delivery decisions.
 
 ### P2
 
@@ -115,15 +115,15 @@ Scheduled DCA; automatic rebalance; event calendar; DeFi positions and calldata;
 
 | Capability | Current status | Next validation |
 |---|---|---|
-| MCP asset resolution | Verified | Higher-level discovery orchestration |
-| Wrapper comparison | Verified | Preference-based screening |
-| Market context | Verified | Percentage gap and market-state semantics |
-| Outcome envelope | Implemented and tested | Multi-client presentation |
-| ActionPlan | Implemented and tested | Higher-level intent entry point |
+| MCP asset resolution | Verified | Broader multi-asset regression set |
+| Wrapper comparison | Verified | Additional user preference combinations |
+| Market context | Verified with explicit gaps | Re-test upstream market-status and liquidity coverage |
+| Outcome envelope | Implemented and tested | Cross-client presentation regression |
+| ActionPlan | Implemented and tested | Funded final-stage validation |
 | Simulation | Verified | Multi-asset portfolio simulation |
-| External signing | Boundary implemented | Funded-wallet validation |
-| Broadcast | Boundary implemented | Funded-wallet validation |
-| Wallet / portfolio | Basic capability verified | Portfolio view |
+| External signing | External-only; raw signed EVM transaction is checked against its confirmed plan | Funded-wallet validation |
+| Broadcast | MCP and guarded SDK workflows validate plan, signature, gas, balances, reviewed allowance and one-attempt replay locally | Funded-wallet validation; RFQ/multi-action remain unsupported by guarded flow |
+| Wallet / portfolio | MCP and direct web read-only views verified | Strategy and rebalance preview |
 | DeFi Positions | Upstream blocked | Re-test after service recovery |
-| Demo Mode | Implemented locally | Extend deterministic fixtures beyond the NVDA discovery path |
-| Asset logos / metadata | To be added | Source and caching strategy |
+| Demo Mode | Implemented locally across directory, research, exposure and quote | Broader fixture maintenance |
+| Asset logos / metadata | Implemented from official RWA and platform API fields | Cache policy and refresh observability |

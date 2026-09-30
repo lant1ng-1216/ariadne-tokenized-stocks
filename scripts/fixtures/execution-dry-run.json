@@ -1,0 +1,25 @@
+{
+  "note": "SYNTHETIC OFFLINE TEST DATA ONLY. No asset, quote or transaction in this file is real or broadcastable.",
+  "chainId": "56",
+  "asset": {
+    "assetId": "56:0x6666666666666666666666666666666666666666",
+    "chainId": "56",
+    "platformId": "bstock",
+    "contractAddress": "0x6666666666666666666666666666666666666666",
+    "tokenSymbol": "TESTB",
+    "underlyingTicker": "TEST",
+    "underlyingName": "Synthetic Test Stock"
+  },
+  "inputTokenAddress": "0x5555555555555555555555555555555555555555",
+  "routerAddress": "0x3333333333333333333333333333333333333333",
+  "spenderAddress": "0x4444444444444444444444444444444444444444",
+  "amount": "10",
+  "amountDecimals": 6,
+  "maxGasCostBnb": "0.0002",
+  "quoteId": "offline-quote-001",
+  "quotePriceImpactPercent": "0.3",
+  "inputBalanceBaseUnits": "20000000",
+  "allowanceBaseUnits": "20000000",
+  "bnbBalanceWei": "1000000000000000",
+  "transactionData": "0x1234"
+}

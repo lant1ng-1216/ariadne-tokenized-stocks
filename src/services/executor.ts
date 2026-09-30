@@ -8,6 +8,11 @@ export type ActionBroadcaster = (signed: SignedAction, plan: ActionPlan) => Prom
 /**
  * Execution is deliberately dependency-injected. Ariadne never owns a private key;
  * callers must provide a signer and an explicit broadcaster, and the plan must be confirmed.
+ * This generic callback orchestrator is not the MCP safety boundary: integrators must
+ * validate signed payloads, fee/balance limits, immutable plan stages and replay before
+ * their broadcaster sends anything. Use GuardedEvmExecutionService for a standard
+ * BSC EVM plan when Ariadne must enforce those checks itself.
+ * @deprecated Use GuardedEvmExecutionService for standard BSC EVM plan simulation, confirmation and broadcast.
  */
 export class ExecutionService {
   constructor(private readonly signer: ActionSigner, private readonly broadcaster?: ActionBroadcaster) {}

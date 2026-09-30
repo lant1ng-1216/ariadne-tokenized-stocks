@@ -10,10 +10,42 @@ export type StockAsset = {
   tokenSymbol: string;
   underlyingTicker: string;
   underlyingName: string;
+  tokenName?: string;
+  tokenLogoUrl?: string;
+  issuerLogoUrl?: string;
+  issuerWebsite?: string;
   matchQuality?: AssetMatchQuality;
 };
 
+export type RwaPlatform = {
+  platformId: PlatformId;
+  name: string;
+  tickerCount?: number;
+  chainDistribution: Array<{ chainId: string; tokenCount: number }>;
+  website?: string;
+  logoUrl?: string;
+};
+
+export type TokenizedStockListing = StockAsset & {
+  underlyingNameZh?: string;
+  tokenToShareRatio?: string;
+  tags: string[];
+  market: MarketContext;
+  marketCap?: string;
+  peRatioTTM?: string;
+};
+
 export type MarketStatus = "open" | "closed" | "offhours" | "unknown";
+
+export type MarketDataProvenance = {
+  provider: "Binance Web3";
+  endpoint: string;
+  fields: string[];
+  /** Provider response time for this snapshot, when supplied. */
+  responseTimestampMs?: number;
+  /** Per-asset market update time, distinct from the response time. */
+  assetUpdatedAtMs?: number;
+};
 
 export type MarketContext = {
   asset: StockAsset;
@@ -29,6 +61,7 @@ export type MarketContext = {
   volume24H?: string;
   holders?: number;
   dataWarnings: string[];
+  provenance?: MarketDataProvenance[];
 };
 
 export type WalletHolding = {
@@ -52,6 +85,8 @@ export type TradeIntent = {
   amount: string;
   amountDecimals: number;
   maxSlippageBps?: number;
+  /** User-reviewed maximum gas spend in BNB; no implicit broadcast default. */
+  maxGasCostBnb?: string;
 };
 
 export type QuoteRoute = {
@@ -60,6 +95,8 @@ export type QuoteRoute = {
   toTokenAmount?: string;
   minToTokenAmount?: string;
   priceImpact?: string;
+  /** Only priceImpactPercent has a verified percent unit; a raw priceImpact is not assumed to be percent. */
+  priceImpactUnit?: "percent" | "unknown";
   dexName?: string;
   approvalTarget?: string | null;
   expiresAt?: number;
@@ -138,6 +175,10 @@ export type ActionPlan = {
   unsignedActions?: unknown[];
   simulation?: unknown;
   safetyReport?: SafetyReport;
+  /** Read-only evidence for a separate approval step; never an approval or swap authorization. */
+  approvalRequired?: { tokenAddress: string; spender: string; requiredAmount: string; currentAllowance: string };
+  /** Quote-declared ERC-20 spender and allowance reviewed during preparation; re-read before broadcast. */
+  authorizationCheck?: { required: true; tokenAddress: string; spender: string; requiredAmount: string; reviewedAllowance: string };
   expiresAt?: number;
   requiresUserConfirmation: boolean;
 };

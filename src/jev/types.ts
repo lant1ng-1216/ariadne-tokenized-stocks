@@ -1,12 +1,27 @@
 export type GateStatus = "passed" | "passed_with_deferred_items" | "needs_rework" | "blocked";
 export type NextAction = "continue" | "repair" | "ask_user" | "stop";
 export type RiskLevel = "low" | "medium" | "high";
+export type CriterionVerdict = "met" | "gap" | "insufficient_evidence" | "blocked";
+
+export type GateCriterion = {
+  id: string;
+  requirement: string;
+  checkNames: string[];
+  evidenceSummary: string;
+};
+
+export type CriterionReview = {
+  verdict: CriterionVerdict;
+  confidence: number;
+};
+export type DeferredAssessment = "non_blocking" | "current_phase_gap" | "unclear";
 
 export type GateEvidence = {
   phase: string;
   nextPhase?: string;
   objective: string;
   checks: Array<{ name: string; passed: boolean; evidence?: string }>;
+  acceptanceCriteria?: GateCriterion[];
   deferredItems: string[];
   blockedItems: string[];
   externalWriteRequested: boolean;
@@ -18,6 +33,9 @@ export type GateDecision = {
   nextAction: NextAction;
   riskLevel: RiskLevel;
   confidence: number;
+  questionConfidence?: Record<string, number>;
+  criterionReviews?: Record<string, CriterionReview>;
+  deferredAssessment?: DeferredAssessment;
   reasons: string[];
   automaticExecutionAllowed: false;
   source: "deterministic-baseline" | "jev";

@@ -36,6 +36,9 @@ export function errorOutcome(error: unknown, nextAction: string, code = "tool_er
   );
 }
 
-export function textResult(payload: Record<string, unknown>) {
-  return { content: [{ type: "text" as const, text: JSON.stringify(payload, null, 2) }] };
+export function textResult(payload: Record<string, unknown>, options: { structuredContent?: boolean } = {}) {
+  return {
+    content: [{ type: "text" as const, text: JSON.stringify(payload, null, 2) }],
+    ...(options.structuredContent ? { structuredContent: payload } : {})
+  };
 }

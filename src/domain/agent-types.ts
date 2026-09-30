@@ -27,11 +27,18 @@ export type CoverageStatus = {
   marketContext: "fetched" | "not_requested" | "unavailable";
 };
 
+export type MarketContextFailureCategory =
+  | "network_failure"
+  | "provider_failure"
+  | "data_integrity_failure"
+  | "unexpected_failure";
+
 export type DataQuality = {
   completeness: "complete" | "partial" | "limited";
   coverage: CoverageStatus;
   missingFields: string[];
   warnings: string[];
+  marketContextFailureCategory?: MarketContextFailureCategory;
   lastUpdatedAt?: number;
 };
 
@@ -71,11 +78,24 @@ export type AssetComparison = {
 
 export type ResearchTiming = {
   searchMs: number;
+  searchResolution?: {
+    directSearchMs: number;
+    catalogReadMs: number;
+    catalogMatchMs: number;
+    resolvedSearchMs: number;
+    calls: {
+      directSearch: number;
+      catalogRead: number;
+      resolvedSearch: number;
+    };
+  };
   marketContextMs: number;
+  marketContextBatchCalls?: number;
+  marketContextFailureCategory?: MarketContextFailureCategory;
   comparisonMs: number;
   presentationMs: number;
   totalMs: number;
-  marketContextRequests: number;
+  marketContextAssets: number;
   agentReasoningExcluded: true;
 };
 

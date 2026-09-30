@@ -11,9 +11,11 @@ export type PhaseState = {
 
 export async function advancePhaseState(path: string, record: ShadowDecisionRecord): Promise<PhaseState> {
   const current = await readPhaseState(path);
-  const next = record.phaseTransition === "advance" ? record.evidence.nextPhase : current.nextPhase;
+  const next = record.evidence.nextPhase ?? current.nextPhase;
   const state: PhaseState = {
-    currentPhase: record.phaseTransition === "advance" && next ? next : current.currentPhase,
+    // A pause holds the requested phase; it must not leave a stale terminal/previous
+    // phase in the ledger when a new approved phase has just started.
+    currentPhase: record.phaseTransition === "advance" && next ? next : record.evidence.phase,
     lastDecisionAt: record.recordedAt,
     lastTransition: record.phaseTransition,
     nextPhase: next,

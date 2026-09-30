@@ -48,6 +48,7 @@ const processStarted = now();
 await mcpClient.connect(transport);
 const mcpConnectMs = now() - processStarted;
 const mcpRuns: Array<Record<string, unknown>> = [];
+const researchRuns: Array<Record<string, unknown>> = [];
 for (let iteration = 1; iteration <= 3; iteration += 1) {
   const searchStarted = now();
   const search = await mcpClient.callTool({ name: "resolve_tokenized_stock", arguments: { query: "NVDA", chainId: "56" } });
@@ -71,6 +72,20 @@ for (let iteration = 1; iteration <= 3; iteration += 1) {
   });
   const marketMs = now() - marketStarted;
   mcpRuns.push({ iteration, searchMs, marketMs });
+
+  const researchStarted = now();
+  const research = await mcpClient.callTool({
+    name: "research_tokenized_stock",
+    arguments: { query: "Research NVDA tokenized-stock representations on BNB Chain. Do not trade.", chainId: "56" }
+  });
+  const researchMs = now() - researchStarted;
+  const researchText = (research.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
+  if (!researchText) throw new Error("MCP research returned no text payload");
+  const researchPayload = JSON.parse(researchText) as {
+    outcome?: { status?: string; sideEffects?: string };
+    timing?: { searchMs?: number; marketContextMs?: number; comparisonMs?: number; presentationMs?: number; totalMs?: number; marketContextAssets?: number };
+  };
+  researchRuns.push({ iteration, clientWallMs: researchMs, serverTiming: researchPayload.timing, status: researchPayload.outcome?.status, sideEffects: researchPayload.outcome?.sideEffects });
 }
 await transport.close();
 
@@ -78,7 +93,7 @@ console.log(JSON.stringify({
   measuredAt: new Date().toISOString(),
   repeats: 3,
   directSdk: directRuns,
-  mcp: { connectMs: mcpConnectMs, runs: mcpRuns },
+  mcp: { connectMs: mcpConnectMs, runs: mcpRuns, naturalLanguageResearch: researchRuns },
   limitations: [
     "These measurements cover SDK/API and MCP client timing, not the time Codex spends reasoning or rendering a final answer.",
     "No signing, broadcast or transaction side effect is performed."

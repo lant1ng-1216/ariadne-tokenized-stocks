@@ -30,6 +30,14 @@ export function normalizeMarketStatus(value: unknown): MarketStatus {
   return "unknown";
 }
 
+export function positiveDecimal(value: unknown): string | undefined {
+  if (typeof value !== "string" && typeof value !== "number") return undefined;
+  const candidate = String(value).trim();
+  if (candidate.length > 256 || !/^\d+(?:\.\d+)?$/.test(candidate)) return undefined;
+  const [whole, fraction = ""] = candidate.split(".");
+  return BigInt(`${whole}${fraction}`) > 0n ? candidate : undefined;
+}
+
 function parseDecimal(value: string): { units: bigint; scale: number } {
   const normalized = value.trim();
   if (!/^-?\d+(?:\.\d+)?$/.test(normalized)) throw new Error(`Invalid decimal: ${value}`);
@@ -72,18 +80,20 @@ function decimalGapPercent(tokenPrice?: string, referencePrice?: string): string
 
 export function normalizeMarketContext(asset: StockAsset, input: any): MarketContext {
   const status = normalizeMarketStatus(input.statusInfo?.marketStatus);
+  const tokenPrice = positiveDecimal(input.tokenPrice);
+  const referencePrice = positiveDecimal(input.referencePrice);
   const warnings: string[] = [];
   if (status === "unknown") warnings.push("The platform did not provide a recognized marketStatus");
   if (input.liquidity == null) warnings.push("Liquidity was not provided and must not be interpreted as zero");
-  if (input.tokenPrice == null) warnings.push("tokenPrice is missing");
-  if (input.referencePrice == null) warnings.push("referencePrice is missing");
+  if (!tokenPrice) warnings.push(input.tokenPrice == null ? "tokenPrice is missing" : "tokenPrice is invalid or non-positive");
+  if (!referencePrice) warnings.push(input.referencePrice == null ? "referencePrice is missing" : "referencePrice is invalid or non-positive");
 
   return {
     asset,
-    tokenPrice: input.tokenPrice,
-    referencePrice: input.referencePrice,
-    priceGap: decimalGap(input.tokenPrice, input.referencePrice),
-    priceGapPercent: decimalGapPercent(input.tokenPrice, input.referencePrice),
+    tokenPrice,
+    referencePrice,
+    priceGap: decimalGap(tokenPrice, referencePrice),
+    priceGapPercent: decimalGapPercent(tokenPrice, referencePrice),
     tokenPriceUpdatedAt: input.tokenPriceUpdatedAt,
     marketStatus: status,
     openState: input.statusInfo?.openState,
@@ -124,6 +134,7 @@ export function normalizeQuote(asset: StockAsset, input: any): QuoteResult {
     toTokenAmount: route.toTokenAmount,
     minToTokenAmount: route.minToTokenAmount,
     priceImpact: route.priceImpactPercent ?? route.priceImpact,
+    priceImpactUnit: route.priceImpactPercent != null ? "percent" as const : "unknown" as const,
     dexName: route.vendorName ?? route.dexName,
     approvalTarget: route.approveTarget ?? null
   }));
@@ -133,6 +144,7 @@ export function normalizeQuote(asset: StockAsset, input: any): QuoteResult {
   const warnings: string[] = [];
   if (isRfq) warnings.push("This RWA quote uses RFQ and requires a userWalletAddress and external EIP-712 signature");
   if (routes.some((route: any) => !route.minToTokenAmount)) warnings.push("Quote did not return minToTokenAmount");
+  if (routes.some((route: any) => route.priceImpactUnit === "unknown")) warnings.push("Price impact is missing or its unit is unverified; do not treat it as a percentage");
   return {
     asset,
     platformMode: isRfq ? "rfq" : isStandard ? "standard" : "unknown",
@@ -147,12 +159,17 @@ export function normalizeQuote(asset: StockAsset, input: any): QuoteResult {
 
 export function normalizeSimulation(input: any): SimulationResult {
   const data = input.data ?? {};
-  const warnings: string[] = [];
-  const status = data.status ?? data.executionStatus;
-  const failedByStatus = status === "FAILED" || status === "FAIL" || Boolean(data.failReason);
-  if (!input.success || input.code !== 0 || failedByStatus) warnings.push(data.failReason ?? input.msg ?? "Simulation failed");
+  const rawStatus = data.status ?? data.executionStatus;
+  const status = typeof rawStatus === "string" ? rawStatus.trim().toUpperCase() : undefined;
+  const successfulStatuses = new Set(["SUCCESS", "SUCCEEDED", "SIMULATED", "PASSED"]);
+  const explicitlySucceeded = successfulStatuses.has(status ?? "");
+  const failedByStatus = Boolean(status && !explicitlySucceeded) || Boolean(data.failReason);
+  const success = input.success === true && input.code === 0 && explicitlySucceeded && !failedByStatus;
+  const warnings: string[] = success ? [] : [
+    data.failReason ?? (!status ? "Simulation response did not include an explicit successful status" : `Simulation did not succeed (status: ${status})`)
+  ];
   return {
-    success: input.success === true && input.code === 0 && !failedByStatus,
+    success,
     status,
     balanceChanges: data.balanceChanges ?? [],
     allowanceChanges: data.allowanceChanges ?? [],

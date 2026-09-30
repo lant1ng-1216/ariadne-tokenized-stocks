@@ -91,7 +91,10 @@ assert.match(researchBriefPayload.presentation, /What Ariadne can do next/);
 assert.match(researchBriefPayload.presentation, /Product timing/);
 assert.doesNotMatch(researchBriefPayload.presentation, /\| Rank \| Issuer \|/);
 assert.equal(researchBriefPayload.timing.agentReasoningExcluded, true);
-assert.equal(researchBriefPayload.timing.marketContextRequests, 2);
+assert.equal(researchBriefPayload.timing.marketContextAssets, 2);
+assert.deepEqual(researchBriefPayload.timing.searchResolution.calls, { directSearch: 1, catalogRead: 0, resolvedSearch: 0 }, "a direct ticker lookup must not read the full catalog");
+assert.equal(researchBriefPayload.timing.marketContextBatchCalls, 1);
+assert.ok(Object.values(researchBriefPayload.timing.searchResolution.durationsMs).every((value: unknown) => typeof value === "number" && Number.isFinite(value) && value >= 0));
 assert.ok(Number.isFinite(researchBriefPayload.timing.totalMs));
 const ambiguousIntent = await client.callTool({ name: "prepare_action_from_intent", arguments: { query: "NVDA", type: "buy", walletAddress: "0x0000000000000000000000000000000000000000", fromTokenAddress: "0x55d398326f99059fF775485246999027B3197955", amount: "10", amountDecimals: 18, chainId: "56" } });
 const ambiguousIntentText = (ambiguousIntent.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
@@ -150,16 +153,17 @@ const simulationPlan = {
 };
 const planSimulation = await client.callTool({ name: "simulate_stock_action_plan", arguments: { plan: simulationPlan } });
 const planSimulationText = (planSimulation.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
-assert.ok(planSimulationText && /Plan simulation/.test(planSimulationText));
+assert.ok(planSimulationText);
 const simulatedPayload = JSON.parse(planSimulationText!);
 assert.ok(simulatedPayload.outcome.nextAction);
-assert.equal(simulatedPayload.plan.status, "simulated");
-const planSimulationWritebackSucceeded = true;
-const successfulConfirmation = await client.callTool({ name: "confirm_stock_action_plan", arguments: { plan: simulatedPayload.plan, confirmationToken: simulatedPayload.plan.planId } });
+assert.equal(simulatedPayload.outcome.status, "error", "a synthetic plan must not reach simulation");
+assert.match(simulatedPayload.summary, /not created in this MCP session/);
+const syntheticPlanRejected = true;
+const successfulConfirmation = await client.callTool({ name: "confirm_stock_action_plan", arguments: { plan: simulationPlan, confirmationToken: simulationPlan.planId } });
 const successfulConfirmationText = (successfulConfirmation.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
-assert.ok(successfulConfirmationText && /Plan confirmed/.test(successfulConfirmationText));
+assert.ok(successfulConfirmationText && /rejected/.test(successfulConfirmationText));
 const successfulConfirmationPayload = JSON.parse(successfulConfirmationText!);
-assert.equal(successfulConfirmationPayload.plan.status, "confirmed");
+assert.equal(successfulConfirmationPayload.outcome.status, "error");
 const confirmationAttempt = await client.callTool({ name: "confirm_stock_action_plan", arguments: { plan: parsedPlan.plan, confirmationToken: parsedPlan.plan.planId } });
 const confirmationText = (confirmationAttempt.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
 assert.ok(confirmationText && /rejected/.test(confirmationText));
@@ -205,17 +209,17 @@ const executableShape = {
   status: "confirmed",
   requiresUserConfirmation: false,
   expiresAt: Date.now() + 60_000,
-  safetyReport: { passed: true, checks: [], blockingReasons: [] },
+  safetyReport: { passed: true, checks: ["asset_identity", "quote_available", "price_impact", "authorization_visibility", "input_balance", "simulation"].map((name) => ({ name, passed: true, severity: "blocking", message: "test fixture" })), blockingReasons: [] },
   simulation: { success: true, balanceChanges: [], allowanceChanges: [], warnings: [] },
   intent: { walletAddress: "0x0000000000000000000000000000000000000000", toAsset: { chainId: "56" } }
 };
 const mismatchedAddress = await client.callTool({ name: "broadcast_confirmed_transaction", arguments: { plan: executableShape, signedTransaction: "0x01", address: "0x0000000000000000000000000000000000000001" } });
 const mismatchedAddressText = (mismatchedAddress.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
-assert.ok(mismatchedAddressText && /address must match/i.test(mismatchedAddressText));
+assert.ok(mismatchedAddressText && /not created in this MCP session/i.test(mismatchedAddressText));
 const expiredPlan = { ...executableShape, expiresAt: 1 };
 const expiredBroadcast = await client.callTool({ name: "broadcast_confirmed_transaction", arguments: { plan: expiredPlan, signedTransaction: "0x01", address: "0x0000000000000000000000000000000000000000" } });
 const expiredBroadcastText = (expiredBroadcast.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
-assert.ok(expiredBroadcastText && /expired/i.test(expiredBroadcastText));
+assert.ok(expiredBroadcastText && /not created in this MCP session/i.test(expiredBroadcastText));
 
-console.log(JSON.stringify({ toolCount: names.length, tools: names, resolveSucceeded: true, compareSucceeded: true, wrapperCount: comparisonPayload.count, planSucceeded: true, planSimulationWritebackSucceeded, successfulConfirmationSucceeded: true, unsafePlanMarkedFailed: true, unreadyPlanConfirmationRejected: true, simulationSucceeded: true, walletExposureSucceeded: true, walletHoldingCount: exposurePayload.holdings.length, broadcastOrderStatusSucceeded: true, unconfirmedBroadcastRejected: true, mismatchedAddressRejected: true, expiredBroadcastRejected: true }, null, 2));
+console.log(JSON.stringify({ toolCount: names.length, tools: names, resolveSucceeded: true, compareSucceeded: true, wrapperCount: comparisonPayload.count, planSucceeded: true, syntheticPlanRejected, syntheticPlanConfirmationRejected: true, unsafePlanMarkedFailed: true, unreadyPlanConfirmationRejected: true, simulationSucceeded: true, walletExposureSucceeded: true, walletHoldingCount: exposurePayload.holdings.length, broadcastOrderStatusSucceeded: true, unregisteredBroadcastRejected: true }, null, 2));
 await transport.close();

@@ -1,4 +1,4 @@
-import { createHmac } from "node:crypto";
+import { createHmac, randomUUID } from "node:crypto";
 import { fetch, ProxyAgent } from "undici";
 import { BinanceWeb3Error } from "./errors.js";
 
@@ -79,6 +79,7 @@ export class BinanceWeb3Client {
     const signature = createHmac("sha256", this.config.apiSecret)
       .update(preHash, "utf8")
       .digest("base64");
+    const nonce = randomUUID();
 
     let response: Awaited<ReturnType<typeof fetch>>;
     try {
@@ -88,6 +89,7 @@ export class BinanceWeb3Client {
         "X-OC-APIKEY": this.config.apiKey,
         "X-OC-TIMESTAMP": timestamp,
         "X-OC-SIGN": signature,
+        "X-OC-NONCE": nonce,
         "X-OC-RECV-WINDOW": "60000",
         ...(body ? { "Content-Type": "application/json" } : {})
       },

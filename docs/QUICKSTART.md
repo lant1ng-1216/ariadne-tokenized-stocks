@@ -2,7 +2,7 @@
 
 ## Demo Mode — no API credentials
 
-Demo Mode provides deterministic, read-only NVDA exploration so a user can test the Agent-native interaction without Binance credentials or wallet funds.
+Demo Mode provides deterministic, read-only tokenized-equity exploration so a user can test the AI-native interaction without Binance credentials or wallet funds.
 
 ```bash
 npm install
@@ -25,7 +25,9 @@ Then ask in natural language:
 I want to understand the tokenized NVIDIA stock versions on BNB Chain. Compare them and show the warnings. Do not create a transaction.
 ```
 
-For the shortest Agent-native path, the client should select `research_tokenized_stock` automatically. It combines discovery, issuer comparison, market context, data-quality warnings and the next safe action in one read-only workflow. Lower-level tools remain available for developers who need explicit control.
+In an MCP Agent client with automatic tool selection enabled, ask the question in natural language and the host may select `research_tokenized_stock`. This tool combines discovery, issuer comparison, market context, data-quality warnings and the next safe action in one read-only workflow. This repository's integration test explicitly invokes that tool with a natural-language query; it verifies Ariadne's handling and response, not automatic tool selection across every third-party Agent host. Lower-level tools remain available for developers who need explicit control.
+
+Research results keep issuer/chain/contract identity intact and report the Binance Web3 source endpoint and provider update time for timestamped prices. Unknown status, missing liquidity, and other gaps are warnings—not zero values or assurances that a snapshot is fresh under a guaranteed SLA.
 
 Useful first-run prompts:
 
@@ -45,7 +47,7 @@ If you want to inspect the product without asking Codex or Claude Code to render
 npm run web:demo
 ```
 
-Open `http://127.0.0.1:18901`. The page supports issuer comparison, field-level evidence, a public-address wallet-exposure preview and an explicit-issuer read-only quote preview. Use the deterministic Demo address shown on the page; it is not a real wallet. No private key, seed phrase, ActionPlan, signature or broadcast is accepted by this surface.
+Open `http://127.0.0.1:3000`. The Next.js App Router provides the multi-page product: SDK and MCP explanations, a deterministic asset directory, issuer comparison, field-level evidence, a public-address wallet-exposure preview and explicit-issuer read-only quote preview. No private key, seed phrase, ActionPlan, signature or broadcast is accepted by this surface.
 
 ## Live Mode
 
@@ -58,7 +60,7 @@ npm install
 
 Set the user's own Binance Web3 API credentials in `.env`, then configure the MCP client using `docs/mcp-config.example.json`. Real signing and broadcasting remain separate user-wallet operations.
 
-In Live Mode, use the same natural-language prompts. Ariadne resolves the appropriate read-only workflow; a user does not need to name an MCP tool. Any quote, signature, transaction or broadcast remains an explicit later boundary.
+In Live Mode, use the same natural-language prompts in a host that supports MCP tool selection. Whether the host selects the appropriate tool automatically depends on that host and its configuration; the user can also invoke the research tool explicitly. Any quote, signature, transaction or broadcast remains an explicit later boundary.
 
 For the controlled browser surface in Live Mode:
 
@@ -66,4 +68,4 @@ For the controlled browser surface in Live Mode:
 npm run web:live
 ```
 
-This keeps Binance credentials on the local server and exposes only GET-based asset research, public-address exposure and read-only quote preview. It is not a public deployment.
+This starts the Next.js site and a separate local API process. Binance credentials remain server-side; only GET-based catalog discovery, asset research, public-address exposure and read-only quote preview are exposed. Live Mode loads the current catalog returned by the BSC RWA API, including supplied token and issuer metadata. It is not a public deployment.

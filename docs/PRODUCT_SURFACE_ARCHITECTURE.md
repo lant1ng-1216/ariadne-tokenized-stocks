@@ -2,19 +2,19 @@
 
 ## Purpose
 
-Ariadne is not a replacement for an Agent and it is not limited to an API wrapper. It is a shared semantic and execution-boundary layer that can be used through three product surfaces:
+Ariadne is the AI-native interaction infrastructure for onchain finance. It connects Agents, developers and direct users to tokenized equities and real-world assets through one shared identity, research and execution model exposed through three product surfaces:
 
 1. the TypeScript SDK for developers and institutions;
 2. the MCP server for existing Agents such as Codex and Claude Code;
 3. the Ariadne web product for users who want to research and compare tokenized assets directly.
 
-The three surfaces should share one domain model and one safety policy. They should differ only in how intent is expressed and how evidence is presented.
+The three surfaces share one domain model and one safety policy. They differ in how intent is expressed and how evidence is presented.
 
 ## Product boundary
 
 ```text
 Direct web user ───────┐
-                       ├─> Ariadne semantic layer ──> Binance Web3 APIs
+                       ├─> Ariadne interaction core ─> Binance Web3 APIs
 Existing Agent ─ MCP ──┤             │
 Developer ─ SDK ───────┘             ├─> comparison and research evidence
                                      ├─> ActionPlan and simulation
@@ -30,11 +30,11 @@ The calling Agent may interpret natural language, select tools and explain resul
 - quote, allowance, ActionPlan and simulation boundaries;
 - explicit external-signature and broadcast constraints.
 
-The local web product calls the same semantic layer directly. It does not depend on Codex or Claude Code to perform a second summary before the user can understand the result; public hosting remains a separate release decision.
+The local web product calls the same interaction core directly. It does not depend on Codex or Claude Code to perform a second summary before the user can understand the result; public hosting remains a separate release decision.
 
-## Research workspace contract
+## Direct-product view contracts
 
-The first web surface should consume a structured research-workspace view rather than Markdown generated for an Agent transcript. The view contains:
+The web product consumes structured view models rather than Markdown generated for an Agent transcript. Its research view contains:
 
 - query identity and chain context;
 - one representation object per issuer, including token identity, contract, market snapshot and comparison eligibility;
@@ -70,7 +70,7 @@ Research mode is the most mature path. It should let a user search a company or 
 - missing data and warnings;
 - neutral next steps.
 
-The current MCP implementation exposes this through `research_tokenized_stock`. The web implementation should present the same evidence as visual cards and comparison views.
+The MCP implementation exposes this through `research_tokenized_stock`. The web product presents the same evidence as issuer-aware cards, a mechanical comparison workspace and an inspectable provenance drawer.
 
 ### Preparation mode — implemented but not complete as a product experience
 
@@ -82,11 +82,11 @@ Preparation mode can request quotes, inspect allowance, create an ActionPlan and
 - allowance and balance blockers;
 - whether the next step requires an external signature.
 
-The current SDK and MCP boundaries are implemented and tested. A polished web flow remains future work.
+The SDK and MCP preparation boundaries are implemented and tested. The web product currently exposes explicit-issuer read-only quote evidence; ActionPlan creation and simulation remain SDK/MCP workflows until a later authorized web execution phase.
 
-### Execution mode — intentionally final-stage
+### Guarded execution mode — local path implemented, funded validation deferred
 
-Execution mode includes external wallet signing, RFQ settlement, funded broadcast and post-trade balance reconciliation. These are not missing because of an architectural gap; they are intentionally held for final validation with an explicitly funded and authorized wallet.
+The SDK and MCP now provide Ariadne-guarded staged execution for one standard BSC EVM action: simulation, explicit confirmation, external signing, signed-transaction verification, gas and balance checks, and one broadcast attempt. No private key is handled. This synthetic/local implementation has not been validated with a funded wallet or on-chain settlement. RFQ signing/settlement, native-input assets, multi-action execution and post-trade balance reconciliation remain deferred.
 
 ## Track integration status
 
@@ -94,8 +94,8 @@ Execution mode includes external wallet signing, RFQ settlement, funded broadcas
 |---|---|---|
 | RWA Data | Implemented and verified | Core asset identity and issuer layer |
 | Market | Implemented and verified with data limitations | Research and comparison layer; missing liquidity/status remain visible |
-| Trading | Quote and unsigned preparation implemented | Read-only quote and preparation are mature; settlement remains final-stage |
-| Transaction | Simulation and rejection boundaries verified | Safe preparation layer; funded success remains deferred |
+| Trading | Quote, unsigned preparation and guarded standard-BSC-EVM execution path implemented | External signing is required; funded success remains unverified |
+| Transaction | Simulation, signature/fee/balance validation and replay boundary verified locally | Synthetic tests only; funded success and settlement remain deferred |
 | Wallet and portfolio | Read-only exposure implemented across MCP and local web surfaces | Portfolio context exists; unmatched assets and missing prices remain visible; automated strategy is not yet complete |
 | DeFi | Protocol/investment discovery verified | Positions are upstream-blocked; deposit/redeem/LP flows are not implemented |
 | b402 Payments | Not implemented | Future paid data/service distribution layer |
@@ -103,11 +103,11 @@ Execution mode includes external wallet signing, RFQ settlement, funded broadcas
 | BNB Agent Studio | Not implemented | Future hosted Agent deployment layer |
 | SDK and MCP | Local product core implemented | Public package, registry and hosted distribution remain release decisions |
 
-The goal is not to force every track into the first release. The goal is to make the semantic layer broad enough that later track capabilities can be added without creating a new incompatible plugin for every workflow.
+The goal is not to force every track into the first release. The goal is to make the interaction core broad enough that later track capabilities can be added without creating a new incompatible plugin for every workflow.
 
 ## Web product expression
 
-The web product should not reproduce raw JSON or rely on a downstream Agent to invent the visual hierarchy. The initial interface should contain:
+The web product does not reproduce raw JSON or rely on a downstream Agent to invent the visual hierarchy. The current multi-page interface contains:
 
 1. a natural-language or ticker search entry;
 2. issuer-aware asset cards;
@@ -116,7 +116,7 @@ The web product should not reproduce raw JSON or rely on a downstream Agent to i
 5. a neutral next-action area for market context, read-only quote and wallet exposure;
 6. a clearly separated preparation and execution boundary.
 
-Each asset card should reserve space for verified underlying and issuer logos, but show an explicit unavailable state when the upstream metadata source does not provide them. No logo URL should be inferred from a ticker or scraped without provenance.
+Each asset card renders a verified underlying logo with a distinct issuer badge and shows an explicit unavailable state when upstream metadata does not provide one. Logo URLs retain API provenance and are never inferred from a ticker.
 
 ## Maturity and release gates
 
@@ -126,9 +126,9 @@ The current maturity boundary is:
 - local Agent integration: passed;
 - local Hosted MCP proof of concept: passed;
 - local web Demo Mode and controlled Live Read-only Mode: passed;
-- product expression: improving, not final;
+- product expression: multi-page visual and interaction system implemented locally; refinement remains ongoing;
 - public package and Hosted MCP: not released;
 - funded execution and post-trade verification: intentionally deferred;
 - final competition materials: intentionally deferred.
 
-The next product work should improve the shared evidence model, web presentation and documentation consistency before adding high-risk execution or public hosting.
+The next product work should validate cross-surface consistency, deepen capability expression and complete public-delivery quality before adding high-risk execution or public hosting.

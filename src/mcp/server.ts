@@ -12,7 +12,15 @@ import { compareAgentAssets, toAgentAsset } from "../domain/agent-normalizers.js
 import type { AssetPreference } from "../domain/agent-types.js";
 import { renderAssetCard, renderComparisonTable, renderResearchBrief, researchNextSteps } from "../presentation/asset-view.js";
 import { DemoTokenizedStocksService } from "../services/demo-tokenized-stocks.js";
+import { AmbiguousAssetQueryError, explicitlyRequestsNoTrade, searchAssetIntent } from "../services/asset-intent-query.js";
 import { performance } from "node:perf_hooks";
+import { PlanRegistry } from "./plan-registry.js";
+import { assertSignedTransactionMatchesPlan } from "../domain/signed-transaction.js";
+import { assessSignedTransactionFee, assertNativeBalanceCoversFee, requireReviewedGasBudget } from "../domain/gas-safety.js";
+import { assertAllowanceCoversPlan, assertInputBalanceCoversPlan } from "../domain/balance-safety.js";
+import { enrichAgentAssets, type MarketContextEnrichmentDiagnostics } from "./asset-enrichment.js";
+import { registerAppResource, registerAppTool, RESOURCE_MIME_TYPE } from "@modelcontextprotocol/ext-apps/server";
+import { buildResearchAppHtml } from "./ui/research-app-html.js";
 
 const demoMode = process.env.ARIADNE_MODE === "demo";
 const apiKey = process.env.BINANCE_WEB3_API_KEY;
@@ -28,7 +36,12 @@ const client = new BinanceWeb3Client({
 const stocks = demoMode ? new DemoTokenizedStocksService(client) : new TokenizedStocksService(client);
 const wallet = new WalletService(client);
 const transactions = new TransactionService(client);
+const plans = new PlanRegistry();
 const elapsedMs = (startedAt: number) => Math.max(0, Math.round((performance.now() - startedAt) * 100) / 100);
+
+function ambiguousAssetResult(error: AmbiguousAssetQueryError) {
+  return textResult(outcome({ summary: error.message, candidateTickers: error.tickers }, "blocked", "Ask the user to choose one underlying ticker or company before continuing", { sideEffects: "none" }));
+}
 
 async function enrichAgentAsset(asset: Parameters<typeof toAgentAsset>[0], requestMarketContext = true) {
   if (!requestMarketContext) return toAgentAsset(asset);
@@ -41,9 +54,19 @@ async function enrichAgentAsset(asset: Parameters<typeof toAgentAsset>[0], reque
 }
 
 const server = new McpServer({ name: "ariadne-tokenized-stocks", version: "0.1.0" });
+const RESEARCH_UI_URI = "ui://ariadne/research-view.html";
+const researchUiHtml = buildResearchAppHtml();
 
-server.registerTool("discover_tokenized_assets", {
-  description: "Discover and explain tokenized-stock representations for a natural-language ticker or company query. Returns issuer-aware asset views with market context, data quality and next actions.",
+registerAppResource(server, "Ariadne asset research view", RESEARCH_UI_URI, {
+  description: "Read-only visual comparison of tokenized-stock representations returned by Ariadne research tools."
+}, async (uri) => ({
+  contents: [{ uri: uri.href, mimeType: RESOURCE_MIME_TYPE, text: await researchUiHtml }]
+}));
+
+registerAppTool(server, "discover_tokenized_assets", {
+  title: "Discover tokenized-stock representations",
+  description: "Discover tokenized-stock representations for a ticker, company name or natural-language asset request. Extract the intended asset if possible; ambiguous requests require clarification. Read-only.",
+  _meta: { ui: { resourceUri: RESEARCH_UI_URI } },
   inputSchema: {
     query: z.string().min(1),
     chainId: z.string().optional(),
@@ -52,26 +75,28 @@ server.registerTool("discover_tokenized_assets", {
   }
 }, async ({ query, chainId, platforms, includeMarketContext }) => {
   try {
-    const assets = await stocks.search(query, { chainId });
+    const { assets, resolvedQuery } = await searchAssetIntent(stocks, query, { chainId });
     const filtered = platforms?.length ? assets.filter((asset) => platforms.includes(asset.platformId)) : assets;
-    const enriched = await Promise.all(filtered.map(async (asset) => {
-      return enrichAgentAsset(asset, includeMarketContext !== false);
-    }));
+    const enriched = await enrichAgentAssets(stocks, filtered, includeMarketContext !== false);
     const warnings = enriched.flatMap((asset) => asset.dataQuality.warnings).filter((warning, index, all) => all.indexOf(warning) === index);
     return textResult(outcome({
-      summary: enriched.length ? `Discovered ${enriched.length} tokenized-stock representations for ${query}` : `No tokenized-stock representations found for ${query}`,
+      summary: enriched.length ? `Discovered ${enriched.length} tokenized-stock representations for ${resolvedQuery}` : `No tokenized-stock representations found for ${query}`,
       query,
+      resolvedQuery,
       assets: enriched,
       count: enriched.length,
-      presentation: enriched.map(renderAssetCard).join("\n\n---\n\n")
-    }, enriched.length ? warnings.length ? "warning" : "success" : "warning", enriched.length ? "Compare the representations or request a focused market summary" : "Try a broader ticker or remove platform filters", { warnings }));
+      presentation: enriched.map((asset) => renderAssetCard(asset, { allowQuoteFollowUp: !explicitlyRequestsNoTrade(query) })).join("\n\n---\n\n")
+    }, enriched.length ? warnings.length ? "warning" : "success" : "warning", enriched.length ? "Compare the representations or request a focused market summary" : "Try a broader ticker or remove platform filters", { warnings }), { structuredContent: true });
   } catch (error) {
+    if (error instanceof AmbiguousAssetQueryError) return ambiguousAssetResult(error);
     return textResult(errorOutcome(error, "Check the query and API availability before retrying", "asset_discovery_failed"));
   }
 });
 
-server.registerTool("compare_asset_representations", {
+registerAppTool(server, "compare_asset_representations", {
+  title: "Compare issuer representations",
   description: "Compare issuer-aware tokenized-stock representations using optional user preferences. The Agent can use this instead of manually calling low-level search and market tools.",
+  _meta: { ui: { resourceUri: RESEARCH_UI_URI } },
   inputSchema: {
     query: z.string().min(1),
     chainId: z.string().optional(),
@@ -87,17 +112,20 @@ server.registerTool("compare_asset_representations", {
   }
 }, async ({ query, chainId, preference }) => {
   try {
-    const assets = await stocks.search(query, { chainId });
-    const enriched = await Promise.all(assets.map((asset) => enrichAgentAsset(asset)));
+    const { assets } = await searchAssetIntent(stocks, query, { chainId });
+    const enriched = await enrichAgentAssets(stocks, assets);
     const comparison = compareAgentAssets(enriched, (preference ?? {}) as AssetPreference);
-    return textResult(outcome({ summary: comparison.summary, comparison, presentation: renderComparisonTable(comparison) }, comparison.rows.some((row) => row.excludedReasons.length === 0) ? comparison.warnings.length ? "warning" : "success" : "blocked", comparison.rows.some((row) => row.excludedReasons.length === 0) ? "Review ranked representations and choose whether to request a quote" : "Relax the preference filters or inspect the exclusion reasons", { warnings: comparison.warnings }));
+    return textResult(outcome({ summary: comparison.summary, comparison, presentation: renderComparisonTable(comparison) }, comparison.rows.some((row) => row.excludedReasons.length === 0) ? comparison.warnings.length ? "warning" : "success" : "blocked", comparison.rows.some((row) => row.excludedReasons.length === 0) ? "Review ranked representations and choose whether to request a quote" : "Relax the preference filters or inspect the exclusion reasons", { warnings: comparison.warnings }), { structuredContent: true });
   } catch (error) {
+    if (error instanceof AmbiguousAssetQueryError) return ambiguousAssetResult(error);
     return textResult(errorOutcome(error, "Check the query and API availability before retrying", "asset_comparison_failed"));
   }
 });
 
-server.registerTool("research_tokenized_stock", {
+registerAppTool(server, "research_tokenized_stock", {
+  title: "Research a tokenized stock",
   description: "Run an Agent-native tokenized-stock research workflow in one call: discover issuer representations, enrich market context, compare evidence and return a human-readable brief with the next safe action. The Agent can use this instead of manually chaining search, market and comparison tools. Read-only; never signs or broadcasts.",
+  _meta: { ui: { resourceUri: RESEARCH_UI_URI } },
   inputSchema: {
     query: z.string().min(1),
     chainId: z.string().optional(),
@@ -116,11 +144,12 @@ server.registerTool("research_tokenized_stock", {
   try {
     const workflowStartedAt = performance.now();
     const searchStartedAt = performance.now();
-    const assets = await stocks.search(query, { chainId });
+    const { assets, resolvedQuery, diagnostics: searchDiagnostics } = await searchAssetIntent(stocks, query, { chainId });
     const searchMs = elapsedMs(searchStartedAt);
     const filtered = platforms?.length ? assets.filter((asset) => platforms.includes(asset.platformId)) : assets;
     const marketContextStartedAt = performance.now();
-    const enriched = await Promise.all(filtered.map((asset) => enrichAgentAsset(asset)));
+    let marketDiagnostics: MarketContextEnrichmentDiagnostics = { batchCalls: 0, assetsRequested: filtered.length, durationMs: 0 };
+    const enriched = await enrichAgentAssets(stocks, filtered, true, (diagnostics) => { marketDiagnostics = diagnostics; });
     const marketContextMs = elapsedMs(marketContextStartedAt);
     const comparisonStartedAt = performance.now();
     const comparison = compareAgentAssets(enriched, (preference ?? {}) as AssetPreference);
@@ -131,29 +160,43 @@ server.registerTool("research_tokenized_stock", {
       ...enriched.flatMap((asset) => asset.dataQuality.warnings)
     ])];
     const status = !enriched.length ? "warning" : eligible.length ? warnings.length ? "warning" : "success" : "blocked";
+    const noTradeRequested = explicitlyRequestsNoTrade(query);
     const nextAction = !enriched.length
       ? "Try a broader ticker or remove platform filters"
       : eligible.length
-        ? "Review the evidence and request a quote only for an explicitly selected representation"
+        ? noTradeRequested ? "Review the evidence and data gaps; no trading follow-up was requested" : "Review the evidence and request a quote only for an explicitly selected representation"
         : "Review exclusion reasons or relax the preference filters";
-    const nextSteps = researchNextSteps(enriched, comparison);
+    const nextSteps = researchNextSteps(enriched, comparison, {
+      allowQuoteFollowUp: !noTradeRequested,
+      allowWalletExposureFollowUp: !noTradeRequested
+    });
     const presentationStartedAt = performance.now();
     const timing = {
       searchMs,
+      searchResolution: {
+        directSearchMs: searchDiagnostics.durationsMs.directSearch,
+        catalogReadMs: searchDiagnostics.durationsMs.catalogRead,
+        catalogMatchMs: searchDiagnostics.durationsMs.catalogMatch,
+        resolvedSearchMs: searchDiagnostics.durationsMs.resolvedSearch,
+        calls: searchDiagnostics.calls
+      },
       marketContextMs,
+      marketContextBatchCalls: marketDiagnostics.batchCalls,
+      ...(marketDiagnostics.failureCategory ? { marketContextFailureCategory: marketDiagnostics.failureCategory } : {}),
       comparisonMs,
       presentationMs: 0,
       totalMs: 0,
-      marketContextRequests: filtered.length,
+      marketContextAssets: filtered.length,
       agentReasoningExcluded: true as const
     };
-    if (enriched.length) renderResearchBrief(enriched, comparison, timing, nextSteps);
+    if (enriched.length) renderResearchBrief(enriched, comparison, timing, nextSteps, { allowQuoteFollowUp: !noTradeRequested });
     timing.presentationMs = elapsedMs(presentationStartedAt);
     timing.totalMs = elapsedMs(workflowStartedAt);
-    const presentation = enriched.length ? renderResearchBrief(enriched, comparison, timing, nextSteps) : "No representations available.";
+    const presentation = enriched.length ? renderResearchBrief(enriched, comparison, timing, nextSteps, { allowQuoteFollowUp: !noTradeRequested }) : "No representations available.";
     return textResult(outcome({
-      summary: enriched.length ? `Research brief for ${query}: ${enriched.length} issuer representations compared` : `No tokenized-stock representations found for ${query}`,
+      summary: enriched.length ? `Research brief for ${resolvedQuery}: ${enriched.length} issuer representations compared` : `No tokenized-stock representations found for ${query}`,
       query,
+      resolvedQuery,
       chainId,
       assets: enriched,
       comparison,
@@ -162,25 +205,27 @@ server.registerTool("research_tokenized_stock", {
       presentation,
       decisionBoundary: "Ariadne presents evidence and preference matches; it does not make an investment decision.",
       executionBoundary: "This workflow is read-only. No quote, signature, transaction or broadcast was performed."
-    }, status, nextAction, { warnings }));
+    }, status, nextAction, { warnings }), { structuredContent: true });
   } catch (error) {
+    if (error instanceof AmbiguousAssetQueryError) return ambiguousAssetResult(error);
     return textResult(errorOutcome(error, "Check the query and API availability before retrying", "stock_research_failed"));
   }
 });
 
 server.registerTool("prepare_action_from_intent", {
-  description: "Translate a tokenized-stock purchase or sale intent into a platform-aware ActionPlan. If multiple representations exist and no explicit preference is provided, returns a comparison instead of choosing silently. Never signs or broadcasts.",
+  description: "Translate a tokenized-stock intent into a platform-aware ActionPlan. Specify a user-reviewed maxGasCostBnb to make a BSC EVM plan confirmable. Multiple representations require an explicit preference. Never signs or broadcasts.",
   inputSchema: {
     query: z.string().min(1),
     type: z.enum(["buy", "sell", "swap"]),
     walletAddress: z.string().min(1),
     fromTokenAddress: z.string().min(1),
-    amount: z.string().regex(/^\d+$/),
+    amount: z.string().regex(/^(?:0|[1-9]\d*)(?:\.\d+)?$/),
     amountDecimals: z.number().int().min(0).max(36),
     chainId: z.string().optional(),
     platformId: z.string().optional(),
     selectionPolicy: z.enum(["explicit_platform", "lowest_price_gap"]).optional(),
-    maxSlippageBps: z.number().int().min(0).max(10_000).optional()
+    maxSlippageBps: z.number().int().min(0).max(10_000).optional(),
+    maxGasCostBnb: z.string().regex(/^(?:0|[1-9]\d*)(?:\.\d+)?$/).optional()
   }
 }, async (input) => {
   try {
@@ -188,12 +233,12 @@ server.registerTool("prepare_action_from_intent", {
     if (!assets.length) return textResult(outcome({ summary: `No tokenized-stock representation found for ${input.query}`, assets: [] }, "warning", "Try a broader ticker or remove the platform filter", { warnings: ["No matching asset was found"] }));
     let selected = input.platformId ? assets.find((asset) => asset.platformId === input.platformId) : undefined;
     if (!selected && input.selectionPolicy === "lowest_price_gap") {
-      const enriched = await Promise.all(assets.map((asset) => enrichAgentAsset(asset)));
+      const enriched = await enrichAgentAssets(stocks, assets);
       const comparison = compareAgentAssets(enriched, { requireMarketPrice: true, requireReferencePrice: true });
       selected = comparison.rows.find((row) => !row.excludedReasons.length)?.asset;
     }
     if (!selected && assets.length > 1) {
-      const enriched = await Promise.all(assets.map((asset) => enrichAgentAsset(asset)));
+      const enriched = await enrichAgentAssets(stocks, assets);
       const comparison = compareAgentAssets(enriched, {});
       return textResult(outcome({ summary: "Multiple tokenized-stock representations require an explicit choice", comparison, presentation: renderComparisonTable(comparison) }, "blocked", "Choose a platformId or provide selectionPolicy=lowest_price_gap before preparing the ActionPlan", { warnings: ["Ariadne did not silently choose between multiple issuers"] }));
     }
@@ -205,8 +250,10 @@ server.registerTool("prepare_action_from_intent", {
       amount: input.amount,
       amountDecimals: input.amountDecimals,
       maxSlippageBps: input.maxSlippageBps,
+      maxGasCostBnb: input.maxGasCostBnb,
       toAsset: selected
     });
+    if (plan.status === "awaiting_confirmation") plans.registerPrepared(plan);
     const status = plan.status === "failed" ? "blocked" : plan.assetContext?.dataWarnings.length ? "warning" : "success";
     return textResult(outcome({ summary: plan.status === "failed" ? "ActionPlan preparation was blocked by a readiness or safety condition" : "ActionPlan prepared; no signing or broadcast occurred", selectedAsset: selected, plan }, status, plan.status === "failed" ? "Resolve the blocking reasons before simulation" : "Simulate the ActionPlan before requesting confirmation", { warnings: plan.assetContext?.dataWarnings ?? [], sideEffects: "none" }));
   } catch (error) {
@@ -231,12 +278,13 @@ server.registerTool("screen_assets_by_preferences", {
   }
 }, async ({ query, chainId, preference }) => {
   try {
-    const assets = await stocks.search(query, { chainId });
-    const enriched = await Promise.all(assets.map((asset) => enrichAgentAsset(asset)));
+    const { assets } = await searchAssetIntent(stocks, query, { chainId });
+    const enriched = await enrichAgentAssets(stocks, assets);
     const comparison = compareAgentAssets(enriched, preference as AssetPreference);
     const eligible = comparison.rows.filter((row) => !row.excludedReasons.length);
     return textResult(outcome({ summary: `${eligible.length} representations match the requested preferences`, comparison, presentation: renderComparisonTable(comparison), recommendationBoundary: "This is preference-based evidence screening, not investment advice", interpretation: "Eligibility reflects the supplied criteria and observed data; it is not a recommendation to buy or sell." }, eligible.length ? "success" : "blocked", eligible.length ? "Review the evidence and choose whether to request a quote" : "Relax the preferences or inspect exclusion reasons", { warnings: comparison.warnings }));
   } catch (error) {
+    if (error instanceof AmbiguousAssetQueryError) return ambiguousAssetResult(error);
     return textResult(errorOutcome(error, "Check the query and preference values before retrying", "asset_screening_failed"));
   }
 });
@@ -273,7 +321,7 @@ server.registerTool("resolve_tokenized_stock", {
     assetViews,
     count: assets.length,
     coverage: { identity: assets.length ? "confirmed" : "unresolved", marketContext: "not_requested" },
-    presentation: assetViews.length ? assetViews.map(renderAssetCard).join("\n\n---\n\n") : "No representations available."
+    presentation: assetViews.length ? assetViews.map((asset) => renderAssetCard(asset)).join("\n\n---\n\n") : "No representations available."
   }, assets.length ? "success" : "warning", assets.length ? "Request market context before comparing prices or assessing tradability" : "Try a broader ticker or omit platformId", { warnings: assets.length ? [] : ["No matching tokenized-stock asset was found"] }));
 });
 
@@ -334,11 +382,13 @@ server.registerTool("simulate_stock_action_plan", {
   inputSchema: { plan: z.any() }
 }, async ({ plan }) => {
   try {
-    const action = (plan as ActionPlan).unsignedActions?.[0] as any;
+    const trusted = plans.requireExact(plan as ActionPlan, "awaiting_confirmation");
+    const action = trusted.unsignedActions?.[0] as any;
     const tx = action?.payload?.tx;
     if (!tx) throw new Error("Plan has no unsigned EVM transaction");
-    const simulation = await transactions.simulateEvm((plan as ActionPlan).intent.toAsset.chainId, tx);
-    const updated = attachSimulation(plan as ActionPlan, simulation);
+    const simulation = await transactions.simulateEvm(trusted.intent.toAsset.chainId, tx);
+    const updated = attachSimulation(trusted, simulation);
+    if (updated.status === "simulated") plans.advance(plan as ActionPlan, "awaiting_confirmation", updated, "simulated");
     const simulationWarnings = (updated.simulation as { warnings?: string[] } | undefined)?.warnings ?? [];
     return textResult(outcome({ summary: "Plan simulation completed; nothing broadcast", plan: updated, broadcasted: false }, updated.status === "simulated" ? "success" : "blocked", updated.status === "simulated" ? "Request explicit confirmation before signing" : "Resolve the blocking safety checks", { warnings: simulationWarnings }));
   } catch (error) {
@@ -347,13 +397,14 @@ server.registerTool("simulate_stock_action_plan", {
 });
 
 server.registerTool("create_stock_action_plan", {
-  description: "Create a tokenized-stock action plan with quote and market context. Does not execute or broadcast.",
+  description: "Create a tokenized-stock action plan with quote and market context. Specify a user-reviewed maxGasCostBnb before confirmation. Does not execute or broadcast.",
   inputSchema: {
     type: z.enum(["buy", "sell", "swap"]),
     walletAddress: z.string(),
     fromTokenAddress: z.string(),
-    amount: z.string().regex(/^\d+$/),
+    amount: z.string().regex(/^(?:0|[1-9]\d*)(?:\.\d+)?$/),
     amountDecimals: z.number().int().min(0).max(36),
+    maxGasCostBnb: z.string().regex(/^(?:0|[1-9]\d*)(?:\.\d+)?$/).optional(),
     asset: z.object({
       assetId: z.string(),
       chainId: z.string(),
@@ -364,15 +415,17 @@ server.registerTool("create_stock_action_plan", {
       underlyingName: z.string()
     })
   }
-}, async ({ type, walletAddress, fromTokenAddress, amount, amountDecimals, asset }) => {
+}, async ({ type, walletAddress, fromTokenAddress, amount, amountDecimals, maxGasCostBnb, asset }) => {
   const plan = await stocks.createActionPlan({
     type,
     walletAddress,
     fromTokenAddress,
     amount,
     amountDecimals,
+    maxGasCostBnb,
     toAsset: asset
   });
+  if (plan.status === "awaiting_confirmation") plans.registerPrepared(plan);
   return textResult(outcome({
     summary: plan.status === "failed" ? "Action plan could not be created" : "Action plan created; no transaction executed",
     plan
@@ -384,7 +437,13 @@ server.registerTool("confirm_stock_action_plan", {
   inputSchema: { plan: z.any(), confirmationToken: z.string().min(1) }
 }, async ({ plan, confirmationToken }) => {
   try {
-    const confirmed = confirmPlan(plan as ActionPlan, confirmationToken);
+    const trusted = plans.requireExact(plan as ActionPlan, "simulated");
+    const action = trusted.unsignedActions?.[0] as { kind?: string } | undefined;
+    if (action?.kind === "evm_transaction") {
+      requireReviewedGasBudget(trusted);
+    }
+    const confirmed = confirmPlan(trusted, confirmationToken);
+    plans.advance(plan as ActionPlan, "simulated", confirmed, "confirmed");
     return textResult(outcome({ summary: "Plan confirmed; signing and broadcast are still separate", plan: confirmed, broadcasted: false }, "success", "Sign externally, then submit or broadcast the signed payload", { sideEffects: "external_signature_required" }));
   } catch (error) {
     return textResult({ ...errorOutcome(error, "Simulate the plan and resolve all blocking checks before confirming", "confirmation_rejected"), broadcasted: false });
@@ -392,8 +451,9 @@ server.registerTool("confirm_stock_action_plan", {
 });
 
 server.registerTool("submit_signed_rfq_order", {
-  description: "Submit an already EIP-712-signed RFQ order. The caller must sign externally; Ariadne never handles private keys.",
+  description: "Submit an externally signed RFQ order only with an unchanged, confirmed plan from this MCP session. No private keys are handled.",
   inputSchema: {
+    plan: z.any(),
     requestId: z.string().uuid(),
     userSignature: z.string().regex(/^0x[0-9a-fA-F]{130}$/),
     vendor: z.enum(["InchFusion", "CowSwap", "PcsXRfq"]),
@@ -402,7 +462,15 @@ server.registerTool("submit_signed_rfq_order", {
   }
 }, async (input) => {
   try {
-    const order = await stocks.submitRfqOrder(input);
+    const trusted = plans.requireExact(input.plan as ActionPlan, "confirmed");
+    assertExecutable(trusted);
+    const action = trusted.unsignedActions?.[0] as any;
+    const rfq = action?.payload?.rfq;
+    if (action?.kind !== "rfq_order" || trusted.quoteId !== input.quoteId || rfq?.vendor !== input.vendor ||
+      (rfq?.signingScheme && rfq.signingScheme !== input.signingScheme)) throw new Error("RFQ signature request does not match the confirmed plan");
+    plans.reserveBroadcast(input.plan as ActionPlan);
+    const { plan: _plan, ...signedOrder } = input;
+    const order = await stocks.submitRfqOrder(signedOrder);
     return textResult(outcome({ summary: "Signed RFQ submitted; poll status for settlement", order, privateKeyHandled: false }, "success", "Poll RFQ order status; do not replay the signed order blindly", { sideEffects: "broadcast_possible" }));
   } catch (error) {
     return textResult({ ...errorOutcome(error, "Inspect the error and query order status before retrying", "rfq_submission_failed"), privateKeyHandled: false });
@@ -421,15 +489,28 @@ server.registerTool("broadcast_confirmed_transaction", {
   description: "Broadcast an externally signed raw transaction only for an explicitly confirmed action plan. This sends a real transaction to the chain and never signs internally.",
   inputSchema: {
     plan: z.any(),
-    signedTransaction: z.string().regex(/^0x[0-9a-fA-F]+$/),
+    signedTransaction: z.string().regex(/^0x[0-9a-fA-F]+$/).max(131_072),
     address: z.string().min(1),
     enableMevProtection: z.boolean().optional()
   }
 }, async ({ plan, signedTransaction, address, enableMevProtection }) => {
   try {
-    assertExecutable(plan as ActionPlan);
-    if (address.toLowerCase() !== (plan as ActionPlan).intent.walletAddress.toLowerCase()) throw new Error("Broadcast address must match the confirmed plan wallet address");
-    const result = await transactions.broadcastSigned((plan as ActionPlan).intent.toAsset.chainId, signedTransaction, address, enableMevProtection ?? false);
+    const trusted = plans.requireExact(plan as ActionPlan, "confirmed");
+    await assertSignedTransactionMatchesPlan(trusted, signedTransaction, address);
+    const fee = assessSignedTransactionFee(trusted, signedTransaction);
+    const nativeBalance = await transactions.nativeBalance(trusted.intent.toAsset.chainId, address);
+    assertNativeBalanceCoversFee(nativeBalance, fee);
+    const currentBalance = await transactions.erc20Balance(trusted.intent.toAsset.chainId, trusted.intent.fromTokenAddress, address);
+    assertInputBalanceCoversPlan(trusted, currentBalance);
+    const currentAllowance = await transactions.erc20Allowance(
+      trusted.intent.toAsset.chainId,
+      trusted.authorizationCheck!.tokenAddress,
+      address,
+      trusted.authorizationCheck!.spender
+    );
+    assertAllowanceCoversPlan(trusted, currentAllowance);
+    plans.reserveBroadcast(plan as ActionPlan);
+    const result = await transactions.broadcastSigned(trusted.intent.toAsset.chainId, signedTransaction, address, enableMevProtection ?? false);
     return textResult(outcome({ summary: "Signed transaction broadcast; query orders for status", result, signedInternally: false }, "success", "Query broadcast order status; do not replay the signed transaction blindly", { sideEffects: "broadcast_possible" }));
   } catch (error) {
     return textResult({ ...errorOutcome(error, "Resolve the plan or address rejection before attempting another broadcast", "broadcast_rejected"), broadcasted: false });

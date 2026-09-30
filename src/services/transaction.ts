@@ -61,7 +61,42 @@ export class TransactionService {
     if (!response.ok) throw new Error(`EVM RPC allowance request failed: HTTP ${response.status}`);
     const payload = await response.json() as { result?: string; error?: { message?: string } };
     if (payload.error) throw new Error(`EVM RPC allowance request failed: ${payload.error.message ?? "unknown error"}`);
-    if (!payload.result || !/^0x[0-9a-f]+$/i.test(payload.result)) throw new Error("EVM RPC returned an invalid allowance result");
+    if (!payload.result || !/^0x[0-9a-fA-F]{64}$/.test(payload.result)) throw new Error("EVM RPC returned an invalid allowance result");
+    return BigInt(payload.result);
+  }
+
+  /** Read-only raw ERC-20 balance. Missing or malformed RPC data is never treated as zero. */
+  async erc20Balance(chainId: string, tokenAddress: string, owner: string, rpcUrl = process.env.BINANCE_WEB3_EVM_RPC_URL ?? "https://bsc-dataseed.binance.org"): Promise<bigint> {
+    if (chainId !== "56") throw new Error(`No default EVM RPC configured for chain ${chainId}`);
+    if (!/^0x[0-9a-fA-F]{40}$/.test(tokenAddress) || !/^0x[0-9a-fA-F]{40}$/.test(owner)) throw new Error("ERC-20 balance requires valid token and wallet addresses");
+    const ownerWord = owner.slice(2).toLowerCase().padStart(64, "0");
+    const response = await fetch(rpcUrl, {
+      method: "POST",
+      dispatcher: process.env.BINANCE_WEB3_PROXY_URL ? new ProxyAgent(process.env.BINANCE_WEB3_PROXY_URL) : undefined,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_call", params: [{ to: tokenAddress, data: `0x70a08231${ownerWord}` }, "latest"] })
+    });
+    if (!response.ok) throw new Error(`EVM RPC balance request failed: HTTP ${response.status}`);
+    const payload = await response.json() as { result?: string; error?: { message?: string } };
+    if (payload.error) throw new Error(`EVM RPC balance request failed: ${payload.error.message ?? "unknown error"}`);
+    if (!payload.result || !/^0x[0-9a-fA-F]{64}$/.test(payload.result)) throw new Error("EVM RPC returned an invalid ERC-20 balance result");
+    return BigInt(payload.result);
+  }
+
+  /** Read-only native BNB balance; never infers a missing RPC result as zero. */
+  async nativeBalance(chainId: string, owner: string, rpcUrl = process.env.BINANCE_WEB3_EVM_RPC_URL ?? "https://bsc-dataseed.binance.org"): Promise<bigint> {
+    if (chainId !== "56") throw new Error(`No default EVM RPC configured for chain ${chainId}`);
+    if (!/^0x[0-9a-fA-F]{40}$/.test(owner)) throw new Error("Native balance requires a valid wallet address");
+    const response = await fetch(rpcUrl, {
+      method: "POST",
+      dispatcher: process.env.BINANCE_WEB3_PROXY_URL ? new ProxyAgent(process.env.BINANCE_WEB3_PROXY_URL) : undefined,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_getBalance", params: [owner, "latest"] })
+    });
+    if (!response.ok) throw new Error(`EVM RPC native balance request failed: HTTP ${response.status}`);
+    const payload = await response.json() as { result?: string; error?: { message?: string } };
+    if (payload.error) throw new Error(`EVM RPC native balance request failed: ${payload.error.message ?? "unknown error"}`);
+    if (!payload.result || !/^0x(?:0|[1-9a-fA-F][0-9a-fA-F]*)$/.test(payload.result)) throw new Error("EVM RPC returned an invalid native balance result");
     return BigInt(payload.result);
   }
 
@@ -75,6 +110,10 @@ export class TransactionService {
     return result;
   }
 
+  /**
+   * Low-level broadcast primitive. Callers must validate the signed payload against
+   * the reviewed plan, fee/balance limits and replay state before invoking it.
+   */
   async broadcastSigned(chainId: string, signedTransaction: string, address: string, enableMevProtection = false): Promise<unknown> {
     const response = await this.client.post<any>("/api/v1/dex/pre-transaction/broadcast-transaction", {
       binanceChainId: chainId,

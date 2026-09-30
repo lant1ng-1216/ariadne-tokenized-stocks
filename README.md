@@ -1,10 +1,12 @@
 # Ariadne
 
-## Agent-native safety and execution infrastructure for tokenized assets
+## AI-native interaction infrastructure for onchain finance
 
-Ariadne is a TypeScript SDK and MCP server for applications and existing AI agents that need to discover, compare, understand and safely prepare tokenized-stock actions on BNB Chain.
+Ariadne gives AI agents, developers and direct users one coherent way to discover, understand, compare and act on tokenized equities and real-world assets. Its TypeScript SDK and MCP server turn fragmented onchain data and execution modules into issuer-aware financial objects, research evidence and reviewable action states on BNB Chain.
 
-Ariadne is not an autonomous trading agent. It provides structured financial context, safety checks, simulation and an externally signed execution boundary that existing agents can use.
+**Make onchain markets intelligible and actionable for AI.**
+
+Ariadne works with existing Agents rather than replacing them. Safety checks, simulation and externally controlled signing are foundations of the interaction model, not the product's headline identity.
 
 ## Why Ariadne exists
 
@@ -17,7 +19,7 @@ resolve identity → compare wrappers → read market context → build plan
 
 The SDK keeps discovery and execution separate. The MCP layer exposes the same domain model to existing clients such as Codex and Claude Code.
 
-The product is organized as an Agent-native interaction layer: users express intent, while Ariadne resolves issuer-aware assets, organizes market context, compares representations and prepares reviewable next steps.
+The product is organized as an AI-native interaction core: users express intent, while Ariadne resolves issuer-aware assets, organizes market context, compares representations and prepares reviewable next steps.
 
 ## Product surfaces
 
@@ -68,12 +70,14 @@ The complete evidence model, audit output and reproducible figure inputs are mai
 - Normalize token price, reference price, market state, candles and data warnings.
 - Read wallet exposure, portfolio information and transaction context.
 - Create and simulate ActionPlans before execution.
-- Enforce allowance, balance, market-state, slippage and price-impact checks.
+- Enforce allowance, market-state, slippage and verified-unit price-impact checks. ERC-20 plans without a quote-declared, verifiable spender fail closed; input-token/native BNB balances and allowance are rechecked before guarded BSC EVM broadcast. Funded settlement remains unverified.
+- Offer `GuardedEvmExecutionService` for one standard BSC EVM action through the standalone SDK, accepting only the unchanged in-memory plan object issued by SDK preparation; it applies staged plan binding, external signature verification, reviewed gas limits, live balance and allowance checks, and one-attempt replay protection.
 - Prepare RFQ signing requests without handling private keys.
 - Expose 18 MCP tools for existing agents and applications, including the one-call `research_tokenized_stock` workflow.
 - Return stable issuer-by-issuer evidence entries, explicit identity/market-data coverage and read-only next steps instead of relying on fragile Markdown tables.
 - Report Ariadne workflow timing with an explicit boundary that excludes calling-Agent reasoning and final-answer rendering.
-- Run a direct web research workspace with issuer comparison, metadata provenance, public-address exposure and explicit-issuer read-only quote preview.
+- Browse the verified BSC RWA directory with official token and issuer metadata, then move into issuer comparison, evidence inspection, public-address exposure or explicit-issuer quote preview.
+- Run a direct multi-page web product with dedicated SDK, MCP, asset-directory, research, portfolio and read-only quote surfaces.
 - Record request attempts, latency, business codes and rate-limit headers.
 - Retry documented transient failures while keeping broadcast operations explicit and non-automatic.
 
@@ -100,7 +104,7 @@ Every MCP tool returns its domain payload together with an `outcome` object:
 read → plan → simulate → confirm → sign externally → submit → poll status
 ```
 
-`broadcast_confirmed_transaction` is the only explicit broadcast boundary. It requires a confirmed ActionPlan and an externally signed raw transaction. No private key handling is implemented in Ariadne.
+The MCP `broadcast_confirmed_transaction` tool and SDK `GuardedEvmExecutionService.broadcastSigned()` are the guarded standard-EVM broadcast boundaries. Both require a confirmed, unchanged plan and an externally signed raw transaction. No private key handling is implemented in Ariadne. The generic callback `ExecutionService` and raw `TransactionService.broadcastSigned()` remain lower-level integrator-owned escape hatches; see [`docs/SDK_USAGE.md`](docs/SDK_USAGE.md).
 
 ## Quickstart
 
@@ -129,7 +133,7 @@ For a direct browser experience that does not depend on Codex or Claude Code sum
 npm run web:demo
 ```
 
-Then open `http://127.0.0.1:18901`. Demo Mode provides deterministic research, public-address exposure and read-only quote preview. It never accepts a private key, creates an ActionPlan or broadcasts. `npm run web:live` enables the same read-only browser surface with server-side Binance credentials from `.env`; it is still local-only.
+Then open `http://127.0.0.1:3000`. The Next.js App Router serves the direct product experience; its read-only API runs separately and is proxied through the same origin. Demo Mode uses deterministic data and never accepts a private key, creates an ActionPlan or broadcasts. `npm run web:live` starts the same Next.js site with the local Live Read-only API and server-side Binance credentials from `.env`; it remains local-only.
 
 ## Evidence and limitations
 

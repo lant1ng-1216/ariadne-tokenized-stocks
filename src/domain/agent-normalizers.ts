@@ -1,5 +1,6 @@
-import type { AssetComparison, AssetComparisonRow, AgentTokenizedAsset, AssetMetadata, AssetPreference, DataQuality, Issuer } from "./agent-types.js";
+import type { AssetComparison, AssetComparisonRow, AgentTokenizedAsset, AssetMetadata, AssetPreference, DataQuality, Issuer, MarketContextFailureCategory } from "./agent-types.js";
 import type { MarketContext, StockAsset } from "./types.js";
+import { positiveDecimal } from "./normalizers.js";
 
 const knownIssuers: Record<string, string> = {
   ondo: "Ondo",
@@ -37,7 +38,7 @@ export function dataQualityFor(
   asset: StockAsset,
   market?: MarketContext,
   metadata?: AssetMetadata,
-  options: { marketContextRequested?: boolean; marketContextUnavailable?: boolean } = {}
+  options: { marketContextRequested?: boolean; marketContextUnavailable?: boolean; marketContextFailureCategory?: MarketContextFailureCategory } = {}
 ): DataQuality {
   const marketContextRequested = options.marketContextRequested ?? market !== undefined;
   const missingFields: string[] = [];
@@ -46,16 +47,31 @@ export function dataQualityFor(
   if (!market) {
     missingFields.push("marketContext");
   } else {
-    if (!market.tokenPrice) missingFields.push("tokenPrice");
-    if (!market.referencePrice) missingFields.push("referencePrice");
+    if (!positiveDecimal(market.tokenPrice)) missingFields.push("tokenPrice");
+    if (!positiveDecimal(market.referencePrice)) missingFields.push("referencePrice");
     if (market.liquidity == null) missingFields.push("liquidity");
+    if (market.marketStatus === "unknown") missingFields.push("marketStatus");
+    if (market.tokenPrice && !Number.isFinite(market.tokenPriceUpdatedAt)) missingFields.push("tokenPriceUpdatedAt");
   }
   if (!metadata?.underlyingLogoUrl) missingFields.push("underlyingLogoUrl");
   if (!metadata?.issuerLogoUrl) missingFields.push("issuerLogoUrl");
   const warnings = [...(market?.dataWarnings ?? [])];
+  if (market && market.tokenPrice != null && !positiveDecimal(market.tokenPrice)) warnings.push("Token price is invalid or non-positive");
+  if (market && market.referencePrice != null && !positiveDecimal(market.referencePrice)) warnings.push("Reference price is invalid or non-positive");
+  if (market?.marketStatus === "unknown") warnings.push("Market status is unknown");
+  if (market?.tokenPrice && !Number.isFinite(market.tokenPriceUpdatedAt)) warnings.push("Per-asset price update time is unavailable");
   if (!market) warnings.push(marketContextRequested
     ? "Market context was requested but is unavailable"
     : "Market context was not requested; prices, status and market warnings are unavailable");
+  if (!market && options.marketContextFailureCategory) {
+    const failureWarning = {
+      network_failure: "Market context could not be retrieved because the provider connection failed",
+      provider_failure: "Market context could not be retrieved because the upstream provider request failed",
+      data_integrity_failure: "Market context was omitted because provider results did not match the requested assets",
+      unexpected_failure: "Market context is unavailable because an unexpected processing error occurred"
+    }[options.marketContextFailureCategory];
+    warnings.push(failureWarning);
+  }
   if (missingFields.includes("underlyingLogoUrl")) warnings.push("Underlying asset logo metadata is unavailable");
   if (missingFields.includes("issuerLogoUrl")) warnings.push("Issuer logo metadata is unavailable");
   const completeness = missingFields.length === 0 ? "complete" : missingFields.length <= 2 ? "partial" : "limited";
@@ -68,6 +84,7 @@ export function dataQualityFor(
     },
     missingFields,
     warnings: [...new Set(warnings)],
+    ...(options.marketContextFailureCategory ? { marketContextFailureCategory: options.marketContextFailureCategory } : {}),
     lastUpdatedAt: market?.tokenPriceUpdatedAt
   };
 }
@@ -77,11 +94,21 @@ export function toAgentAsset(
   market?: MarketContext,
   issuerOverrides: Partial<Issuer> = {},
   metadataOverrides: Partial<AssetMetadata> = {},
-  options: { marketContextRequested?: boolean; marketContextUnavailable?: boolean } = {}
+  options: { marketContextRequested?: boolean; marketContextUnavailable?: boolean; marketContextFailureCategory?: MarketContextFailureCategory } = {}
 ): AgentTokenizedAsset {
-  const issuer = issuerFromPlatform(asset.platformId, issuerOverrides);
+  const issuer = issuerFromPlatform(asset.platformId, {
+    logoUrl: asset.issuerLogoUrl,
+    links: asset.issuerWebsite ? [{ label: "issuer", url: asset.issuerWebsite }] : [],
+    ...issuerOverrides
+  });
   const generated = assetLinks(asset, issuer);
-  const metadata: AssetMetadata = { ...generated, ...metadataOverrides, tags: metadataOverrides.tags ?? generated.tags };
+  const metadata: AssetMetadata = {
+    ...generated,
+    underlyingLogoUrl: asset.tokenLogoUrl,
+    issuerLogoUrl: asset.issuerLogoUrl,
+    ...metadataOverrides,
+    tags: metadataOverrides.tags ?? generated.tags
+  };
   return {
     ...asset,
     issuer,
