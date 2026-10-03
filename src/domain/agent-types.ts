@@ -18,7 +18,7 @@ export type AssetMetadata = {
   issuerLogoUrl?: string;
   sector?: string;
   tags: string[];
-  source: "api" | "metadata" | "user" | "unknown";
+  source: "api" | "metadata" | "user" | "synthetic" | "unknown";
   updatedAt?: number;
 };
 

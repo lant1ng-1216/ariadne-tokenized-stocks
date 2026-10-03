@@ -159,12 +159,12 @@ assert.ok(simulatedPayload.outcome.nextAction);
 assert.equal(simulatedPayload.outcome.status, "error", "a synthetic plan must not reach simulation");
 assert.match(simulatedPayload.summary, /not created in this MCP session/);
 const syntheticPlanRejected = true;
-const successfulConfirmation = await client.callTool({ name: "confirm_stock_action_plan", arguments: { plan: simulationPlan, confirmationToken: simulationPlan.planId } });
+const successfulConfirmation = await client.callTool({ name: "confirm_stock_action_plan", arguments: { plan: simulationPlan } });
 const successfulConfirmationText = (successfulConfirmation.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
 assert.ok(successfulConfirmationText && /rejected/.test(successfulConfirmationText));
 const successfulConfirmationPayload = JSON.parse(successfulConfirmationText!);
 assert.equal(successfulConfirmationPayload.outcome.status, "error");
-const confirmationAttempt = await client.callTool({ name: "confirm_stock_action_plan", arguments: { plan: parsedPlan.plan, confirmationToken: parsedPlan.plan.planId } });
+const confirmationAttempt = await client.callTool({ name: "confirm_stock_action_plan", arguments: { plan: parsedPlan.plan } });
 const confirmationText = (confirmationAttempt.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
 assert.ok(confirmationText && /rejected/.test(confirmationText));
 

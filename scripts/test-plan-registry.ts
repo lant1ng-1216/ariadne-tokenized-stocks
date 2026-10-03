@@ -43,7 +43,7 @@ assert.throws(() => registry.advance(prepared, "awaiting_confirmation", { ...sim
 registry.advance(prepared, "awaiting_confirmation", simulated, "simulated");
 assert.throws(() => registry.requireExact(prepared, "awaiting_confirmation"), /required stage/);
 assert.throws(() => registry.requireExact({ ...simulated, simulation: { success: false } }, "simulated"), /changed/);
-const confirmed = confirmPlan(simulated, prepared.planId);
+const confirmed = confirmPlan(simulated);
 registry.advance(simulated, "simulated", confirmed, "confirmed");
 assert.throws(() => registry.advance(confirmed, "confirmed", simulated, "simulated"), /Invalid plan stage transition/);
 assert.throws(() => registry.requireExact(simulated, "simulated"), /required stage/);

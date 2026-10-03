@@ -98,6 +98,28 @@ assert.equal(record.mode, "shadow");
 assert.equal(record.actionTaken, "none");
 assert.equal(record.phaseTransition, "pause");
 assert.equal(record.baseline.automaticExecutionAllowed, false);
+const warningMessages: string[] = [];
+const originalWarn = console.warn;
+console.warn = (...values: unknown[]) => warningMessages.push(values.map(String).join(" "));
+try {
+  await runShadowGate(safe, async () => {
+    const error = Object.assign(new TypeError("fetch failed"), {
+      cause: Object.assign(new Error("sensitive proxy detail"), { code: "UND_ERR_CONNECT_TIMEOUT" }),
+    });
+    throw error;
+  });
+  await runShadowGate(safe, async () => {
+    const error = Object.assign(new TypeError("fetch failed"), {
+      cause: Object.assign(new Error("sensitive authentication detail"), { code: "SECRET_VALUE" }),
+    });
+    throw error;
+  });
+} finally {
+  console.warn = originalWarn;
+}
+assert.match(warningMessages[0] ?? "", /fetch failed \(UND_ERR_CONNECT_TIMEOUT\)/);
+assert.match(warningMessages[1] ?? "", /fetch failed$/);
+assert.doesNotMatch(warningMessages.join(" "), /sensitive|SECRET_VALUE/);
 const approved = await runShadowGate(safe, async () => ({
   ...evaluateBaseline(safe),
   source: "jev",
@@ -198,6 +220,47 @@ const terminalState = await advancePhaseState(phaseStatePath, phaseApproved);
 assert.equal(terminalState.currentPhase, "delivery-complete");
 assert.equal(terminalState.lastTransition, "advance");
 
+const agentNativeUiCriteria = [
+  { id: "inline-host-native-ui", requirement: "The MCP Apps result uses compact host-adaptive Agent-native presentation.", checkNames: ["test:mcp-app-ui"], evidenceSummary: "The executable UI harness checks inline hierarchy, host theme adaptation and progressive disclosures." },
+  { id: "research-data-fidelity", requirement: "The MCP Apps view preserves exact research evidence and text/structured parity.", checkNames: ["test:mcp-app-ui", "test:presentation"], evidenceSummary: "UI and presentation tests cover identities, values, provenance, caveats and no-fabrication wording." },
+  { id: "read-only-ui-safety", requirement: "The MCP App remains read-only and the related Demo, build and phase-plan checks pass.", checkNames: ["test:mcp-app-ui", "test:demo-mode", "typecheck", "build", "test:core-product-phase-plan"], evidenceSummary: "The view has no wallet/order controls, Demo blocks action paths, and compile/build/phase-ledger regressions pass." },
+];
+const agentNativeUiPhaseEvidence = {
+  ...safe,
+  phase: "mcp-agent-native-research-ui",
+  nextPhase: "delivery-complete",
+  objective: "Advance the approved Agent-native MCP UI phase only after its required checks and Jev criteria pass.",
+  checks: ["typecheck", "build", "test:mcp-app-ui", "test:demo-mode", "test:presentation", "test:core-product-phase-plan"].map((name) => ({ name, passed: true, evidence: "pass" })),
+  acceptanceCriteria: agentNativeUiCriteria,
+};
+const agentNativeUiApproved = await runShadowGate(agentNativeUiPhaseEvidence, async () => ({
+  ...evaluateBaseline(agentNativeUiPhaseEvidence),
+  source: "jev",
+  confidence: 0.99,
+  questionConfidence: { status: 0.99, nextAction: 0.99, riskLevel: 0.99 },
+  criterionReviews: Object.fromEntries(agentNativeUiCriteria.map(({ id }) => [id, { verdict: "met" as const, confidence: 0.99 }])),
+}));
+assert.equal(agentNativeUiApproved.phaseTransition, "advance", "the approved Agent-native UI phase advances only after complete passing evidence");
+await writeFile(phaseStatePath, `${JSON.stringify({ currentPhase: "mcp-agent-native-research-ui" }, null, 2)}\n`, "utf8");
+const agentNativeUiTerminalState = await advancePhaseState(phaseStatePath, agentNativeUiApproved);
+assert.equal(agentNativeUiTerminalState.currentPhase, "delivery-complete", "an approved Agent-native UI phase records the named terminal next phase");
+
+const failedAgentNativeUiEvidence = {
+  ...agentNativeUiPhaseEvidence,
+  checks: agentNativeUiPhaseEvidence.checks.map((check) => check.name === "test:mcp-app-ui" ? { ...check, passed: false } : check),
+};
+const failedAgentNativeUiReview = await runShadowGate(failedAgentNativeUiEvidence, async () => ({
+  ...evaluateBaseline(agentNativeUiPhaseEvidence),
+  source: "jev",
+  confidence: 0.99,
+  questionConfidence: { status: 0.99, nextAction: 0.99, riskLevel: 0.99 },
+  criterionReviews: Object.fromEntries(agentNativeUiCriteria.map(({ id }) => [id, { verdict: "met" as const, confidence: 0.99 }])),
+}));
+assert.equal(failedAgentNativeUiReview.phaseTransition, "pause", "an Agent-native UI check failure holds the phase despite a mocked passing Jev review");
+await writeFile(phaseStatePath, `${JSON.stringify({ currentPhase: "mcp-agent-native-research-ui" }, null, 2)}\n`, "utf8");
+const agentNativeUiHeldState = await advancePhaseState(phaseStatePath, failedAgentNativeUiReview);
+assert.equal(agentNativeUiHeldState.currentPhase, "mcp-agent-native-research-ui", "a failing Agent-native UI gate cannot advance the phase ledger");
+
 const failedPhaseEvidence = {
   ...phaseGateEvidence,
   checks: phaseGateEvidence.checks.map((check) => check.name === "test:mcp-app-ui" ? { ...check, passed: false } : check),
@@ -223,6 +286,65 @@ const newlyHeldState = await advancePhaseState(phaseStatePath, newlyStartedPhase
 assert.equal(newlyHeldState.currentPhase, "mcp-research-observability", "a paused review must identify the active phase even if the previous ledger was terminal");
 assert.equal(newlyHeldState.nextPhase, "delivery-complete", "a pause records the planned next phase without advancing to it");
 
+const approvedContinuation = [
+  ["mcp-confirmation-host-interop", "sdk-cleanroom-revalidation"],
+  ["sdk-cleanroom-revalidation", "demo-mode-journey-coverage"],
+  ["demo-mode-journey-coverage", "provider-data-resilience"],
+  ["provider-data-resilience", "agent-output-language-quality"],
+  ["agent-output-language-quality", "core-local-acceptance"],
+  ["core-local-acceptance", "delivery-complete"],
+] as const;
+for (const [phase, nextPhase] of approvedContinuation) {
+  const evidence = {
+    ...safe,
+    phase,
+    nextPhase,
+    checks: [{ name: "test:core-product-phase-plan", passed: true, evidence: "approved forward phase and successor are explicitly recorded" }],
+    acceptanceCriteria: [{
+      id: "approved-transition",
+      requirement: "An approved continuation advances only to its explicitly named successor after passing checks and Jev review.",
+      checkNames: ["test:core-product-phase-plan"],
+      evidenceSummary: "The plan records the approved bounded continuation; this deterministic fixture verifies the phase-state transition implementation.",
+    }],
+  };
+  const decision = await runShadowGate(evidence, async () => ({
+    ...evaluateBaseline(evidence),
+    source: "jev",
+    confidence: 0.99,
+    questionConfidence: { status: 0.99, nextAction: 0.99, riskLevel: 0.99 },
+    criterionReviews: { "approved-transition": { verdict: "met" as const, confidence: 0.99 } },
+  }));
+  assert.equal(decision.phaseTransition, "advance", `${phase} should advance only after its linked evidence and Jev approval pass`);
+  await writeFile(phaseStatePath, `${JSON.stringify({ currentPhase: phase }, null, 2)}\n`, "utf8");
+  const nextState = await advancePhaseState(phaseStatePath, decision);
+  assert.equal(nextState.currentPhase, nextPhase, `${phase} advances to its named successor`);
+}
+
+const failedFirstForwardEvidence = {
+  ...safe,
+  phase: "mcp-confirmation-host-interop",
+  nextPhase: "sdk-cleanroom-revalidation",
+  checks: [{ name: "test:core-product-phase-plan", passed: false, evidence: "simulated failed acceptance check" }],
+  acceptanceCriteria: [{
+    id: "approved-transition",
+    requirement: "A failing deterministic check holds the current phase, even when Jev returns continue.",
+    checkNames: ["test:core-product-phase-plan"],
+    evidenceSummary: "The check is intentionally marked failed in this offline state-transition regression.",
+  }],
+};
+const failedFirstForwardGate = await runShadowGate(failedFirstForwardEvidence, async () => ({
+  ...evaluateBaseline({ ...failedFirstForwardEvidence, checks: [{ ...failedFirstForwardEvidence.checks[0], passed: true }] }),
+  source: "jev",
+  confidence: 0.99,
+  questionConfidence: { status: 0.99, nextAction: 0.99, riskLevel: 0.99 },
+  criterionReviews: { "approved-transition": { verdict: "met" as const, confidence: 0.99 } },
+}));
+assert.equal(failedFirstForwardGate.phaseTransition, "pause", "a failed Phase 18 check must prevent automatic advancement");
+await writeFile(phaseStatePath, `${JSON.stringify({ currentPhase: "delivery-complete" }, null, 2)}\n`, "utf8");
+const failedFirstForwardState = await advancePhaseState(phaseStatePath, failedFirstForwardGate);
+assert.equal(failedFirstForwardState.currentPhase, "mcp-confirmation-host-interop", "a paused Phase 18 remains the active phase");
+assert.equal(failedFirstForwardState.nextPhase, "sdk-cleanroom-revalidation", "a Phase 18 pause preserves its intended successor without advancing");
+
 const tempDir = await mkdtemp(join(tmpdir(), "ariadne-jev-shadow-"));
 const recordPath = join(tempDir, "shadow.jsonl");
 await writeShadowDecisionRecord(recordPath, record);
@@ -235,10 +357,15 @@ console.log(JSON.stringify({
   mode: record.mode,
   baselineStatus: record.baseline.status,
   jevAvailable: Boolean(record.jev),
+  jevTransportFailureIsSafelyClassified: true,
   mockedGateDecisions: true,
   criterionLinkedReview: true,
   terminalPhaseAdvancesOnlyAfterApproval: true,
+  approvedPhases18To23AdvanceInSequence: true,
+  failedPhase18CheckRemainsActive: failedFirstForwardState.currentPhase === "mcp-confirmation-host-interop",
+  agentNativeUiPhaseAdvancesOnlyAfterApproval: agentNativeUiTerminalState.currentPhase === "delivery-complete",
   failedPhaseGateRemainsActive: true,
+  failedAgentNativeUiGateRemainsActive: agentNativeUiHeldState.currentPhase === "mcp-agent-native-research-ui",
   requiredCriteriaAndCompleteCoverage: true,
   thresholdFloorAndChoiceConfidence: true,
   actionTaken: record.actionTaken,

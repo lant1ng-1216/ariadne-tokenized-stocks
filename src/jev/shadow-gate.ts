@@ -14,7 +14,7 @@ export async function runShadowGate(
     jev = await evaluator(evidence);
   } catch (error) {
     jev = undefined;
-    console.warn(`Jev shadow call unavailable: ${error instanceof Error ? error.message : String(error)}`);
+    console.warn(`Jev shadow call unavailable: ${safeJevFailure(error)}`);
   }
   return {
     recordedAt: new Date().toISOString(),
@@ -29,6 +29,25 @@ export async function runShadowGate(
     provider: jev ? (process.env.JEV_AGENT_KEY ? "native-jev" : "vercel-ai-gateway") : "deterministic-fallback",
     actionTaken: "none",
   };
+}
+
+function safeJevFailure(error: unknown): string {
+  if (!(error instanceof Error)) return "unknown error";
+  if (error.message === "fetch failed") {
+    const cause = error.cause;
+    const code = cause && typeof cause === "object" && "code" in cause
+      ? (cause as { code?: unknown }).code
+      : undefined;
+    const safeCodes = new Set([
+      "ECONNREFUSED", "ECONNRESET", "ETIMEDOUT", "ENETUNREACH", "EHOSTUNREACH",
+      "ENOTFOUND", "EAI_AGAIN", "UND_ERR_CONNECT_TIMEOUT", "UND_ERR_HEADERS_TIMEOUT",
+      "UND_ERR_SOCKET", "UND_ERR_ABORTED",
+    ]);
+    return typeof code === "string" && safeCodes.has(code) ? `fetch failed (${code})` : "fetch failed";
+  }
+  const httpFailure = /^Native Jev request failed with HTTP (\d{3})$/.exec(error.message);
+  if (httpFailure) return `native request returned HTTP ${httpFailure[1]}`;
+  return error.name || "unknown error";
 }
 
 export function isLowRiskContinuation(decision: ShadowDecisionRecord["baseline"] | undefined): boolean {

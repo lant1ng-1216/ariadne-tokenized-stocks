@@ -16,8 +16,16 @@ const catalog = [
   { ...asset("NVDA", "Nvidia Corp"), underlyingNameZh: "英伟达" },
   { ...asset("TSLA", "Tesla Inc"), underlyingNameZh: "特斯拉" },
 ] as TokenizedStockListing[];
-assert.equal(explicitlyRequestsNoTrade("不要交易"), true);
-assert.equal(explicitlyRequestsNoTrade("Do not trade; research only"), true);
+for (const request of [
+  "不要交易",
+  "只做研究，不要交易",
+  "不买卖",
+  "Do not trade; research only",
+  "No trading; research only",
+  "No-trade request",
+  "No transactions or orders",
+  "Research only, do not buy or sell"
+]) assert.equal(explicitlyRequestsNoTrade(request), true, `no-trade intent should be recognized: ${request}`);
 assert.equal(explicitlyRequestsNoTrade("Compare Nvidia representations"), false);
 let listCalls = 0;
 const source = {

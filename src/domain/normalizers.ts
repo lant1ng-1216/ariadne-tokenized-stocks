@@ -25,8 +25,8 @@ export function normalizeStockAsset(input: {
 
 export function normalizeMarketStatus(value: unknown): MarketStatus {
   if (value === "open" || value === "regular") return "open";
-  if (value === "closed" || value === "paused" || value === "halted") return "closed";
-  if (value === "offhours" || value === "preopen" || value === "afterhours") return "offhours";
+  if (value === "closed" || value === "paused" || value === "pause" || value === "halted") return "closed";
+  if (value === "offhours" || value === "preopen" || value === "afterhours" || value === "premarket" || value === "postmarket" || value === "overnight") return "offhours";
   return "unknown";
 }
 

@@ -13,7 +13,7 @@ export type AssetIntentDiagnostics = {
 const elapsedMs = (startedAt: number) => Math.max(0, Math.round((performance.now() - startedAt) * 100) / 100);
 
 export function explicitlyRequestsNoTrade(query: string): boolean {
-  return /不要交易|不进行交易|不下单|暂不交易|\b(?:do not|don't) trade\b|\bwithout trading\b|\bresearch only\b/i.test(query);
+  return /不要交易|不进行交易|不做交易|暂不交易|不得交易|不买卖|不进行买卖|只看不交易|只做研究|仅做研究|仅供研究|不下单|\b(?:do not|don't|never)\s+(?:trade|buy|sell|place orders?|execute transactions?)\b|\bno[\s-]+(?:trading|trades?|transactions?|orders?)\b|\bwithout trading\b|\bresearch[\s-]+only\b/i.test(query);
 }
 
 export class AmbiguousAssetQueryError extends Error {

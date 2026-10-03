@@ -11,6 +11,8 @@ import type { GateCriterion } from "../src/jev/types.js";
 const allowedChecks = new Set([
   "typecheck", "build", "pack:check", "web:next:typecheck", "web:next:build",
   "test:domain", "test:plan-registry", "test:signed-transaction",
+  "test:mcp-human-confirmation",
+  "test:mcp-confirmation-host-fixture",
   "test:input-balance", "test:gas-safety", "test:execution-dry-run", "test:guarded-sdk-executor",
   "test:agent-model", "test:asset-intent-query", "test:core-hardening", "test:core-product-phase-plan", "test:presentation",
   "test:web-workspace", "test:web-catalog-client", "test:web-market-presentation", "test:web-market-freshness", "test:asset-directory", "test:web-demo",

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { DemoTokenizedStocksService } from "../src/services/demo-tokenized-stocks.js";
 import { compareAgentAssets, toAgentAsset } from "../src/domain/agent-normalizers.js";
 import { renderAssetCard, renderComparisonTable, renderResearchBrief, researchNextSteps } from "../src/presentation/asset-view.js";
+import { renderResearchView } from "../src/mcp/ui/research-view.js";
 
 const demo = new DemoTokenizedStocksService({} as any);
 const identities = await demo.search("NVDA", { chainId: "56" });
@@ -32,7 +33,15 @@ const timing = {
 const presentation = renderResearchBrief(enriched, comparison, timing, nextSteps);
 const researchOnlyPresentation = renderResearchBrief(enriched, comparison, timing, researchOnlyNextSteps, { allowQuoteFollowUp: false });
 assert.doesNotMatch(presentation, /\| Rank \| Issuer \|/);
-assert.match(renderComparisonTable(comparison), /request a quote/);
+const filteredComparison = renderComparisonTable(comparison);
+assert.match(filteredComparison, /request a quote/);
+assert.match(filteredComparison, /Filter status: \*\*Matches filters\*\*/);
+assert.match(filteredComparison, /Price-gap rank: \*\*1\*\*/);
+assert.doesNotMatch(filteredComparison, /\bEligible\b|Eligibility:/i, "criteria match must not be presented as execution eligibility");
+const unfilteredComparison = renderComparisonTable(compareAgentAssets(enriched));
+assert.match(unfilteredComparison, /Filter status: \*\*No filters applied\*\*/);
+assert.match(unfilteredComparison, /Price-gap rank:/);
+assert.match(unfilteredComparison, /Neither indicates tradability or recommends a trade/);
 assert.match(researchOnlyPresentation, /Next: review the evidence or data gaps\. No transaction was created\./);
 assert.doesNotMatch(researchOnlyPresentation, /request a quote/i, "research-only brief must not contain a quote CTA in nested comparison content");
 assert.equal((researchOnlyPresentation.match(/Warnings:/g) ?? []).length, 0, "brief should avoid repeating aggregate warnings after row-level evidence warnings");
@@ -71,10 +80,76 @@ assert.match(sourcedCard, /Last update: \*\*2026-09-28T/);
 assert.match(sourcedCard, /response 2026-09-28T/);
 assert.notEqual(sourcedAsset.market.tokenPriceUpdatedAt, sourcedAsset.market.provenance[0]?.responseTimestampMs, "asset update and API response timestamps remain separate");
 
+const fidelityMarket = {
+  ...enriched[0]!.market!,
+  tokenPrice: "123.45",
+  referencePrice: "234.56",
+  priceGap: "-111.11",
+  priceGapPercent: "-47.35%",
+  liquidity: undefined,
+  marketStatus: "unknown" as const,
+  openState: true,
+  tokenPriceUpdatedAt: 1_790_603_000_123,
+  provenance: [{
+    provider: "Binance Web3" as const,
+    endpoint: "/fixture/rwa/price",
+    fields: ["tokenPrice", "referencePrice", "tokenPriceUpdatedAt"],
+    responseTimestampMs: 1_790_603_000_200,
+    assetUpdatedAtMs: 1_790_603_000_123
+  }],
+  dataWarnings: ["Liquidity was not provided and must not be interpreted as zero", "The platform did not provide a recognized marketStatus"]
+};
+const fidelityAsset = toAgentAsset(enriched[0]!, fidelityMarket);
+const fidelityComparison = compareAgentAssets([fidelityAsset]);
+const chineseFidelityCard = renderAssetCard(fidelityAsset, { language: "zh-CN", allowQuoteFollowUp: false });
+const englishFidelityCard = renderAssetCard(fidelityAsset, { language: "en", allowQuoteFollowUp: false });
+assert.equal(fidelityAsset.market?.liquidity, undefined, "an absent liquidity observation stays absent in structured evidence");
+assert.ok(fidelityAsset.dataQuality.missingFields.includes("liquidity"));
+assert.ok(fidelityAsset.dataQuality.missingFields.includes("marketStatus"));
+assert.match(chineseFidelityCard, /代币观测价格：\*\*123\.45\*\* · 标的参考价格：\*\*234\.56\*\*/);
+assert.match(englishFidelityCard, /Observed price: \*\*123\.45\*\* · Reference price: \*\*234\.56\*\*/);
+assert.match(chineseFidelityCard, /报告为开放状态；市场状态未知/);
+assert.match(englishFidelityCard, /Open state reported; status unknown/);
+assert.match(chineseFidelityCard, /未提供流动性数据；不得将其理解为 0/);
+assert.match(englishFidelityCard, /Liquidity was not provided and must not be interpreted as zero/);
+assert.doesNotMatch(chineseFidelityCard, /流动性(?:数据)?[：:]\s*0(?:\.0+)?/);
+assert.doesNotMatch(englishFidelityCard, /liquidity(?: data)?\s*[:=]\s*0(?:\.0+)?/i);
+
+const fidelityNextStepsZh = researchNextSteps([fidelityAsset], fidelityComparison, {
+  allowQuoteFollowUp: false,
+  allowWalletExposureFollowUp: false,
+  language: "zh-CN"
+});
+const fidelityBriefZh = renderResearchBrief([fidelityAsset], fidelityComparison, undefined, fidelityNextStepsZh, { language: "zh-CN", allowQuoteFollowUp: false });
+const fidelityBriefEn = renderResearchBrief([fidelityAsset], fidelityComparison, undefined, [], { language: "en", allowQuoteFollowUp: false });
+assert.match(fidelityBriefZh, /代币观测价格：\*\*123\.45\*\* · 标的参考价格：\*\*234\.56\*\*/);
+assert.match(fidelityBriefEn, /Observed price: \*\*123\.45\*\* · Reference price: \*\*234\.56\*\*/);
+assert.doesNotMatch(fidelityBriefZh, /下一步[^\n]*(?:request a quote|请求报价)/i);
+
+const fidelityViewInput = (query: string) => ({
+  query,
+  resolvedQuery: "NVDA",
+  assets: [fidelityAsset],
+  comparison: fidelityComparison,
+  outcome: { status: "warning", warnings: fidelityAsset.dataQuality.warnings }
+});
+const fidelityUiZh = renderResearchView(fidelityViewInput("研究 NVDA；行情未知，不要交易"));
+const fidelityUiEn = renderResearchView(fidelityViewInput("Research NVDA; status is unknown, no trading"));
+for (const [surface, ui, statusLabel, warning] of [
+  ["Chinese", fidelityUiZh, "报告为开放状态；市场状态未知", "未提供流动性数据；不得将其理解为 0"],
+  ["English", fidelityUiEn, "open state reported; status unknown", "Liquidity was not provided and must not be interpreted as zero"]
+] as const) {
+  assert.ok(ui.includes("123.45") && ui.includes("234.56"), `${surface} native view retains the separate exact observed/reference prices`);
+  assert.ok(ui.includes(statusLabel), `${surface} native view preserves unknown market status`);
+  assert.ok(ui.includes(warning), `${surface} native view discloses missing liquidity without converting it to zero`);
+  assert.ok(ui.includes("/fixture/rwa/price"), `${surface} native view retains the supplied source endpoint`);
+}
+
 console.log(JSON.stringify({
   identityCoverage: identityView.dataQuality.coverage,
   marketCoverage: enriched.map((asset) => asset.dataQuality.coverage.marketContext),
   comparisonUsesStableList: true,
+  bilingualEvidenceUnknownAndZeroParity: true,
   nextStepCount: nextSteps.length,
   passed: true
 }, null, 2));

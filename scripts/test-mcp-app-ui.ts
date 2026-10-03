@@ -3,6 +3,7 @@ import { runInNewContext } from "node:vm";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { renderResearchView } from "../src/mcp/ui/research-view.js";
+import { inferOutputLanguage, localizeEvidenceMessage } from "../src/presentation/language.js";
 
 const transport = new StdioClientTransport({
   command: "node",
@@ -37,6 +38,12 @@ try {
   assert.match(html, /id="app"/);
   assert.match(html, /Ariadne research view|Ariadne Research View/);
   assert.match(html, /ui\/notifications\/tool-result/);
+  assert.match(html, /var\(--color-text-primary/);
+  assert.match(html, /var\(--font-sans/);
+  assert.match(html, /background:\s*transparent/);
+  assert.match(html, /data-theme="dark"/);
+  assert.match(html, /@media\s*\(max-width:\s*640px\)/);
+  assert.match(html, /prefers-reduced-motion/);
   assert.ok(html.length < 450_000, `the bundled research view should remain bounded (${html.length} bytes)`);
   assert.doesNotMatch(html, /from\s+["']@modelcontextprotocol\/ext-apps["']/i, "the iframe resource must contain its bundled bridge client");
 
@@ -68,25 +75,28 @@ const query = "我想了解 BNB Chain 上英伟达股票代币有哪些发行方
   assert.doesNotMatch(executableBundle, /^\s*(?:import|export)\s/m, "the inline bundle must not require an unresolved module loader");
 
   const messageListeners = new Set<(event: { data: unknown; source?: unknown }) => void>();
-  const rootListeners = new Map<string, (event: { target: unknown }) => void>();
   const root = {
     innerHTML: "",
-    addEventListener(type: string, listener: (event: { target: unknown }) => void) { rootListeners.set(type, listener); }
+    addEventListener() {}
   };
   const hostMessages: Array<Record<string, any>> = [];
+  const rootStyles = new Map<string, string>();
+  const rootAttributes = new Map<string, string>();
+  const injectedStyles = new Map<string, { id?: string; textContent?: string }>();
   const documentElement = {
-    style: { height: "", colorScheme: "", setProperty() {} },
+    style: { height: "", colorScheme: "", setProperty(name: string, value: string) { rootStyles.set(name, value); } },
     classList: { contains: () => false },
-    getAttribute: () => null,
+    getAttribute: (name: string) => rootAttributes.get(name) ?? null,
+    setAttribute: (name: string, value: string) => { rootAttributes.set(name, value); },
     getBoundingClientRect: () => ({ height: 720 })
   };
   const fakeDocument = {
     querySelector: (selector: string) => selector === "#app" ? root : null,
     documentElement,
     body: {},
-    head: { appendChild() {} },
-    getElementById: () => null,
-    createElement: () => ({ style: {}, setAttribute() {}, textContent: "" })
+    head: { appendChild(element: { id?: string; textContent?: string }) { if (element.id) injectedStyles.set(element.id, element); } },
+    getElementById: (id: string) => injectedStyles.get(id) ?? null,
+    createElement: () => ({ style: {}, setAttribute() {}, textContent: "", id: "" })
   };
   const fakeWindow: Record<string, any> = {
     innerWidth: 1280,
@@ -100,6 +110,17 @@ const query = "我想了解 BNB Chain 上英伟达股票代币有哪些发行方
   const dispatchHostMessage = (message: Record<string, any>) => {
     for (const listener of messageListeners) listener({ data: message, source: fakeWindow.parent });
   };
+  const initialHostContext = {
+    theme: "light",
+    styles: {
+      variables: {
+        "--color-background-primary": "#ffffff",
+        "--color-text-primary": "#202124",
+        "--font-sans": "Agent Sans, sans-serif"
+      },
+      css: { fonts: "@font-face { font-family: 'Agent Sans'; src: local('Arial'); }" }
+    }
+  };
   const fakeParent = {
     postMessage(message: Record<string, any>) {
       hostMessages.push(message);
@@ -111,7 +132,7 @@ const query = "我想了解 BNB Chain 上英伟达股票代币有哪些发行方
             protocolVersion: message.params.protocolVersion,
             hostInfo: { name: "Ariadne MCP Apps protocol test host", version: "1.0.0" },
             hostCapabilities: {},
-            hostContext: {}
+            hostContext: initialHostContext
           }
         }));
       }
@@ -151,6 +172,9 @@ const query = "我想了解 BNB Chain 上英伟达股票代币有哪些发行方
   };
   await waitFor(() => hostMessages.some((message) => message.method === "ui/initialize"), "bundled MCP Apps client must initiate the host handshake");
   await waitFor(() => hostMessages.some((message) => message.method === "ui/notifications/initialized"), "bundled MCP Apps client must complete the host handshake");
+  assert.equal(documentElement.getAttribute("data-theme"), "light", "the app applies the host's initial theme");
+  assert.equal(rootStyles.get("--color-text-primary"), "#202124", "the app applies host design tokens");
+  assert.ok(injectedStyles.get("__mcp-host-fonts")?.textContent?.includes("Agent Sans"), "the app uses host-provided font CSS when supplied");
   const toolResultNotification = (includeStructured: boolean) => ({
     jsonrpc: "2.0",
     method: "ui/notifications/tool-result",
@@ -159,16 +183,26 @@ const query = "我想了解 BNB Chain 上英伟达股票代币有哪些发行方
       : { content: research.content, isError: research.isError }
   });
   dispatchHostMessage(toolResultNotification(true));
-  await waitFor(() => root.innerHTML.includes("ISSUER SNAPSHOT"), "the bundled client must render the result delivered by its host bridge");
+  await waitFor(() => root.innerHTML.includes("来源与数据质量"), "the bundled client must render the result delivered by its host bridge in the request language");
   assert.equal(root.innerHTML, ui, "the actual bundled app must render the same supplied research view as the server renderer");
   assert.doesNotMatch(root.innerHTML, /<form|name="privateKey"|Sign transaction|Place order/i);
 
+  dispatchHostMessage({
+    jsonrpc: "2.0",
+    method: "ui/notifications/host-context-changed",
+    params: {
+      theme: "dark",
+      styles: { variables: { "--color-text-primary": "#f4f4f5", "--color-border-primary": "#41434a" } },
+      safeAreaInsets: { top: 3, right: 4, bottom: 5, left: 6 }
+    }
+  });
+  await waitFor(() => documentElement.getAttribute("data-theme") === "dark", "host context changes must be delivered to the research view");
+  assert.equal(documentElement.getAttribute("data-theme"), "dark", "host theme changes update the rendered app theme");
+  assert.equal(rootStyles.get("--color-text-primary"), "#f4f4f5", "host style-token changes are applied without a reload");
+  assert.equal(rootStyles.get("--host-safe-area-left"), "6px", "safe-area insets are respected when the host supplies them");
+
   dispatchHostMessage(toolResultNotification(false));
   await waitFor(() => root.innerHTML === ui, "the bundled client must also render the text-only compatibility result");
-  const clickHandler = rootListeners.get("click");
-  assert.ok(clickHandler, "the research view must register its view-switch interaction");
-  clickHandler!({ target: new TestElement("representations") });
-  assert.equal(root.innerHTML, renderResearchView(researched, "representations"), "the bundled app must switch views through its rendered control");
 
   const identity = (asset: Record<string, any>) => `${asset.chainId}:${asset.platformId}:${asset.contractAddress?.toLowerCase()}`;
   const identities = (items: Record<string, any>[]) => items.map(identity).sort();
@@ -176,6 +210,7 @@ const query = "我想了解 BNB Chain 上英伟达股票代币有哪些发行方
   assert.deepEqual(identities(compared.comparison.rows.map((row: Record<string, any>) => row.asset)), identities(researched.assets), "comparison and research must use the same returned representation set");
   const evidence = (asset: Record<string, any>) => ({
     identity: identity(asset),
+    metadataSource: asset.metadata?.source,
     tokenPrice: asset.market?.tokenPrice,
     referencePrice: asset.market?.referencePrice,
     priceGapPercent: asset.market?.priceGapPercent,
@@ -187,13 +222,19 @@ const query = "我想了解 BNB Chain 上英伟达股票代币有哪些发行方
   assert.deepEqual(discovered.assets.map(evidence).sort((a: any, b: any) => a.identity.localeCompare(b.identity)), researched.assets.map(evidence).sort((a: any, b: any) => a.identity.localeCompare(b.identity)), "discovery and research market evidence must be identical by exact asset identity");
   assert.deepEqual(compared.comparison.rows.map((row: Record<string, any>) => evidence(row.asset)).sort((a: any, b: any) => a.identity.localeCompare(b.identity)), researched.assets.map(evidence).sort((a: any, b: any) => a.identity.localeCompare(b.identity)), "comparison and research market evidence must be identical by exact asset identity");
 
-  assert.match(ui, /ISSUER SNAPSHOT/);
-  assert.match(ui, /Evidence and data quality/);
-  assert.match(ui, /Quote timestamp/);
-  assert.match(ui, /READ-ONLY RESEARCH/);
+  assert.match(ui, /class="brand-name">Ariadne</);
+  assert.match(ui, /Demo 合成数据/, "the native result must visibly distinguish synthetic fixtures from live evidence in Chinese");
+  assert.match(ui, /来源与数据质量/);
+  assert.match(ui, /报告为开放状态；市场状态未知/);
+  assert.match(ui, /不得将其理解为 0/);
+  assert.match(ui, /No source timestamp supplied|UTC/);
+  assert.match(ui, /仅供研究 · 不涉及钱包或交易操作/);
+  assert.match(ui, /class="representation"/);
+  assert.doesNotMatch(ui, /<nav|view-tabs|overview-grid|topbar|full comparison dashboard/i, "the default result stays inline instead of rendering a separate dashboard shell");
   assert.match(ui, /Ondo|bStocks/);
-  assert.match(ui, /does not make an investment decision/);
+  assert.match(ui, /仅供研究 · 不涉及钱包或交易操作/);
   for (const asset of researched.assets as Array<Record<string, any>>) {
+    assert.equal(asset.metadata.source, "synthetic");
     const market = asset.market as Record<string, any>;
     assert.ok(ui.includes(market.tokenPrice), "view carries through the exact supplied token price");
     assert.ok(ui.includes(market.referencePrice), "view carries through the exact supplied reference price");
@@ -203,9 +244,9 @@ const query = "我想了解 BNB Chain 上英伟达股票代币有哪些发行方
       assert.ok(ui.includes(market.provenance[0].endpoint), "view identifies the supplying endpoint");
       assert.ok(ui.includes(market.provenance[0].fields.join(", ")), "view associates source with the fields it supplied");
     } else {
-      assert.ok(ui.includes("Source details were not supplied"), "Demo Mode must not invent a live provider or endpoint");
+      assert.ok(ui.includes("未提供来源详情"), "Demo Mode must not invent a live provider or endpoint");
     }
-    for (const warning of asset.dataQuality.warnings as string[]) assert.ok(ui.includes(warning), `view includes the exact data warning: ${warning}`);
+    for (const warning of asset.dataQuality.warnings as string[]) assert.ok(ui.includes(localizeEvidenceMessage(warning, inferOutputLanguage(query))), `view includes the meaning of the exact data warning: ${warning}`);
     for (const missing of asset.dataQuality.missingFields as string[]) assert.ok(ui.includes(missing), `view includes the exact missing field: ${missing}`);
   }
   const sourcedPayload = structuredClone(researched);
@@ -240,7 +281,7 @@ const query = "我想了解 BNB Chain 上英伟达股票代币有哪些发行方
   }));
   failedMarketPayload.comparison.rows = failedMarketPayload.assets.map((asset: Record<string, any>) => ({ asset, excludedReasons: [] }));
   const failedMarketUi = renderResearchView(failedMarketPayload);
-  assert.ok(failedMarketUi.includes("upstream provider request failed"), "the native view explains a safe failure category without exposing raw exception text");
+  assert.ok(failedMarketUi.includes("上游提供方请求失败，无法获取行情信息"), "the native view explains a safe failure category in the request language without exposing raw exception text");
   assert.doesNotMatch(ui, /\b(?:live|fresh|real-time) quote\b/i, "a timestamp must not be mistaken for a freshness guarantee");
   assert.doesNotMatch(ui, /<form|name="privateKey"|Sign transaction|Place order/i, "research UI must not create wallet or trading affordances");
 
@@ -256,17 +297,32 @@ const query = "我想了解 BNB Chain 上英伟达股票代币有哪些发行方
       market: { tokenPrice: "<svg onload=alert(1)>", marketStatus: "unknown" },
       dataQuality: { coverage: {}, warnings: ["<b>unsafe warning</b>"], missingFields: [] }
     }]
-  }, "representations");
+  });
   assert.doesNotMatch(hostile, /<img src=x|<script>alert|<svg onload|href="javascript:/i, "untrusted tool output must not become active markup or links");
   assert.match(hostile, /&lt;img/);
   assert.match(hostile, /&lt;script&gt;/);
+
+  const expandedPayload = structuredClone(researched);
+  const repeatedAsset = structuredClone(expandedPayload.assets[0]);
+  expandedPayload.assets = [
+    ...expandedPayload.assets,
+    { ...structuredClone(repeatedAsset), tokenSymbol: "TEST3", contractAddress: "0x333" },
+    { ...structuredClone(repeatedAsset), tokenSymbol: "TEST4", contractAddress: "0x444" },
+    { ...structuredClone(repeatedAsset), tokenSymbol: "TEST5", contractAddress: "0x555" }
+  ];
+  expandedPayload.comparison.rows = expandedPayload.assets.map((asset: Record<string, any>) => ({ asset, excludedReasons: [] }));
+  const expandedUi = renderResearchView(expandedPayload);
+  assert.match(expandedUi, /再显示 2 个发行方版本/, "larger result sets collapse overflow behind a native disclosure");
+  for (const symbol of ["TEST3", "TEST4", "TEST5"]) assert.ok(expandedUi.includes(symbol), `progressive disclosure keeps ${symbol} present in the accessible result markup`);
 
   console.log(JSON.stringify({
     appResourceRegistered: true,
     appTools: appTools.size,
     bundledAppHandshakeAndToolResultRendered: true,
     structuredAndTextOnlyHostDeliveryRendered: true,
-    renderedViewInteractionPassed: true,
+    nativeInlineHierarchy: true,
+    progressiveDisclosure: true,
+    hostThemeAndStyleUpdatesApplied: true,
     textAndStructuredContentAgree: true,
     sameChineseResearchIdentityAcrossTools: true,
     noTradeBoundaryPreserved: true,

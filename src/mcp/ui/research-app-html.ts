@@ -22,7 +22,7 @@ export async function buildResearchAppHtml(): Promise<string> {
   const safeScript = javascript.replace(/<\/script/gi, "<\\/script");
   return `<!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark light"><title>Ariadne research</title><style>${css}</style></head>
-<body><div id="app"><main class="research-shell"><header class="topbar"><div class="brand-mark">A</div><div class="brand"><strong>ARIADNE</strong><span>MARKET CONTEXT</span></div></header><div class="loading"><span class="loading-dot"></span>Waiting for the MCP research result…</div></main></div><script type="module">${safeScript}</script></body>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>Ariadne · Research</title><style>${css}</style></head>
+<body><div id="app"><main class="research-shell"><header class="result-heading"><div class="brandline"><span class="brand-thread" aria-hidden="true"></span><span class="brand-name">Ariadne</span><span class="brand-divider">·</span><span class="brand-context">Research</span></div></header><div class="empty-result">Waiting for the research result…</div></main></div><script type="module">${safeScript}</script></body>
 </html>`;
 }

@@ -1,6 +1,22 @@
 # Ariadne Product Experience Issues and Improvement Record
 
-Updated: 2026-09-23
+Updated: 2026-10-02
+
+## 2026-10-02 — Bilingual MCP output and final local acceptance approved
+
+Phase 22 is Jev-approved at **0.930** after 11/11 selected checks passed and all five criteria were `met` (0.940 / 0.960 / 0.930 / 0.940 / 0.970). After the first review paused at 0.810, a focused fixture now asserts in both English and Chinese that token price and reference price are labeled distinctly, update time remains distinct from provider response time, unknown status stays unknown, missing liquidity stays absent rather than becoming zero, and the evidence survives briefs and the native research card. Explicit no-trade wording also suppresses quote and wallet follow-up actions.
+
+Phase 23, the last approved local SDK/MCP acceptance phase, is complete. Its first two Jev reviews paused at **0.670** and **0.590** despite 24/24 checks passing; the repairs added live English MCP research/no-trade assertions, cross-document ledger checks, and an installed-package `search → marketContext` journey against a loopback-only synthetic fixture. The third full gate passed all 24 checks and Jev approved at **0.900**: SDK consumption **1.000**, MCP **0.930**, safety **0.990**, reconciliation **0.900**, terminal scope **0.920**; all five criteria were `met`, above the unchanged 0.850 threshold. The phase ledger now records terminal `delivery-complete`. This is local SDK/MCP completion only. Provider inventory/freshness and broader cross-host visual parity remain deferred; website work, npm/public release, deployment, real-wallet execution and funded settlement were not part of this approval.
+
+## 2026-10-01 — Approved core-product continuation
+
+The user approved Phases 18–23 as a bounded sequence with Jev review and automatic advancement only after checks and criteria pass. Post-reconnect, the current connected MCP catalog exposes `confirm_stock_action_plan(plan)`, superseding the earlier observation of `confirmationToken`; this is schema evidence only. The isolated stdio MCP fixture passed a synthetic form-elicitation/decline round trip and confirmed the fixture stays simulated with no network, wallet, signing, or broadcast path. A subsequent connected-host call returned `unavailable` and the synthetic plan remained `simulated`; no form was shown. Review found the handler hid whether the host had not advertised form capability or the request failed after negotiation. The local handler now distinguishes those cases without returning raw exception text; all focused tests, typecheck, build and the phase-plan check pass. The test-server entry was removed after the first host attempt, then re-added following the diagnostic repair; a fresh desktop reconnect is now needed to observe the negotiated capability and updated status. Phase 18's previous Jev gate returned `blocked` at 0.480 (local fixture 0.990; actual-host form evidence 0.610). Website work, push/publication, deployment, paid services and real-wallet execution remain excluded.
+
+## 2026-10-02 — Phase 21 provider-data experience update (Jev approved; Phase 22 active)
+
+The read-only asset/research service had been converting several documented Binance market states into `unknown`. The local mapper now represents `premarket`, `postmarket`, and `overnight` as `offhours`, and `pause` as `closed`; unknown future values remain explicitly unknown. On the latest paired live snapshot, the directory returned 488 unique representations while platform metadata declared 545 BSC records; 411 rows mapped to off-hours, 31 to closed, and 46 lacked a market-status string. This improves status expression in Agent output without claiming the catalog is complete or every listing is tradable.
+
+The directory still has no per-representation price-update timestamp or liquidity field. A separate NVDA price sample matched both issuer representations and included per-token update times, but no freshness threshold is defined. A full six-request probe succeeded once; the subsequent bounded repeat was partial because the NVDA search timed out. Both outcomes remain visible as distinct evidence. Jev approved Phase 21 at **0.970** after all ten selected checks and five criteria passed, and the gate advanced to Phase 22. This does not resolve the provider gaps or imply investment advice, signature, broadcast, or external write.
 
 ## Purpose
 
@@ -239,6 +255,14 @@ Ariadne's core capability path is usable, but the product remains in a state whe
 - Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
 - Action taken: `none`
 - Safety note: Jev does not control Codex and no external write was authorized.
+
+### Phase 18 direct connected-host attempt — 2026-10-01
+
+- The refreshed connected catalog exposed `confirm_stock_action_plan(plan)`, matching the local confirmation handler.
+- The temporary isolated test server returned a synthetic-only TESTB plan; its metadata confirmed zero network requests and no real wallet, signing or broadcast support.
+- The connected confirmation call returned `confirmationStatus: unavailable` because the host could not provide the required form. The follow-up status tool confirmed `simulated`. No UI form was displayed and this was not a user decline.
+- The local stdio MCP regression still passes for a client that advertises form elicitation, including explicit decline with the plan left simulated. That protocol test does not prove connected-host UI support.
+- The temporary Codex config entry was removed after the attempt. No wallet operation, signature, broadcast, or phase transition occurred. Phase 18 remains active pending a decision on whether to retain this host limitation or pursue an alternative interaction path.
 
 ## 2026-09-30 — Asset-directory data quality (Phase 9; Jev review pending)
 
@@ -1889,5 +1913,698 @@ This does not promise that every third-party Agent host will select the right MC
   - scope-and-regression (typecheck, build, test:demo-mode, test:mcp-app-ui, test:core-product-phase-plan, test:jev-shadow): Phase 14 remains the active held phase until an approved gate advances it; selected core checks pass, no-trade MCP research stays read-only, and the state-machine regression holds on pause and advances only after approval. Evidence: Typecheck/build pass; Demo and MCP App tests assert read-only/no-trade behavior; the phase-plan test checks the persisted currentPhase=mcp-research-observability and paused nextPhase=delivery-complete; Jev-state regression proves both pause holds and approved transition advances.
 - Jev confidence by review item: status=0.960, nextAction=0.890, riskLevel=1.000, criterion_research-timing=0.980, criterion_safe-failure-diagnosis=0.980, criterion_scope-and-regression=0.890
 - Jev criterion findings: Criterion research-timing: met (0.980 confidence) — For direct ticker and natural-language MCP research, expose finite nonnegative resolver and handler timings whose resolver substages fit inside searchMs and whose sequential measured stages fit inside totalMs; report exact service-method call counts and one market-context batch while preserving read-only behavior.; Criterion safe-failure-diagnosis: met (0.980 confidence) — Market-context failures preserve asset identity, omit unverified market values, use sanitized network/provider/integrity/unexpected categories, and never expose raw exception text in structured or rendered output.; Criterion scope-and-regression: met (0.890 confidence) — Phase 14 remains the active held phase until an approved gate advances it; selected core checks pass, no-trade MCP research stays read-only, and the state-machine regression holds on pause and advances only after approval.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-30T19:21:45.238Z
+- Phase: `mcp-post-simulation-user-confirmation`
+- Jev provider: `deterministic-fallback`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: unavailable
+- Agreement: `unknown`
+- Latency: `14 ms`
+- Phase transition: `pause`
+- Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
+- Acceptance criteria and supplied evidence:
+  - mcp-host-approval (test:mcp-human-confirmation, test:plan-registry): Only an accepted MCP form-elicitation response with decision=approve advances an unchanged, registered simulated plan; decline, cancel, unsupported host, malformed reply, or changed plan does not advance it. Evidence: A protocol-level in-memory MCP host exercises the production confirmation tool; deterministic assertions inspect the requested exact plan details and verify every non-approval path retains the simulated registry stage.
+  - sdk-approval-responsibility (typecheck, test:guarded-sdk-executor, test:execution-dry-run): SDK confirmation no longer treats planId as a token; standalone SDK applications must collect user approval in their own UI before confirm(plan). Evidence: The SDK executor and offline synthetic rehearsal compile and run using confirm(plan) without a planId credential; SDK usage documentation assigns user approval to the integrating application.
+  - no-signing-or-broadcast (test:mcp-human-confirmation, test:guarded-sdk-executor, test:execution-dry-run): The new MCP approval prompt and state transition do not sign or broadcast, and the existing downstream transaction guards continue to pass. Evidence: The MCP host protocol test records zero broadcast requests and no real wallet; the offline regression retains explicit separate signing checks and records zero broadcasts.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-30T19:22:26.951Z
+- Phase: `mcp-post-simulation-user-confirmation`
+- Jev provider: `native-jev`
+- Baseline: `needs_rework` / `repair` / risk `medium`
+- Jev: `needs_rework` / `repair` / risk `medium` / confidence `0.400`
+- Agreement: `true`
+- Latency: `1647 ms`
+- Phase transition: `pause`
+- Transition reason: Criterion sdk-approval-responsibility lacks a sufficiently confident Jev review (0.830); clarify its evidence before advancing.
+- Acceptance criteria and supplied evidence:
+  - mcp-host-approval (test:mcp-human-confirmation, test:plan-registry): Only an accepted MCP form-elicitation response with decision=approve advances an unchanged, registered simulated plan; decline, cancel, unsupported host, malformed reply, or changed plan does not advance it. Evidence: A protocol-level in-memory MCP host exercises the production confirmation tool; deterministic assertions inspect the requested exact plan details and verify every non-approval path retains the simulated registry stage.
+  - sdk-approval-responsibility (typecheck, test:guarded-sdk-executor, test:execution-dry-run): SDK confirmation no longer treats planId as a token; standalone SDK applications must collect user approval in their own UI before confirm(plan). Evidence: The SDK executor and offline synthetic rehearsal compile and run using confirm(plan) without a planId credential; SDK usage documentation assigns user approval to the integrating application.
+  - no-signing-or-broadcast (test:mcp-human-confirmation, test:guarded-sdk-executor, test:execution-dry-run): The new MCP approval prompt and state transition do not sign or broadcast, and the existing downstream transaction guards continue to pass. Evidence: The MCP host protocol test records zero broadcast requests and no real wallet; the offline regression retains explicit separate signing checks and records zero broadcasts.
+- Jev confidence by review item: status=0.860, nextAction=0.940, riskLevel=0.400, criterion_mcp-host-approval=0.960, criterion_sdk-approval-responsibility=0.830, criterion_no-signing-or-broadcast=0.940
+- Jev criterion findings: Criterion mcp-host-approval: met (0.960 confidence) — Only an accepted MCP form-elicitation response with decision=approve advances an unchanged, registered simulated plan; decline, cancel, unsupported host, malformed reply, or changed plan does not advance it.; Criterion sdk-approval-responsibility: met (0.830 confidence) — SDK confirmation no longer treats planId as a token; standalone SDK applications must collect user approval in their own UI before confirm(plan).; Criterion no-signing-or-broadcast: met (0.940 confidence) — The new MCP approval prompt and state transition do not sign or broadcast, and the existing downstream transaction guards continue to pass.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-30T19:27:43.837Z
+- Phase: `mcp-post-simulation-user-confirmation`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.790`
+- Agreement: `true`
+- Latency: `1029 ms`
+- Phase transition: `pause`
+- Transition reason: Criterion mcp-host-approval lacks a sufficiently confident Jev review (0.790); clarify its evidence before advancing.
+- Acceptance criteria and supplied evidence:
+  - mcp-host-approval (test:mcp-human-confirmation, test:plan-registry): Only an accepted MCP form-elicitation response with decision=approve advances an unchanged, registered simulated plan; decline, cancel, unsupported host, malformed reply, or changed plan does not advance it. Evidence: An in-memory MCP host invokes the same production tool registration as the server. Tests inspect the exact summary/form schema and registered stage after approve, decline, cancel, SDK-rejected malformed content, unsupported elicitation, and changed plans.
+  - sdk-approval-responsibility (typecheck, test:mcp-human-confirmation, test:guarded-sdk-executor, test:execution-dry-run): SDK confirmation has no planId-as-token API; the integrating application is explicitly responsible for collecting user approval before confirm(plan), and docs state the host/caller limitation. Evidence: Typecheck and synthetic executor callers compile with confirm(plan) and no token. The MCP confirmation regression also asserts SDK_USAGE documents the app-owned approval UI, says SDK cannot prove a person approved, and no longer claims planId is an authentication token.
+  - separate-signing-boundary (test:mcp-human-confirmation, test:guarded-sdk-executor, test:execution-dry-run, test:demo-mode): This change requests no external signature or broadcast; all post-confirmation signing and transaction guards remain separate and regression-tested. Evidence: The protocol host test confirms local state only, zero broadcasts, and no real wallet. Existing synthetic signing tests remain isolated fixtures and record zero network broadcasts; Demo mode blocks action preparation.
+- Jev confidence by review item: status=0.980, nextAction=0.980, riskLevel=0.990, criterion_mcp-host-approval=0.790, criterion_sdk-approval-responsibility=0.960, criterion_separate-signing-boundary=0.960
+- Jev criterion findings: Criterion mcp-host-approval: met (0.790 confidence) — Only an accepted MCP form-elicitation response with decision=approve advances an unchanged, registered simulated plan; decline, cancel, unsupported host, malformed reply, or changed plan does not advance it.; Criterion sdk-approval-responsibility: met (0.960 confidence) — SDK confirmation has no planId-as-token API; the integrating application is explicitly responsible for collecting user approval before confirm(plan), and docs state the host/caller limitation.; Criterion separate-signing-boundary: met (0.960 confidence) — This change requests no external signature or broadcast; all post-confirmation signing and transaction guards remain separate and regression-tested.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-30T19:29:38.353Z
+- Phase: `mcp-post-simulation-user-confirmation`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.950`
+- Agreement: `true`
+- Latency: `907 ms`
+- Phase transition: `advance`
+- Transition reason: Baseline and Jev agree on a low-risk continuation.
+- Acceptance criteria and supplied evidence:
+  - mcp-host-approval (test:mcp-human-confirmation, test:plan-registry): The MCP tool ignores an Agent-echoed planId and still requests host elicitation. Only accepted decision=approve advances the exact registered simulated plan; decline, cancel, malformed/unavailable host, or altered plan does not. This verifies the trusted-host response boundary, not proof of a human click. Evidence: An in-memory MCP host calls the production tool registration. Tests confirm the public schema exposes only plan, a forged echoed confirmationToken still invokes elicitation, exact plan details are shown, accepted approval advances once, and all non-approval or changed-plan paths remain simulated.
+  - sdk-approval-responsibility (typecheck, test:mcp-human-confirmation, test:guarded-sdk-executor, test:execution-dry-run): SDK confirmation has no planId-as-token API; the integrating application must collect user approval before confirm(plan), and docs state the host/caller limitation. Evidence: Typecheck and synthetic executor callers compile with confirm(plan) and no token. The MCP confirmation regression asserts SDK_USAGE documents app-owned approval UI, says SDK cannot prove a person approved, and no longer calls planId an authentication token.
+  - separate-signing-boundary (test:mcp-human-confirmation, test:guarded-sdk-executor, test:execution-dry-run, test:demo-mode): This change requests no external signature or broadcast; post-confirmation signing and transaction guards remain separate and regression-tested. Evidence: The protocol host test confirms local state only, zero broadcasts, and no real wallet. Existing synthetic signer tests remain isolated fixtures and record zero network broadcasts; Demo mode blocks action preparation.
+- Jev confidence by review item: status=0.970, nextAction=0.980, riskLevel=0.990, criterion_mcp-host-approval=0.950, criterion_sdk-approval-responsibility=0.970, criterion_separate-signing-boundary=0.980
+- Jev criterion findings: Criterion mcp-host-approval: met (0.950 confidence) — The MCP tool ignores an Agent-echoed planId and still requests host elicitation. Only accepted decision=approve advances the exact registered simulated plan; decline, cancel, malformed/unavailable host, or altered plan does not. This verifies the trusted-host response boundary, not proof of a human click.; Criterion sdk-approval-responsibility: met (0.970 confidence) — SDK confirmation has no planId-as-token API; the integrating application must collect user approval before confirm(plan), and docs state the host/caller limitation.; Criterion separate-signing-boundary: met (0.980 confidence) — This change requests no external signature or broadcast; post-confirmation signing and transaction guards remain separate and regression-tested.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+## 2026-10-01 — Core-product quality audit (Phase 16; complete, Jev 0.910)
+
+The web/landing experience is excluded. This review covers only independent SDK use, Agent-facing MCP, the MCP-native read-only research view, and the guarded transaction workflow.
+
+| Journey / quality area | Verified now | Gap, cause and next step |
+|---|---|---|
+| Standalone SDK developer | Typecheck/build and the package distribution check pass; prior clean-room import/type evidence is recorded historically. | Today's clean-room install did not finish because dependency resolution stayed silent, so current clean-room evidence is inconclusive. Re-run once package dependencies are available locally or network access is restored; do not describe today's attempt as passing. |
+| Natural-language MCP user | A connected read-only Chinese request correctly resolved NVDA, returned two issuer representations, source endpoints, per-asset timestamps, warnings and `sideEffects: none`; the handler reported 3.56 seconds for this one sample. | The prose result was English despite a Chinese prompt; localization behavior is not currently an acceptance criterion. Decide whether Ariadne or the caller Agent owns response-language matching, then test both languages. One successful request does not establish broad Agent quality or an SLO. |
+| Native MCP research UI | The MCP Apps research view is implemented and the user previously confirmed it was visible in this Codex conversation; local bundle tests cover text/structured results and interactions. | This UI is read-only research, not a wallet or trading panel. The newer transaction confirmation elicitation is covered by an in-memory protocol test only. The connected tool still advertises the old token-based input, so actual rendering of the new form is not verified. |
+| Research interpretation | Missing liquidity and unknown bStocks market status were explicitly surfaced; exact identities and quote/source timestamps were present. | “Eligible” was misleading because the default empty filter object marks all returned rows as not excluded. Root cause was presentation wording, not market-data eligibility. Local output now says “Matches filters” or “No filters applied,” gives the price-gap rank basis, and disclaims tradability. |
+| Transaction/business closure | Local state machine and synthetic signing/broadcast guards passed; the dry run reports nine rejected unsafe/replayed cases, zero broadcasts and no real wallet. | This is not funded execution or a complete settlement loop. Real RFQ signature, funded broadcast and post-trade balance reconciliation remain deferred; the safe path ends before those externally authorized steps. |
+| Asset-data ecosystem | BNB inventory, provider timestamps and issuer representations have been measured and recorded. | Provider contract/observations still do not establish complete inventory: 538 metadata rows vs 488 token rows, equal observed `tabId` result sets, absent directory quote timestamps and some unknown fields. The source documents lack pagination/total-count support; preserve as upstream limitations until exact causes can be established. |
+
+### Phase 16 verification record
+
+- Passed locally: `typecheck`, `build`, `test:domain`, `test:plan-registry`, `test:mcp-human-confirmation`, `test:guarded-sdk-executor`, `test:execution-dry-run`, `test:mcp-app-ui`, `test:demo-mode`, `test:distribution`, `test:presentation`, `test:core-product-phase-plan`, and `git diff --check`.
+- Live/API boundary: one connected MCP research call passed with `sideEffects: none`; the separate local live acceptance script failed to connect upstream (`NETWORK_TIMEOUT`). This is an environment-limited run, not a product assertion failure or a pass.
+- SDK boundary: the clean-room package installation did not complete and was stopped; classify as inconclusive.
+- Release/transaction boundary: no website work, real wallet, signature, broadcast, funded settlement, package publication or push.
+- Final phase gate: all 7 selected checks passed and all 5 criteria were `met`; native Jev returned `passed_with_deferred_items` / low risk / confidence 0.910, and the ledger advanced to terminal `delivery-complete`. Here `continue` means final report and stop—not another coding phase. The deferred host-schema discrepancy, inconclusive clean-room attempt, live-network timeout and product follow-up decisions remain visible rather than being counted as completed functionality.
+
+### Jev phase-gate record — 2026-09-30T20:14:55.012Z
+- Phase: `core-product-quality-audit`
+- Jev provider: `deterministic-fallback`
+- Baseline: `passed_with_deferred_items` / `continue` / risk `low`
+- Jev: unavailable
+- Agreement: `unknown`
+- Latency: `25 ms`
+- Phase transition: `pause`
+- Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
+- Acceptance criteria and supplied evidence:
+  - comparison-language (test:presentation, test:core-product-phase-plan): MCP comparison output distinguishes filter matching from execution eligibility, makes the empty-filter case explicit, and identifies its rank as price-gap based. Evidence: Presentation regressions exercise filtered and unfiltered output, reject the old Eligible wording, and assert the price-gap rank and no-tradability disclaimer; phase-plan checks ensure the correction and its scope are recorded.
+  - mcp-native-ui-and-confirmation (test:mcp-app-ui, test:mcp-human-confirmation, test:core-product-phase-plan): The audit accurately distinguishes the user-confirmed read-only research card from the locally tested but actual-host-unverified Phase 15 confirmation elicitation. Evidence: The MCP Apps bundle renders structured/text results and interactions; an in-memory host exercises production confirmation registration and fail-closed decisions; report assertions preserve the connected tool's older schema as a host-validation limitation.
+  - safe-transaction-boundary (test:mcp-human-confirmation, test:execution-dry-run, build): The revised confirmation and quality audit do not sign or broadcast, and synthetic execution regressions retain their safety checks. Evidence: The protocol test and offline execution rehearsal report zero broadcast requests and no real wallet; the build succeeds. These checks do not claim funded settlement.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-30T20:15:45.556Z
+- Phase: `core-product-quality-audit`
+- Jev provider: `native-jev`
+- Baseline: `passed_with_deferred_items` / `continue` / risk `low`
+- Jev: `passed_with_deferred_items` / `repair` / risk `low` / confidence `0.550`
+- Agreement: `false`
+- Latency: `1552 ms`
+- Phase transition: `pause`
+- Transition reason: Jev did not verify criterion mcp-native-ui-and-confirmation: insufficient_evidence — The audit accurately distinguishes the user-confirmed read-only research card from the locally tested but actual-host-unverified Phase 15 confirmation elicitation.. Diagnose or repair this criterion before advancing.
+- Acceptance criteria and supplied evidence:
+  - comparison-language (test:presentation, test:core-product-phase-plan): MCP comparison output distinguishes filter matching from execution eligibility, makes the empty-filter case explicit, and identifies its rank as price-gap based. Evidence: Presentation regressions exercise filtered and unfiltered output, reject the old Eligible wording, and assert the price-gap rank and no-tradability disclaimer; phase-plan checks ensure the correction and its scope are recorded.
+  - mcp-native-ui-and-confirmation (test:mcp-app-ui, test:mcp-human-confirmation, test:core-product-phase-plan): The audit accurately distinguishes the user-confirmed read-only research card from the locally tested but actual-host-unverified Phase 15 confirmation elicitation. Evidence: The MCP Apps bundle renders structured/text results and interactions; an in-memory host exercises production confirmation registration and fail-closed decisions; report assertions preserve the connected tool's older schema as a host-validation limitation.
+  - safe-transaction-boundary (test:mcp-human-confirmation, test:execution-dry-run, build): The revised confirmation and quality audit do not sign or broadcast, and synthetic execution regressions retain their safety checks. Evidence: The protocol test and offline execution rehearsal report zero broadcast requests and no real wallet; the build succeeds. These checks do not claim funded settlement.
+- Jev confidence by review item: status=0.970, nextAction=0.610, riskLevel=0.620, criterion_comparison-language=0.880, criterion_mcp-native-ui-and-confirmation=0.550, criterion_safe-transaction-boundary=0.790, deferredScope=0.640
+- Jev criterion findings: Criterion comparison-language: met (0.880 confidence) — MCP comparison output distinguishes filter matching from execution eligibility, makes the empty-filter case explicit, and identifies its rank as price-gap based.; Criterion mcp-native-ui-and-confirmation: insufficient_evidence (0.550 confidence) — The audit accurately distinguishes the user-confirmed read-only research card from the locally tested but actual-host-unverified Phase 15 confirmation elicitation.; Criterion safe-transaction-boundary: met (0.790 confidence) — The revised confirmation and quality audit do not sign or broadcast, and synthetic execution regressions retain their safety checks.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-30T20:18:00.442Z
+- Phase: `core-product-quality-audit`
+- Jev provider: `native-jev`
+- Baseline: `passed_with_deferred_items` / `continue` / risk `low`
+- Jev: `passed_with_deferred_items` / `continue` / risk `low` / confidence `0.620`
+- Agreement: `true`
+- Latency: `920 ms`
+- Phase transition: `pause`
+- Transition reason: Jev confidence is below the minimum threshold (0.85); the least-certain review item is nextAction (0.620). Add or clarify evidence for that item, then review again.
+- Acceptance criteria and supplied evidence:
+  - comparison-language (test:presentation, test:core-product-phase-plan): MCP comparison output distinguishes filter matching from execution eligibility, makes the empty-filter case explicit, and identifies its rank as price-gap based. Evidence: Presentation regressions cover explicit filters and an empty filter object, reject the old Eligible wording, and assert the price-gap ranking and no-tradability disclaimer; phase-plan checks verify its recorded scope.
+  - research-ui-contract (test:mcp-app-ui, test:core-product-phase-plan): The local MCP Apps research view renders the bundled result with structured and text-only delivery and preserves the research-only boundary. Evidence: The bundled client handshake, structured/text-only host notifications, rendered values, interaction, hostile-data escaping and no-trade boundary pass. The user separately confirmed the card was visible in this Codex conversation; the report attributes that as a user observation, not a Codex screenshot.
+  - confirmation-protocol (test:mcp-human-confirmation, test:execution-dry-run): The local production MCP confirmation handler requires an accepted explicit approve response for an unchanged simulated plan; every non-approval path remains simulated and does not sign or broadcast. Evidence: An in-memory MCP client exercises the production handler and verifies exact plan summary, approval, decline, cancel, malformed/unavailable host, changed plan, zero broadcasts and no real wallet; synthetic SDK rehearsal retains its separate signing checks.
+  - host-version-disclosure (test:core-product-phase-plan, test:mcp-human-confirmation): The audit records that the connected MCP tool still exposes the old confirmationToken contract while local source exposes only plan, and explicitly does not claim actual-host rendering of the new elicitation. Evidence: Direct connected-tool metadata in this task showed confirmationToken plus plan; local production registration and protocol tests show only plan and host elicitation. The phase-plan test asserts the version discrepancy and the reports label new-form rendering unverified. This is disclosure of a limit, not a claim that the new form rendered.
+  - safe-transaction-boundary (test:mcp-human-confirmation, test:execution-dry-run, build): The audit does not cross into real wallet signing, broadcast, or funded settlement. Evidence: The local confirmation test and offline synthetic rehearsal both report zero broadcasts and no real wallet; compilation succeeds. Funded settlement remains excluded.
+- Jev confidence by review item: status=0.990, nextAction=0.620, riskLevel=0.780, criterion_comparison-language=0.980, criterion_research-ui-contract=0.950, criterion_confirmation-protocol=0.980, criterion_host-version-disclosure=0.960, criterion_safe-transaction-boundary=0.990, deferredScope=0.950
+- Jev criterion findings: Criterion comparison-language: met (0.980 confidence) — MCP comparison output distinguishes filter matching from execution eligibility, makes the empty-filter case explicit, and identifies its rank as price-gap based.; Criterion research-ui-contract: met (0.950 confidence) — The local MCP Apps research view renders the bundled result with structured and text-only delivery and preserves the research-only boundary.; Criterion confirmation-protocol: met (0.980 confidence) — The local production MCP confirmation handler requires an accepted explicit approve response for an unchanged simulated plan; every non-approval path remains simulated and does not sign or broadcast.; Criterion host-version-disclosure: met (0.960 confidence) — The audit records that the connected MCP tool still exposes the old confirmationToken contract while local source exposes only plan, and explicitly does not claim actual-host rendering of the new elicitation.; Criterion safe-transaction-boundary: met (0.990 confidence) — The audit does not cross into real wallet signing, broadcast, or funded settlement.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-30T20:19:19.699Z
+- Phase: `core-product-quality-audit`
+- Jev provider: `native-jev`
+- Baseline: `passed_with_deferred_items` / `continue` / risk `low`
+- Jev: `passed_with_deferred_items` / `continue` / risk `low` / confidence `0.270`
+- Agreement: `true`
+- Latency: `802 ms`
+- Phase transition: `pause`
+- Transition reason: Jev confidence is below the minimum threshold (0.85); the least-certain review item is nextAction (0.270). Add or clarify evidence for that item, then review again.
+- Acceptance criteria and supplied evidence:
+  - comparison-language (test:presentation, test:core-product-phase-plan): MCP comparison output distinguishes filter matching from execution eligibility, makes the empty-filter case explicit, and identifies its rank as price-gap based. Evidence: Presentation regressions cover explicit filters and an empty filter object, reject the old Eligible wording, and assert the price-gap ranking and no-tradability disclaimer; phase-plan checks verify its recorded scope.
+  - research-ui-contract (test:mcp-app-ui, test:core-product-phase-plan): The local MCP Apps research view renders the bundled result with structured and text-only delivery and preserves the research-only boundary. Evidence: The bundled client handshake, structured/text-only host notifications, rendered values, interaction, hostile-data escaping and no-trade boundary pass. The user separately confirmed the card was visible in this Codex conversation; the report attributes that as a user observation, not a Codex screenshot.
+  - confirmation-protocol (test:mcp-human-confirmation, test:execution-dry-run): The local production MCP confirmation handler requires an accepted explicit approve response for an unchanged simulated plan; every non-approval path remains simulated and does not sign or broadcast. Evidence: An in-memory MCP client exercises the production handler and verifies exact plan summary, approval, decline, cancel, malformed/unavailable host, changed plan, zero broadcasts and no real wallet; synthetic SDK rehearsal retains its separate signing checks.
+  - host-version-disclosure (test:core-product-phase-plan, test:mcp-human-confirmation): The audit records that the connected MCP tool still exposes the old confirmationToken contract while local source exposes only plan, and explicitly does not claim actual-host rendering of the new elicitation. Evidence: Direct connected-tool metadata in this task showed confirmationToken plus plan; local production registration and protocol tests show only plan and host elicitation. The phase-plan test asserts the version discrepancy and reports label new-form rendering unverified. This is disclosure of a limit, not a claim that the new form rendered.
+  - safe-transaction-boundary (test:mcp-human-confirmation, test:execution-dry-run, build): The audit does not cross into real wallet signing, broadcast, or funded settlement. Evidence: The local confirmation test and offline synthetic rehearsal both report zero broadcasts and no real wallet; compilation succeeds. Funded settlement remains excluded.
+- Jev confidence by review item: status=0.990, nextAction=0.270, riskLevel=0.870, criterion_comparison-language=0.990, criterion_research-ui-contract=0.930, criterion_confirmation-protocol=0.990, criterion_host-version-disclosure=0.980, criterion_safe-transaction-boundary=1.000, deferredScope=0.970
+- Jev criterion findings: Criterion comparison-language: met (0.990 confidence) — MCP comparison output distinguishes filter matching from execution eligibility, makes the empty-filter case explicit, and identifies its rank as price-gap based.; Criterion research-ui-contract: met (0.930 confidence) — The local MCP Apps research view renders the bundled result with structured and text-only delivery and preserves the research-only boundary.; Criterion confirmation-protocol: met (0.990 confidence) — The local production MCP confirmation handler requires an accepted explicit approve response for an unchanged simulated plan; every non-approval path remains simulated and does not sign or broadcast.; Criterion host-version-disclosure: met (0.980 confidence) — The audit records that the connected MCP tool still exposes the old confirmationToken contract while local source exposes only plan, and explicitly does not claim actual-host rendering of the new elicitation.; Criterion safe-transaction-boundary: met (1.000 confidence) — The audit does not cross into real wallet signing, broadcast, or funded settlement.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-30T20:22:10.979Z
+- Phase: `core-product-quality-audit`
+- Jev provider: `native-jev`
+- Baseline: `passed_with_deferred_items` / `continue` / risk `low`
+- Jev: `passed_with_deferred_items` / `continue` / risk `low` / confidence `0.910`
+- Agreement: `true`
+- Latency: `933 ms`
+- Phase transition: `advance`
+- Transition reason: Baseline and Jev agree on a low-risk continuation.
+- Acceptance criteria and supplied evidence:
+  - comparison-language (test:presentation, test:core-product-phase-plan): MCP comparison output distinguishes filter matching from execution eligibility, makes the empty-filter case explicit, and identifies its rank as price-gap based. Evidence: Presentation regressions cover explicit filters and an empty filter object, reject the old Eligible wording, and assert the price-gap ranking and no-tradability disclaimer; phase-plan checks verify its recorded scope.
+  - research-ui-contract (test:mcp-app-ui, test:core-product-phase-plan): The local MCP Apps research view renders the bundled result with structured and text-only delivery and preserves the research-only boundary. Evidence: The bundled client handshake, structured/text-only host notifications, rendered values, interaction, hostile-data escaping and no-trade boundary pass. The user separately confirmed the card was visible in this Codex conversation; the report attributes that as a user observation, not a Codex screenshot.
+  - confirmation-protocol (test:mcp-human-confirmation, test:execution-dry-run): The local production MCP confirmation handler requires an accepted explicit approve response for an unchanged simulated plan; every non-approval path remains simulated and does not sign or broadcast. Evidence: An in-memory MCP client exercises the production handler and verifies exact plan summary, approval, decline, cancel, malformed/unavailable host, changed plan, zero broadcasts and no real wallet; synthetic SDK rehearsal retains its separate signing checks.
+  - host-version-disclosure (test:core-product-phase-plan, test:mcp-human-confirmation): The audit records that the connected MCP tool still exposes the old confirmationToken contract while local source exposes only plan, and explicitly does not claim actual-host rendering of the new elicitation. Evidence: Direct connected-tool metadata in this task showed confirmationToken plus plan; local production registration and protocol tests show only plan and host elicitation. The phase-plan test asserts the version discrepancy and reports new-form rendering unverified. This is disclosure of a limit, not a claim that the new form rendered.
+  - safe-transaction-boundary (test:mcp-human-confirmation, test:execution-dry-run, build): The audit does not cross into real wallet signing, broadcast, or funded settlement. Evidence: The local confirmation test and offline synthetic rehearsal both report zero broadcasts and no real wallet; compilation succeeds. Funded settlement remains excluded.
+- Jev confidence by review item: status=0.990, nextAction=0.980, riskLevel=0.910, criterion_comparison-language=0.990, criterion_research-ui-contract=0.940, criterion_confirmation-protocol=0.990, criterion_host-version-disclosure=0.990, criterion_safe-transaction-boundary=1.000, deferredScope=0.990
+- Jev criterion findings: Criterion comparison-language: met (0.990 confidence) — MCP comparison output distinguishes filter matching from execution eligibility, makes the empty-filter case explicit, and identifies its rank as price-gap based.; Criterion research-ui-contract: met (0.940 confidence) — The local MCP Apps research view renders the bundled result with structured and text-only delivery and preserves the research-only boundary.; Criterion confirmation-protocol: met (0.990 confidence) — The local production MCP confirmation handler requires an accepted explicit approve response for an unchanged simulated plan; every non-approval path remains simulated and does not sign or broadcast.; Criterion host-version-disclosure: met (0.990 confidence) — The audit records that the connected MCP tool still exposes the old confirmationToken contract while local source exposes only plan, and explicitly does not claim actual-host rendering of the new elicitation.; Criterion safe-transaction-boundary: met (1.000 confidence) — The audit does not cross into real wallet signing, broadcast, or funded settlement.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-30T21:03:23.397Z
+- Phase: `mcp-agent-native-research-ui`
+- Jev provider: `deterministic-fallback`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: unavailable
+- Agreement: `unknown`
+- Latency: `14 ms`
+- Phase transition: `pause`
+- Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
+- Acceptance criteria and supplied evidence:
+  - inline-host-native-ui (test:mcp-app-ui): The default MCP result is compact and inline, avoids a dashboard shell, adapts to supplied host theme/style/font and safe-area context with fallbacks, and keeps accessible responsive disclosures. Evidence: The protocol-host harness executes the bundled app, applies initial and changed host context, verifies compact non-dashboard HTML and responsive/theme fallback CSS, renders structured and text-only results, and retains overflow behind native details disclosures.
+  - research-data-fidelity (test:mcp-app-ui, test:presentation): The redesigned view preserves exact returned asset identities, prices, timestamps, warnings, provenance, missing-field notes, links and text/structured compatibility without fabricating live-data claims. Evidence: UI assertions compare discovery/comparison/research identities and market values, render supplied per-asset timestamps and endpoint-field provenance, preserve caveats and missing fields, escape hostile strings, and keep presentation wording regressions passing.
+  - safety-and-regression (test:demo-mode, typecheck, build, test:core-product-phase-plan): The Agent-native UI remains read-only and introduces no wallet, signature, trade or website behavior; relevant core regression and compile checks pass. Evidence: Demo regressions preserve ambiguity/action blocks and the forged-plan guard; typecheck/build and phase-ledger regression pass. The UI harness asserts no wallet/sign/trade affordances; Phase 17 scope excludes website and transaction behavior.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-30T21:04:11.589Z
+- Phase: `mcp-agent-native-research-ui`
+- Jev provider: `native-jev`
+- Baseline: `needs_rework` / `repair` / risk `medium`
+- Jev: `needs_rework` / `repair` / risk `low` / confidence `0.310`
+- Agreement: `true`
+- Latency: `2065 ms`
+- Phase transition: `pause`
+- Transition reason: Jev did not verify criterion safety-and-regression: gap — The Agent-native UI remains read-only and introduces no wallet, signature, trade or website behavior; relevant core regression and compile checks pass.. Diagnose or repair this criterion before advancing.
+- Acceptance criteria and supplied evidence:
+  - inline-host-native-ui (test:mcp-app-ui): The default MCP result is compact and inline, avoids a dashboard shell, adapts to supplied host theme/style/font and safe-area context with fallbacks, and keeps accessible responsive disclosures. Evidence: The protocol-host harness executes the bundled app, applies initial and changed host context, verifies compact non-dashboard HTML and responsive/theme fallback CSS, renders structured and text-only results, and retains overflow behind native details disclosures.
+  - research-data-fidelity (test:mcp-app-ui, test:presentation): The redesigned view preserves exact returned asset identities, prices, timestamps, warnings, provenance, missing-field notes, links and text/structured compatibility without fabricating live-data claims. Evidence: UI assertions compare discovery/comparison/research identities and market values, render supplied per-asset timestamps and endpoint-field provenance, preserve caveats and missing fields, escape hostile strings, and keep presentation wording regressions passing.
+  - safety-and-regression (test:demo-mode, typecheck, build, test:core-product-phase-plan): The Agent-native UI remains read-only and introduces no wallet, signature, trade or website behavior; relevant core regression and compile checks pass. Evidence: Demo regressions preserve ambiguity/action blocks and the forged-plan guard; typecheck/build and phase-ledger regression pass. The UI harness asserts no wallet/sign/trade affordances; Phase 17 scope excludes website and transaction behavior.
+- Jev confidence by review item: status=0.920, nextAction=0.850, riskLevel=0.310, criterion_inline-host-native-ui=0.940, criterion_research-data-fidelity=0.960, criterion_safety-and-regression=0.510
+- Jev criterion findings: Criterion inline-host-native-ui: met (0.940 confidence) — The default MCP result is compact and inline, avoids a dashboard shell, adapts to supplied host theme/style/font and safe-area context with fallbacks, and keeps accessible responsive disclosures.; Criterion research-data-fidelity: met (0.960 confidence) — The redesigned view preserves exact returned asset identities, prices, timestamps, warnings, provenance, missing-field notes, links and text/structured compatibility without fabricating live-data claims.; Criterion safety-and-regression: gap (0.510 confidence) — The Agent-native UI remains read-only and introduces no wallet, signature, trade or website behavior; relevant core regression and compile checks pass.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-30T21:05:42.357Z
+- Phase: `mcp-agent-native-research-ui`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.770`
+- Agreement: `true`
+- Latency: `854 ms`
+- Phase transition: `pause`
+- Transition reason: Jev confidence is below the minimum threshold (0.85); the least-certain review item is status (0.770). Add or clarify evidence for that item, then review again.
+- Acceptance criteria and supplied evidence:
+  - inline-host-native-ui (test:mcp-app-ui): The default MCP result is compact and inline, avoids a dashboard shell, adapts to supplied host theme/style/font and safe-area context with fallbacks, and keeps accessible responsive disclosures. Evidence: The protocol-host harness executes the bundled app, applies initial and changed host context, verifies compact non-dashboard HTML and responsive/theme fallback CSS, renders structured and text-only results, and retains overflow behind native details disclosures.
+  - research-data-fidelity (test:mcp-app-ui, test:presentation): The redesigned view preserves exact returned asset identities, prices, timestamps, warnings, provenance, missing-field notes, links and text/structured compatibility without fabricating live-data claims. Evidence: UI assertions compare discovery/comparison/research identities and market values, render supplied per-asset timestamps and endpoint-field provenance, preserve caveats and missing fields, escape hostile strings, and keep presentation wording regressions passing.
+  - read-only-ui-safety (test:mcp-app-ui, test:demo-mode, typecheck, build, test:core-product-phase-plan): The rendered research result identifies itself as research-only and contains no wallet, signing or trade controls; Demo negative-action/forged-plan regressions and relevant compile/phase-ledger checks pass. Evidence: The MCP Apps harness asserts the research-only boundary and absence of form/private-key/sign/order controls; Demo-mode tests preserve action and forged-plan rejection; typecheck/build pass and the phase ledger records the bounded no-website scope and current Jev hold/advance reason.
+- Jev confidence by review item: status=0.770, nextAction=0.870, riskLevel=0.990, criterion_inline-host-native-ui=0.960, criterion_research-data-fidelity=0.980, criterion_read-only-ui-safety=0.970
+- Jev criterion findings: Criterion inline-host-native-ui: met (0.960 confidence) — The default MCP result is compact and inline, avoids a dashboard shell, adapts to supplied host theme/style/font and safe-area context with fallbacks, and keeps accessible responsive disclosures.; Criterion research-data-fidelity: met (0.980 confidence) — The redesigned view preserves exact returned asset identities, prices, timestamps, warnings, provenance, missing-field notes, links and text/structured compatibility without fabricating live-data claims.; Criterion read-only-ui-safety: met (0.970 confidence) — The rendered research result identifies itself as research-only and contains no wallet, signing or trade controls; Demo negative-action/forged-plan regressions and relevant compile/phase-ledger checks pass.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-30T21:09:30.054Z
+- Phase: `mcp-agent-native-research-ui`
+- Jev provider: `native-jev`
+- Baseline: `passed_with_deferred_items` / `continue` / risk `low`
+- Jev: `passed_with_deferred_items` / `continue` / risk `low` / confidence `0.250`
+- Agreement: `true`
+- Latency: `959 ms`
+- Phase transition: `pause`
+- Transition reason: Jev confidence is below the minimum threshold (0.85); the least-certain review item is nextAction (0.250). Add or clarify evidence for that item, then review again.
+- Acceptance criteria and supplied evidence:
+  - inline-host-native-ui (test:mcp-app-ui): The default MCP result is compact and inline, avoids a dashboard shell, adapts to supplied host theme/style/font and safe-area context with fallbacks, and keeps accessible responsive disclosures. Evidence: The protocol-host harness executes the bundled app, applies initial and changed host context, verifies compact non-dashboard HTML and responsive/theme fallback CSS, renders structured and text-only results, and retains overflow behind native details disclosures.
+  - research-data-fidelity (test:mcp-app-ui, test:presentation): The redesigned view preserves exact returned asset identities, prices, timestamps, warnings, provenance, missing-field notes, links and text/structured compatibility without fabricating live-data claims. Evidence: UI assertions compare discovery/comparison/research identities and market values, render supplied per-asset timestamps and endpoint-field provenance, preserve caveats and missing fields, escape hostile strings, and keep presentation wording regressions passing.
+  - read-only-ui-safety (test:mcp-app-ui, test:demo-mode, typecheck, build, test:core-product-phase-plan, test:jev-shadow): The rendered research result identifies itself as research-only and contains no wallet, signing or trade controls; Demo negative-action/forged-plan regressions and relevant compile, phase-ledger and gate-state checks pass. Evidence: The MCP Apps harness asserts the research-only boundary and absence of form/private-key/sign/order controls; Demo-mode tests preserve action and forged-plan rejection; test:jev-shadow proves this named Phase 17 advances only after passing checks and Jev criteria and stays active on a failed UI check; typecheck/build and ledger regression pass.
+- Jev confidence by review item: status=0.980, nextAction=0.250, riskLevel=0.890, criterion_inline-host-native-ui=0.950, criterion_research-data-fidelity=0.980, criterion_read-only-ui-safety=0.970, deferredScope=0.880
+- Jev criterion findings: Criterion inline-host-native-ui: met (0.950 confidence) — The default MCP result is compact and inline, avoids a dashboard shell, adapts to supplied host theme/style/font and safe-area context with fallbacks, and keeps accessible responsive disclosures.; Criterion research-data-fidelity: met (0.980 confidence) — The redesigned view preserves exact returned asset identities, prices, timestamps, warnings, provenance, missing-field notes, links and text/structured compatibility without fabricating live-data claims.; Criterion read-only-ui-safety: met (0.970 confidence) — The rendered research result identifies itself as research-only and contains no wallet, signing or trade controls; Demo negative-action/forged-plan regressions and relevant compile, phase-ledger and gate-state checks pass.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-30T21:14:14.972Z
+- Phase: `mcp-agent-native-research-ui`
+- Jev provider: `deterministic-fallback`
+- Baseline: `blocked` / `stop` / risk `high`
+- Jev: unavailable
+- Agreement: `unknown`
+- Latency: `15 ms`
+- Phase transition: `pause`
+- Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
+- Acceptance criteria and supplied evidence:
+  - inline-host-native-ui (test:mcp-app-ui): The local default result is compact and inline, adapts to host theme/style/font/safe-area context, and uses accessible responsive disclosures. Evidence: The protocol-host harness runs the bundled UI with light/dark context updates, safe-area and style tokens, responsive/fallback CSS, semantic disclosures and structured/text-only render paths.
+  - research-data-fidelity (test:mcp-app-ui, test:presentation): The view preserves exact returned research values, identity, timestamps, sources, warnings and missing data without unsafe links or unescaped content. Evidence: The UI harness compares discovery/comparison/research values, provenance, caveats and text/structured parity; it rejects hostile markup and unsafe links. Presentation regressions pass.
+  - safe-local-delivery (test:mcp-app-ui, test:demo-mode, typecheck, build, test:core-product-phase-plan, test:jev-shadow): Local implementation remains research-only, preserves product regressions and does not add website, wallet, signing or trading behavior. Evidence: The UI harness asserts no trade controls; Demo rejects unsafe actions; typecheck/build and phase-ledger plus pass/hold gate-state regressions pass.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-30T21:14:50.023Z
+- Phase: `mcp-agent-native-research-ui`
+- Jev provider: `native-jev`
+- Baseline: `blocked` / `stop` / risk `high`
+- Jev: `blocked` / `repair` / risk `low` / confidence `0.340`
+- Agreement: `false`
+- Latency: `1049 ms`
+- Phase transition: `pause`
+- Transition reason: Both baseline and Jev must authorize low-risk continuation, allowing explicitly recorded deferred items.
+- Acceptance criteria and supplied evidence:
+  - inline-host-native-ui (test:mcp-app-ui): The local default result is compact and inline, adapts to host theme/style/font/safe-area context, and uses accessible responsive disclosures. Evidence: The protocol-host harness runs the bundled UI with light/dark context updates, safe-area and style tokens, responsive/fallback CSS, semantic disclosures and structured/text-only render paths.
+  - research-data-fidelity (test:mcp-app-ui, test:presentation): The view preserves exact returned research values, identity, timestamps, sources, warnings and missing data without unsafe links or unescaped content. Evidence: The UI harness compares discovery/comparison/research values, provenance, caveats and text/structured parity; it rejects hostile markup and unsafe links. Presentation regressions pass.
+  - safe-local-delivery (test:mcp-app-ui, test:demo-mode, typecheck, build, test:core-product-phase-plan, test:jev-shadow): Local implementation remains research-only, preserves product regressions and does not add website, wallet, signing or trading behavior. Evidence: The UI harness asserts no trade controls; Demo rejects unsafe actions; typecheck/build and phase-ledger plus pass/hold gate-state regressions pass.
+- Jev confidence by review item: status=0.800, nextAction=0.340, riskLevel=0.390, criterion_inline-host-native-ui=0.870, criterion_research-data-fidelity=0.940, criterion_safe-local-delivery=0.940
+- Jev criterion findings: Criterion inline-host-native-ui: met (0.870 confidence) — The local default result is compact and inline, adapts to host theme/style/font/safe-area context, and uses accessible responsive disclosures.; Criterion research-data-fidelity: met (0.940 confidence) — The view preserves exact returned research values, identity, timestamps, sources, warnings and missing data without unsafe links or unescaped content.; Criterion safe-local-delivery: met (0.940 confidence) — Local implementation remains research-only, preserves product regressions and does not add website, wallet, signing or trading behavior.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-30T21:45:40.245Z
+- Phase: `mcp-agent-native-research-ui`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.940`
+- Agreement: `true`
+- Latency: `1682 ms`
+- Phase transition: `advance`
+- Transition reason: Baseline and Jev agree on a low-risk continuation.
+- Acceptance criteria and supplied evidence:
+  - inline-host-native-ui (test:mcp-app-ui): The local and refreshed connected MCP UI resource use a compact Agent-native hierarchy, adapt to supplied host style/theme/safe-area context, and keep evidence progressively disclosed. Evidence: The bundled protocol-host test applies light/dark updates, host tokens/fonts/safe areas, renders compact structured/text-only results and verifies semantic disclosures; after reconnect the actual served resource was independently inspected and old dashboard markers were absent.
+  - research-data-fidelity (test:mcp-app-ui, test:presentation): The view and connected read-only research call preserve exact issuer identities, source timestamps, warnings and missing fields without unsafe links or unescaped content. Evidence: The UI harness compares research values/identities and text/structured parity, provenance, caveats, safe links and hostile-string escaping; presentation regressions pass. The refreshed connected resource and successful read-only NVDA result were directly checked.
+  - safe-local-delivery (test:mcp-app-ui, test:demo-mode, typecheck, build, test:core-product-phase-plan, test:jev-shadow): The phase remains research-only and preserves safety/regression boundaries without changing website, wallet, signing, trading or transaction behavior. Evidence: The UI harness asserts no transaction affordances, Demo blocks unsafe actions, typecheck/build and phase-plan plus Jev pass/hold transition regressions all pass.
+- Jev confidence by review item: status=0.980, nextAction=1.000, riskLevel=1.000, criterion_inline-host-native-ui=0.990, criterion_research-data-fidelity=0.990, criterion_safe-local-delivery=0.940
+- Jev criterion findings: Criterion inline-host-native-ui: met (0.990 confidence) — The local and refreshed connected MCP UI resource use a compact Agent-native hierarchy, adapt to supplied host style/theme/safe-area context, and keep evidence progressively disclosed.; Criterion research-data-fidelity: met (0.990 confidence) — The view and connected read-only research call preserve exact issuer identities, source timestamps, warnings and missing fields without unsafe links or unescaped content.; Criterion safe-local-delivery: met (0.940 confidence) — The phase remains research-only and preserves safety/regression boundaries without changing website, wallet, signing, trading or transaction behavior.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-30T22:31:01.134Z
+- Phase: `mcp-confirmation-host-interop`
+- Jev provider: `deterministic-fallback`
+- Baseline: `blocked` / `stop` / risk `high`
+- Jev: unavailable
+- Agreement: `unknown`
+- Latency: `18 ms`
+- Phase transition: `pause`
+- Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
+- Acceptance criteria and supplied evidence:
+  - isolated-stdio-fixture (test:mcp-confirmation-host-fixture, test:mcp-human-confirmation): A separate stdio MCP server invokes the production confirmation handler for a synthetic plan, and decline leaves it simulated without wallet, network, signing, or broadcast capabilities. Evidence: The fixture test starts a separate local process over MCP stdio, receives the production form-elicitation request, explicitly declines, checks simulated status, and confirms the test server exposes no signing/broadcast tools and makes zero network requests. The in-memory regression separately covers malformed, cancel, unavailable, changed-plan, and explicit accepted-choice handling; its acceptance branch is synthetic and not a human click.
+  - actual-codex-host-form (test:mcp-confirmation-host-fixture): The current connected Codex host visibly presents the exact synthetic confirmation form and a decline/cancel response leaves the exact plan simulated. Evidence: Not established by the linked check: it uses a local MCP stdio test client and test server and never calls or observes the connected Codex host. Verifying this criterion requires temporarily adding the isolated synthetic server to local MCP host configuration and reconnecting.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-30T22:31:50.738Z
+- Phase: `mcp-confirmation-host-interop`
+- Jev provider: `native-jev`
+- Baseline: `blocked` / `stop` / risk `high`
+- Jev: `blocked` / `ask_user` / risk `medium` / confidence `0.260`
+- Agreement: `false`
+- Latency: `1336 ms`
+- Phase transition: `pause`
+- Transition reason: Jev did not verify criterion actual-codex-host-form: insufficient_evidence — The current connected Codex host visibly presents the exact synthetic confirmation form and a decline/cancel response leaves the exact plan simulated.. Diagnose or repair this criterion before advancing.
+- Acceptance criteria and supplied evidence:
+  - isolated-stdio-fixture (test:mcp-confirmation-host-fixture, test:mcp-human-confirmation): A separate stdio MCP server invokes the production confirmation handler for a synthetic plan, and decline leaves it simulated without wallet, network, signing, or broadcast capabilities. Evidence: The fixture test starts a separate local process over MCP stdio, receives the production form-elicitation request, explicitly declines, checks simulated status, and confirms the test server exposes no signing/broadcast tools and makes zero network requests. The in-memory regression separately covers malformed, cancel, unavailable, changed-plan, and explicit accepted-choice handling; its acceptance branch is synthetic and not a human click.
+  - actual-codex-host-form (test:mcp-confirmation-host-fixture): The current connected Codex host visibly presents the exact synthetic confirmation form and a decline/cancel response leaves the exact plan simulated. Evidence: Not established by the linked check: it uses a local MCP stdio test client and test server and never calls or observes the connected Codex host. Verifying this criterion requires temporarily adding the isolated synthetic server to local MCP host configuration and reconnecting.
+- Jev confidence by review item: status=0.820, nextAction=0.370, riskLevel=0.260, criterion_isolated-stdio-fixture=0.990, criterion_actual-codex-host-form=0.600
+- Jev criterion findings: Criterion isolated-stdio-fixture: met (0.990 confidence) — A separate stdio MCP server invokes the production confirmation handler for a synthetic plan, and decline leaves it simulated without wallet, network, signing, or broadcast capabilities.; Criterion actual-codex-host-form: insufficient_evidence (0.600 confidence) — The current connected Codex host visibly presents the exact synthetic confirmation form and a decline/cancel response leaves the exact plan simulated.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-09-30T22:33:52.166Z
+- Phase: `mcp-confirmation-host-interop`
+- Jev provider: `native-jev`
+- Baseline: `blocked` / `stop` / risk `high`
+- Jev: `blocked` / `ask_user` / risk `low` / confidence `0.480`
+- Agreement: `false`
+- Latency: `2537 ms`
+- Phase transition: `pause`
+- Transition reason: Jev did not verify criterion actual-codex-host-form: insufficient_evidence — The current connected Codex host visibly presents the exact synthetic confirmation form and a decline/cancel response leaves the exact plan simulated.. Diagnose or repair this criterion before advancing.
+- Acceptance criteria and supplied evidence:
+  - isolated-stdio-fixture (test:mcp-confirmation-host-fixture, test:mcp-human-confirmation): A separate stdio MCP server invokes the production confirmation handler for a synthetic plan, and decline leaves it simulated without wallet, network, signing, or broadcast capabilities. Evidence: The fixture test starts a separate local process over MCP stdio, receives the production form-elicitation request, explicitly declines, checks simulated status, and confirms the test server exposes no signing/broadcast tools and makes zero network requests. The in-memory regression separately covers malformed, cancel, unavailable, changed-plan, and explicit accepted-choice handling; its acceptance branch is synthetic and not a human click.
+  - actual-codex-host-form (test:mcp-confirmation-host-fixture): The current connected Codex host visibly presents the exact synthetic confirmation form and a decline/cancel response leaves the exact plan simulated. Evidence: Not established by the linked check: it uses a local MCP stdio test client and test server and never calls or observes the connected Codex host. Verifying this criterion requires temporarily adding the isolated synthetic server to local MCP host configuration and reconnecting.
+- Jev confidence by review item: status=0.800, nextAction=0.480, riskLevel=0.540, criterion_isolated-stdio-fixture=0.990, criterion_actual-codex-host-form=0.610
+- Jev criterion findings: Criterion isolated-stdio-fixture: met (0.990 confidence) — A separate stdio MCP server invokes the production confirmation handler for a synthetic plan, and decline leaves it simulated without wallet, network, signing, or broadcast capabilities.; Criterion actual-codex-host-form: insufficient_evidence (0.610 confidence) — The current connected Codex host visibly presents the exact synthetic confirmation form and a decline/cancel response leaves the exact plan simulated.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-10-01T15:23:36.973Z
+- Phase: `mcp-confirmation-host-interop`
+- Jev provider: `deterministic-fallback`
+- Baseline: `blocked` / `stop` / risk `high`
+- Jev: unavailable
+- Agreement: `unknown`
+- Latency: `14 ms`
+- Phase transition: `pause`
+- Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
+- Acceptance criteria and supplied evidence:
+  - isolated-stdio-confirmation (test:mcp-human-confirmation, test:mcp-confirmation-host-fixture): The production confirmation handler presents the exact synthetic plan to an MCP protocol client and decline/cancel leaves it simulated without wallet, network, signing or broadcast capability. Evidence: Both local MCP protocol checks pass; the isolated stdio host explicitly declines TESTB and asserts simulated status, zero network requests and no wallet, signing or broadcast tools.
+  - connected-codex-form (test:mcp-confirmation-host-fixture): The current connected Codex host visibly presents the exact synthetic confirmation form and a decline or cancel response leaves the exact plan simulated. Evidence: The latest connected-host tool invocation returned unavailable after the form-capability flag was true; no form was observed and the separate status call confirms the plan remains simulated. The linked regression is only a local stdio harness, not connected-host UI evidence.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-10-01T16:23:57.937Z
+- Phase: `mcp-confirmation-host-interop`
+- Jev provider: `deterministic-fallback`
+- Baseline: `blocked` / `stop` / risk `high`
+- Jev: unavailable
+- Agreement: `unknown`
+- Latency: `14 ms`
+- Phase transition: `pause`
+- Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
+- Acceptance criteria and supplied evidence:
+  - modern-and-legacy-protocol (test:mcp-human-confirmation, test:mcp-confirmation-host-fixture, build): The confirmation tool works through modern multi-round-trip elicitation and retains legacy-client compatibility without adding execution side effects. Evidence: The modern client negotiates the 2026-07-28 protocol and tests explicit accept, decline and cancel; the legacy client receives the form and declines. Both assert the synthetic flow has zero network calls and no wallet, signing or broadcast capability.
+  - exact-plan-safe-transition (test:mcp-human-confirmation, test:plan-registry): Only an explicit accepted response for the exact active simulated plan advances it; changed, expired, malformed, declined, cancelled and replayed attempts do not. Evidence: Deterministic modern protocol cases validate exact-plan continuation, explicit approval and decline/cancel; registry regressions reject changed, expired, invalid-stage and replayed plans. No signing or broadcast is involved.
+  - connected-agent-form (test:mcp-confirmation-host-fixture): The current connected Agent host visibly presents the exact synthetic confirmation form and its decline/cancel response leaves that exact plan simulated. Evidence: Not established: the linked check is a local stdio client, not the connected host. Read-only inspection of the connected fixture returned the original fixed plan ID with an expired timestamp, so I did not submit it. Actual current-host UI and response behavior remain unverified.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-10-01T16:24:51.921Z
+- Phase: `mcp-confirmation-host-interop`
+- Jev provider: `deterministic-fallback`
+- Baseline: `blocked` / `stop` / risk `high`
+- Jev: unavailable
+- Agreement: `unknown`
+- Latency: `10540 ms`
+- Phase transition: `pause`
+- Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
+- Acceptance criteria and supplied evidence:
+  - modern-and-legacy-protocol (test:mcp-human-confirmation, test:mcp-confirmation-host-fixture, build): The confirmation tool works through modern multi-round-trip elicitation and retains legacy-client compatibility without adding execution side effects. Evidence: The modern client negotiates the 2026-07-28 protocol and tests explicit accept, decline and cancel; the legacy client receives the form and declines. Both assert the synthetic flow has zero network calls and no wallet, signing or broadcast capability.
+  - exact-plan-safe-transition (test:mcp-human-confirmation, test:plan-registry): Only an explicit accepted response for the exact active simulated plan advances it; changed, expired, malformed, declined, cancelled and replayed attempts do not. Evidence: Deterministic modern protocol cases validate exact-plan continuation, explicit approval and decline/cancel; registry regressions reject changed, expired, invalid-stage and replayed plans. No signing or broadcast is involved.
+  - connected-agent-form (test:mcp-confirmation-host-fixture): The current connected Agent host visibly presents the exact synthetic confirmation form and its decline/cancel response leaves that exact plan simulated. Evidence: Not established: the linked check is a local stdio client, not the connected host. Read-only inspection of the connected fixture returned the original fixed plan ID with an expired timestamp, so I did not submit it. Actual current-host UI and response behavior remain unverified.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-10-01T16:30:16.470Z
+- Phase: `mcp-confirmation-host-interop`
+- Jev provider: `native-jev`
+- Baseline: `blocked` / `stop` / risk `high`
+- Jev: `blocked` / `repair` / risk `medium` / confidence `0.470`
+- Agreement: `false`
+- Latency: `1337 ms`
+- Phase transition: `pause`
+- Transition reason: Jev did not verify criterion connected-agent-form: insufficient_evidence — The current connected Agent host visibly presents the exact synthetic confirmation form and its decline/cancel response leaves that exact plan simulated.. Diagnose or repair this criterion before advancing.
+- Acceptance criteria and supplied evidence:
+  - modern-and-legacy-protocol (test:mcp-human-confirmation, test:mcp-confirmation-host-fixture, build): The confirmation tool works through modern multi-round-trip elicitation and retains legacy-client compatibility without adding execution side effects. Evidence: The modern client negotiates the 2026-07-28 protocol and tests explicit accept, decline and cancel; the legacy client receives the form and declines. Both assert the synthetic flow has zero network calls and no wallet, signing or broadcast capability.
+  - exact-plan-safe-transition (test:mcp-human-confirmation, test:plan-registry): Only an explicit accepted response for the exact active simulated plan advances it; changed, expired, malformed, declined, cancelled and replayed attempts do not. Evidence: Deterministic modern protocol cases validate exact-plan continuation, explicit approval and decline/cancel; registry regressions reject changed, expired, invalid-stage and replayed plans. No signing or broadcast is involved.
+  - connected-agent-form (test:mcp-confirmation-host-fixture): The current connected Agent host visibly presents the exact synthetic confirmation form and its decline/cancel response leaves that exact plan simulated. Evidence: Not established: the linked check is a local stdio client, not the connected host. Read-only inspection of the connected fixture returned the original fixed plan ID with an expired timestamp, so I did not submit it. Actual current-host UI and response behavior remain unverified.
+- Jev confidence by review item: status=0.710, nextAction=0.900, riskLevel=0.470, criterion_modern-and-legacy-protocol=0.900, criterion_exact-plan-safe-transition=0.950, criterion_connected-agent-form=0.530
+- Jev criterion findings: Criterion modern-and-legacy-protocol: met (0.900 confidence) — The confirmation tool works through modern multi-round-trip elicitation and retains legacy-client compatibility without adding execution side effects.; Criterion exact-plan-safe-transition: met (0.950 confidence) — Only an explicit accepted response for the exact active simulated plan advances it; changed, expired, malformed, declined, cancelled and replayed attempts do not.; Criterion connected-agent-form: insufficient_evidence (0.530 confidence) — The current connected Agent host visibly presents the exact synthetic confirmation form and its decline/cancel response leaves that exact plan simulated.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-10-01T16:55:29.981Z
+- Phase: `mcp-confirmation-host-interop`
+- Jev provider: `deterministic-fallback`
+- Baseline: `blocked` / `stop` / risk `high`
+- Jev: unavailable
+- Agreement: `unknown`
+- Latency: `14 ms`
+- Phase transition: `pause`
+- Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
+- Acceptance criteria and supplied evidence:
+  - modern-and-legacy-protocol (test:mcp-human-confirmation, test:mcp-confirmation-host-fixture, typecheck, build): Modern multi-round-trip and legacy MCP hosts handle explicit confirmation without adding wallet, network, signing, or broadcast side effects. Evidence: The modern protocol test covers explicit approval, decline, cancel, and unsupported form capability; the legacy stdio fixture declines. Both retain simulated/rejected state as required and report zero real-wallet use, network calls, signing tools, and broadcast tools.
+  - exact-plan-safe-transition (test:mcp-human-confirmation, test:plan-registry): Only an explicit approval for the exact active simulated plan advances; malformed, changed, forged, expired, declined, cancelled, and replayed continuations fail closed. Evidence: Deterministic production-handler tests now reject malformed choices, forged continuation state, changed plan contents, expired continuation state, replay, decline, and cancel. Exact explicit approval advances once; registry mutation and replay cases also pass.
+  - connected-agent-form (test:mcp-human-confirmation, test:mcp-confirmation-host-fixture): The current connected Agent host visibly renders the exact synthetic confirmation form and its decline or cancel leaves the same plan simulated. Evidence: Not yet established: current connected tools still return fixed plan ID synthetic_confirmation_host_fixture with an expired timestamp; status reports not_found_or_expired while the form capability is advertised. No connected form was rendered in this turn. Local stdio tests are protocol evidence only.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-10-01T16:56:21.038Z
+- Phase: `mcp-confirmation-host-interop`
+- Jev provider: `native-jev`
+- Baseline: `blocked` / `stop` / risk `high`
+- Jev: `blocked` / `repair` / risk `medium` / confidence `0.310`
+- Agreement: `false`
+- Latency: `1506 ms`
+- Phase transition: `pause`
+- Transition reason: Jev did not verify criterion connected-agent-form: gap — The current connected Agent host visibly renders the exact synthetic confirmation form and its decline or cancel leaves the same plan simulated.. Diagnose or repair this criterion before advancing.
+- Acceptance criteria and supplied evidence:
+  - modern-and-legacy-protocol (test:mcp-human-confirmation, test:mcp-confirmation-host-fixture, typecheck, build): Modern multi-round-trip and legacy MCP hosts handle explicit confirmation without adding wallet, network, signing, or broadcast side effects. Evidence: The modern protocol test covers explicit approval, decline, cancel, and unsupported form capability; the legacy stdio fixture declines. Both retain simulated/rejected state as required and report zero real-wallet use, network calls, signing tools, and broadcast tools.
+  - exact-plan-safe-transition (test:mcp-human-confirmation, test:plan-registry): Only an explicit approval for the exact active simulated plan advances; malformed, changed, forged, expired, declined, cancelled, and replayed continuations fail closed. Evidence: Deterministic production-handler tests now reject malformed choices, forged continuation state, changed plan contents, expired continuation state, replay, decline, and cancel. Exact explicit approval advances once; registry mutation and replay cases also pass.
+  - connected-agent-form (test:mcp-human-confirmation, test:mcp-confirmation-host-fixture): The current connected Agent host visibly renders the exact synthetic confirmation form and its decline or cancel leaves the same plan simulated. Evidence: Not yet established: current connected tools still return fixed plan ID synthetic_confirmation_host_fixture with an expired timestamp; status reports not_found_or_expired while the form capability is advertised. No connected form was rendered in this turn. Local stdio tests are protocol evidence only.
+- Jev confidence by review item: status=0.620, nextAction=0.850, riskLevel=0.340, criterion_modern-and-legacy-protocol=0.950, criterion_exact-plan-safe-transition=0.960, criterion_connected-agent-form=0.310
+- Jev criterion findings: Criterion modern-and-legacy-protocol: met (0.950 confidence) — Modern multi-round-trip and legacy MCP hosts handle explicit confirmation without adding wallet, network, signing, or broadcast side effects.; Criterion exact-plan-safe-transition: met (0.960 confidence) — Only an explicit approval for the exact active simulated plan advances; malformed, changed, forged, expired, declined, cancelled, and replayed continuations fail closed.; Criterion connected-agent-form: gap (0.310 confidence) — The current connected Agent host visibly renders the exact synthetic confirmation form and its decline or cancel leaves the same plan simulated.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-10-01T17:00:18.518Z
+- Phase: `mcp-confirmation-host-interop`
+- Jev provider: `native-jev`
+- Baseline: `blocked` / `stop` / risk `high`
+- Jev: `blocked` / `repair` / risk `medium` / confidence `0.380`
+- Agreement: `false`
+- Latency: `1731 ms`
+- Phase transition: `pause`
+- Transition reason: Jev did not verify criterion connected-agent-form: gap — The current connected Agent host visibly renders the exact synthetic confirmation form and its decline or cancel leaves the same plan simulated.. Diagnose or repair this criterion before advancing.
+- Acceptance criteria and supplied evidence:
+  - modern-and-legacy-protocol (test:mcp-human-confirmation, test:mcp-confirmation-host-fixture, typecheck, build): Modern multi-round-trip and legacy MCP hosts handle explicit confirmation without adding wallet, network, signing, or broadcast side effects. Evidence: The modern protocol test covers explicit approval, decline, cancel, and unsupported form capability; the legacy stdio fixture declines. Both retain simulated/rejected state as required and report zero real-wallet use, network calls, signing tools, and broadcast tools.
+  - exact-plan-safe-transition (test:mcp-human-confirmation, test:plan-registry): Only an explicit approval for the exact active simulated plan advances; malformed, changed, forged, expired, declined, cancelled, and replayed continuations fail closed. Evidence: Deterministic production-handler tests now reject malformed choices, forged continuation state, changed plan contents, expired continuation state, replay, decline, and cancel. Exact explicit approval advances once; registry mutation and replay cases also pass.
+  - connected-agent-form (test:mcp-human-confirmation, test:mcp-confirmation-host-fixture): The current connected Agent host visibly renders the exact synthetic confirmation form and its decline or cancel leaves the same plan simulated. Evidence: Not yet established: current connected tools still return fixed plan ID synthetic_confirmation_host_fixture with an expired timestamp; status reports not_found_or_expired while the form capability is advertised. No connected form was rendered in this turn. Local stdio tests are protocol evidence only.
+- Jev confidence by review item: status=0.600, nextAction=0.840, riskLevel=0.380, criterion_modern-and-legacy-protocol=0.940, criterion_exact-plan-safe-transition=0.950, criterion_connected-agent-form=0.390
+- Jev criterion findings: Criterion modern-and-legacy-protocol: met (0.940 confidence) — Modern multi-round-trip and legacy MCP hosts handle explicit confirmation without adding wallet, network, signing, or broadcast side effects.; Criterion exact-plan-safe-transition: met (0.950 confidence) — Only an explicit approval for the exact active simulated plan advances; malformed, changed, forged, expired, declined, cancelled, and replayed continuations fail closed.; Criterion connected-agent-form: gap (0.390 confidence) — The current connected Agent host visibly renders the exact synthetic confirmation form and its decline or cancel leaves the same plan simulated.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Phase 18 connected-host decline verification — 2026-10-02
+
+- After reconnection, the isolated connected server returned a fresh synthetic TESTB plan and advertised form elicitation. The plan metadata explicitly excluded network, real-wallet, signing and broadcast capability.
+- The connected confirmation request returned `confirmationStatus: declined` for the exact plan. The response and follow-up status both kept it `simulated`; `broadcasted` was false and `sideEffects` was `none`.
+- This verifies a connected-host decline path, not a screenshot-based visual-quality review. The prior Jev confidence of 0.380 predates this host interaction; the fresh phase-gate review is pending. Phase 19 remains gated on that result.
+
+### Jev phase-gate record — 2026-10-02T11:48:11.627Z
+- Phase: `mcp-confirmation-host-interop`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.830`
+- Agreement: `true`
+- Latency: `1358 ms`
+- Phase transition: `pause`
+- Transition reason: Criterion exact-plan-safe-transition lacks a sufficiently confident Jev review (0.830); clarify its evidence before advancing.
+- Acceptance criteria and supplied evidence:
+  - modern-and-legacy-protocol (test:mcp-human-confirmation, test:mcp-confirmation-host-fixture, typecheck, build): Modern and legacy MCP clients handle explicit confirmation without wallet, network, signing, or broadcast side effects. Evidence: Modern tests cover explicit approval, decline, cancellation and unavailable host; the stdio fixture performs the real SDK elicitation round-trip and declines. Both assert synthetic-only behavior and zero wallet, network, signing, or broadcast use.
+  - exact-plan-safe-transition (test:mcp-human-confirmation, test:plan-registry): Only an explicit approval for the exact active simulated plan advances; decline, cancellation, malformed, changed, expired, forged, or replayed continuations fail closed. Evidence: Production-handler and registry regressions verify exact-plan binding, one-time approval, decline/cancel retention, malformed and tampered continuation rejection, expiry, mutation, and replay.
+  - connected-agent-form (test:mcp-human-confirmation, test:mcp-confirmation-host-fixture, test:core-product-phase-plan): The current connected MCP host handles an elicitation request for the exact fresh synthetic plan and returns a decline while that same plan remains simulated. Evidence: After reconnect, the connected tool returned a fresh synthetic TESTB plan; confirmation returned declined for that exact plan, and the subsequent status read remained simulated. The result reported broadcasted false and sideEffects none. No screenshot-based visual review is claimed.
+  - local-regression-and-scope (test:core-product-phase-plan, test:jev-shadow, test:mcp-app-ui, test:demo-mode, test:core-hardening, typecheck, build): Phase scope, read-only research UI and Demo behavior, local safety regressions, typecheck and build pass without transaction or release side effects. Evidence: All selected local checks pass, preserving approved phase boundaries, synthetic-only/demo no-action behavior, native research UI parity and safety. Website, release, wallet signing, broadcast, deployment and paid services remain excluded.
+- Jev confidence by review item: status=0.940, nextAction=0.990, riskLevel=1.000, criterion_modern-and-legacy-protocol=0.920, criterion_exact-plan-safe-transition=0.830, criterion_connected-agent-form=0.970, criterion_local-regression-and-scope=0.870
+- Jev criterion findings: Criterion modern-and-legacy-protocol: met (0.920 confidence) — Modern and legacy MCP clients handle explicit confirmation without wallet, network, signing, or broadcast side effects.; Criterion exact-plan-safe-transition: met (0.830 confidence) — Only an explicit approval for the exact active simulated plan advances; decline, cancellation, malformed, changed, expired, forged, or replayed continuations fail closed.; Criterion connected-agent-form: met (0.970 confidence) — The current connected MCP host handles an elicitation request for the exact fresh synthetic plan and returns a decline while that same plan remains simulated.; Criterion local-regression-and-scope: met (0.870 confidence) — Phase scope, read-only research UI and Demo behavior, local safety regressions, typecheck and build pass without transaction or release side effects.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-10-02T11:54:31.161Z
+- Phase: `mcp-confirmation-host-interop`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.860`
+- Agreement: `true`
+- Latency: `894 ms`
+- Phase transition: `advance`
+- Transition reason: Baseline and Jev agree on a low-risk continuation.
+- Acceptance criteria and supplied evidence:
+  - modern-and-legacy-protocol (test:mcp-human-confirmation, test:mcp-confirmation-host-fixture, typecheck, build): Modern and legacy MCP clients handle explicit confirmation without wallet, network, signing, or broadcast side effects. Evidence: Modern tests cover explicit approval, decline, cancellation and unavailable hosts. The real-SDK stdio fixture checks form mode, its exact approve/decline choices, and simulated state after decline. All assert zero wallet, network, signing, or broadcast use.
+  - exact-plan-safe-transition (test:mcp-human-confirmation, test:plan-registry): The form discloses the registered plan details; only one explicit approval for that exact plan advances it, while altered or repeated submissions cannot change the registered outcome. Evidence: Assertions compare every decision-critical form field (operation, amount, addresses, asset/platform, chain, target/value, output, gas cap, expiry) to fixture values. Approval preserves planId/intent/output and confirms once; a changed output returns the specific rejection with sideEffects none and leaves the original simulated. Repeated approval cannot advance again; malformed, forged, expired and replayed continuations are rejected.
+  - connected-agent-form (test:mcp-human-confirmation, test:mcp-confirmation-host-fixture, test:core-product-phase-plan): The current connected MCP host handles an elicitation request for the exact fresh synthetic plan and returns a decline while that same plan remains simulated. Evidence: After reconnect, the connected tool returned a fresh synthetic TESTB plan; confirmation returned declined for that exact plan, and the subsequent status read remained simulated. The result reported broadcasted false and sideEffects none. No screenshot-based visual review is claimed.
+  - local-regression-and-scope (test:core-product-phase-plan, test:jev-shadow, test:mcp-app-ui, test:demo-mode, test:core-hardening, typecheck, build): Phase scope, read-only research UI and Demo behavior, local safety regressions, typecheck and build pass without transaction or release side effects. Evidence: All selected local checks pass, preserving approved phase boundaries, synthetic-only/demo no-action behavior, native research UI parity and safety. Website, release, wallet signing, broadcast, deployment and paid services remain excluded.
+- Jev confidence by review item: status=0.960, nextAction=0.990, riskLevel=1.000, criterion_modern-and-legacy-protocol=0.970, criterion_exact-plan-safe-transition=0.980, criterion_connected-agent-form=0.990, criterion_local-regression-and-scope=0.860
+- Jev criterion findings: Criterion modern-and-legacy-protocol: met (0.970 confidence) — Modern and legacy MCP clients handle explicit confirmation without wallet, network, signing, or broadcast side effects.; Criterion exact-plan-safe-transition: met (0.980 confidence) — The form discloses the registered plan details; only one explicit approval for that exact plan advances it, while altered or repeated submissions cannot change the registered outcome.; Criterion connected-agent-form: met (0.990 confidence) — The current connected MCP host handles an elicitation request for the exact fresh synthetic plan and returns a decline while that same plan remains simulated.; Criterion local-regression-and-scope: met (0.860 confidence) — Phase scope, read-only research UI and Demo behavior, local safety regressions, typecheck and build pass without transaction or release side effects.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-10-02T12:04:58.386Z
+- Phase: `sdk-cleanroom-revalidation`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.910`
+- Agreement: `true`
+- Latency: `1594 ms`
+- Phase transition: `advance`
+- Transition reason: Baseline and Jev agree on a low-risk continuation.
+- Acceptance criteria and supplied evidence:
+  - isolated-sdk-consumption (test:cleanroom, typecheck, build): A freshly packed local tarball installs into an isolated consumer and supports documented ESM imports, public declarations, root exports and Node engine requirements. Evidence: The clean-room test uses a new consumer directory and npm cache, installs the local .tgz without registry writes, imports BinanceWeb3Client, BinanceWeb3Error, TokenizedStocksService and compareAgentAssets, type-checks public config/event types, and verifies root exports plus Node >=22.19.0.
+  - package-surface-and-example (test:distribution, test:sdk-example, pack:check, build): The local package artifact includes its public runtime, declarations and docs; package metadata, MCP examples and documented SDK usage remain coherent. Evidence: Distribution assertions verify package entrypoints, Node engine, demo/live MCP configs and no secret in the example config. The SDK example references the public client/services and search/marketContext; npm pack --dry-run builds and enumerates the local artifact without publishing.
+  - bounded-isolated-failure (test:cleanroom, test:core-product-phase-plan, test:jev-shadow): The consumer test is repeatable and bounded; timeout or known registry/network failure is explicitly inconclusive, and only the owned temporary consumer directory is cleaned. Evidence: Phase-plan regression checks the unique per-run cache, 180-second install cap, 30-second fetch cap, retries disabled, inconclusive classification and finally cleanup. Jev state-machine tests keep advancement gated on passing checks and Jev review. No package publish or registry write is part of these scripts.
+- Jev confidence by review item: status=0.960, nextAction=0.990, riskLevel=1.000, criterion_isolated-sdk-consumption=0.990, criterion_package-surface-and-example=0.910, criterion_bounded-isolated-failure=0.930
+- Jev criterion findings: Criterion isolated-sdk-consumption: met (0.990 confidence) — A freshly packed local tarball installs into an isolated consumer and supports documented ESM imports, public declarations, root exports and Node engine requirements.; Criterion package-surface-and-example: met (0.910 confidence) — The local package artifact includes its public runtime, declarations and docs; package metadata, MCP examples and documented SDK usage remain coherent.; Criterion bounded-isolated-failure: met (0.930 confidence) — The consumer test is repeatable and bounded; timeout or known registry/network failure is explicitly inconclusive, and only the owned temporary consumer directory is cleaned.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-10-02T12:13:49.254Z
+- Phase: `demo-mode-journey-coverage`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.940`
+- Agreement: `true`
+- Latency: `1431 ms`
+- Phase transition: `advance`
+- Transition reason: Baseline and Jev agree on a low-risk continuation.
+- Acceptance criteria and supplied evidence:
+  - deterministic-demo-journeys (test:demo-mode, test:asset-intent-query): The credential-free Demo MCP supports deterministic discovery across its seeded tickers, natural-language research, issuer-aware comparisons, platform filtering, and market-detail lookup without guessing between companies. Evidence: MCP stdio regressions discover seven seeded tickers, compare both TSLA issuers, filter to a chosen platform, resolve a Chinese NVIDIA request, block compound NVDA/TSLA ambiguity, and retrieve market detail only for a registered exact fixture identity.
+  - synthetic-evidence-parity (test:demo-mode, test:presentation, test:mcp-app-ui): All Demo evidence is visibly synthetic and deterministic; fixed/stale timestamps, unknown market status and missing liquidity are explicit and preserved consistently in text, structured content and the native research view. Evidence: Tests assert synthetic metadata and explicit synthetic/fixed-time warnings, stable timestamps across issuers and research entry points, unchanged unknown/missing fields, exact text-to-structured equality, and the native view badge/caveat rendering.
+  - failure-and-input-boundaries (test:demo-mode, test:asset-intent-query, test:mcp-enrichment, test:core-hardening): Unsupported, malformed and ambiguous requests do not fabricate or guess; provider/network/integrity errors fail closed with sanitized categories and missing market values are never treated as zero. Evidence: Tests cover empty and unsupported queries, compound-entity ambiguity, arbitrary unregistered detail rejection, sanitized provider/network/integrity failures, and explicit absent/unknown data instead of zero substitution.
+  - demo-safety-and-build (test:demo-mode, test:mcp-app-ui, test:core-hardening, test:core-product-phase-plan, test:jev-shadow, typecheck, build): Demo action preparation and forged transaction paths remain blocked; product, UI, type/build, roadmap-state and Jev-gate regressions pass within local scope. Evidence: Demo ActionPlan preparation remains blocked, forged simulation/confirmation/broadcast/RFQ plans are rejected, the read-only research UI has no trade controls, and deterministic scope/build/gate checks pass. No website, wallet, signature, broadcast, release or external write is included.
+- Jev confidence by review item: status=0.950, nextAction=0.990, riskLevel=1.000, criterion_deterministic-demo-journeys=0.990, criterion_synthetic-evidence-parity=0.970, criterion_failure-and-input-boundaries=0.940, criterion_demo-safety-and-build=0.970
+- Jev criterion findings: Criterion deterministic-demo-journeys: met (0.990 confidence) — The credential-free Demo MCP supports deterministic discovery across its seeded tickers, natural-language research, issuer-aware comparisons, platform filtering, and market-detail lookup without guessing between companies.; Criterion synthetic-evidence-parity: met (0.970 confidence) — All Demo evidence is visibly synthetic and deterministic; fixed/stale timestamps, unknown market status and missing liquidity are explicit and preserved consistently in text, structured content and the native research view.; Criterion failure-and-input-boundaries: met (0.940 confidence) — Unsupported, malformed and ambiguous requests do not fabricate or guess; provider/network/integrity errors fail closed with sanitized categories and missing market values are never treated as zero.; Criterion demo-safety-and-build: met (0.970 confidence) — Demo action preparation and forged transaction paths remain blocked; product, UI, type/build, roadmap-state and Jev-gate regressions pass within local scope.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-10-02T12:51:28.302Z
+- Phase: `provider-data-resilience`
+- Jev provider: `native-jev`
+- Baseline: `passed_with_deferred_items` / `continue` / risk `low`
+- Jev: `passed_with_deferred_items` / `continue` / risk `low` / confidence `0.330`
+- Agreement: `true`
+- Latency: `1449 ms`
+- Phase transition: `pause`
+- Transition reason: Jev confidence is below the minimum threshold (0.85); the least-certain review item is nextAction (0.330). Add or clarify evidence for that item, then review again.
+- Acceptance criteria and supplied evidence:
+  - provider-observation-honesty (test:asset-directory, test:mcp-enrichment, test:core-product-phase-plan): Treat returned inventory, status, timestamps and filter equality as bounded observations; do not claim catalog completeness or a freshness SLA from missing provider evidence. Evidence: Local checks cover exact representation identity, timestamped quote matching and sanitized missing-data behavior. Separately, the six-call read-only probe completed once and a repeat was partial; the paired sample was 545 declared versus 488 returned, with no verified completeness or freshness contract.
+  - documented-status-normalization (test:domain, test:core-hardening, test:mcp-app-ui): Normalize the documented Binance market-status enum safely and retain unknown values as unknown. Evidence: Domain regressions cover regular/open, premarket/postmarket/overnight as offhours, closed/pause as non-tradable, and an undocumented future value remaining unknown. The probe observed 442 supplied status strings and 46 missing values in 488 rows.
+  - bounded-retry-response-integrity (test:retry-policy, typecheck, build): Bound retry attempts and waits, honor both supported Retry-After formats, and fail malformed provider responses without retry or payload leakage. Evidence: The local test covers numeric-seconds and HTTP-date Retry-After, budget rejection without early retry, bounded timeout attempts, actual status observations, and non-retryable invalid JSON/envelopes without reflecting response text.
+  - failure-parity-and-approved-scope (test:mcp-enrichment, test:mcp-app-ui, test:core-hardening, test:jev-shadow, test:core-product-phase-plan): Provider failures remain explicit and safe across MCP/native research; the phase introduces no transaction or external-write behavior. Evidence: Selected checks verify sanitized fail-closed enrichment, read-only native research, missing/closed market safety, phase-gate behavior, and the approved exclusion of website, wallet, signing, broadcast, publication and external writes.
+- Jev confidence by review item: status=0.950, nextAction=0.330, riskLevel=0.340, criterion_provider-observation-honesty=0.870, criterion_documented-status-normalization=0.920, criterion_bounded-retry-response-integrity=0.980, criterion_failure-parity-and-approved-scope=0.910, deferredScope=0.810
+- Jev criterion findings: Criterion provider-observation-honesty: met (0.870 confidence) — Treat returned inventory, status, timestamps and filter equality as bounded observations; do not claim catalog completeness or a freshness SLA from missing provider evidence.; Criterion documented-status-normalization: met (0.920 confidence) — Normalize the documented Binance market-status enum safely and retain unknown values as unknown.; Criterion bounded-retry-response-integrity: met (0.980 confidence) — Bound retry attempts and waits, honor both supported Retry-After formats, and fail malformed provider responses without retry or payload leakage.; Criterion failure-parity-and-approved-scope: met (0.910 confidence) — Provider failures remain explicit and safe across MCP/native research; the phase introduces no transaction or external-write behavior.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-10-02T12:54:37.442Z
+- Phase: `provider-data-resilience`
+- Jev provider: `native-jev`
+- Baseline: `passed_with_deferred_items` / `continue` / risk `low`
+- Jev: `passed_with_deferred_items` / `continue` / risk `low` / confidence `0.970`
+- Agreement: `true`
+- Latency: `1212 ms`
+- Phase transition: `advance`
+- Transition reason: Baseline and Jev agree on a low-risk continuation.
+- Acceptance criteria and supplied evidence:
+  - provider-observation-honesty (test:asset-directory, test:mcp-enrichment, test:core-product-phase-plan): Treat returned inventory, status, timestamps and filter equality as bounded observations; do not claim catalog completeness or a freshness SLA from missing provider evidence. Evidence: Local checks cover exact representation identity, timestamped quote matching and sanitized missing-data behavior. A six-call live read-only probe completed once; a later bounded repeat was partial. The paired sample was 545 declared versus 488 returned; docs provide no verified completeness or freshness contract, as Phase 21 explicitly anticipates.
+  - documented-status-normalization (test:domain, test:core-hardening, test:mcp-app-ui): Normalize the documented Binance market-status enum safely and retain unknown values as unknown. Evidence: Domain regressions cover regular/open, premarket/postmarket/overnight as offhours, closed/pause as non-tradable, and an undocumented future value remaining unknown. The read-only probe saw 442 supplied status strings and 46 missing values in 488 rows; normalization now maps the documented values only.
+  - bounded-retry-response-integrity (test:retry-policy, typecheck, build): Bound retry attempts and waits, honor both supported Retry-After formats, and fail malformed provider responses without retry or payload leakage. Evidence: The local test covers numeric-seconds and HTTP-date Retry-After, budget rejection without early retry, bounded timeout attempts, actual status observations, and non-retryable invalid JSON/envelopes without reflecting response text.
+  - failure-parity-and-approved-scope (test:mcp-enrichment, test:mcp-app-ui, test:core-hardening, test:jev-shadow, test:core-product-phase-plan): Provider failures remain explicit and safe across MCP/native research; Phase 21 introduces no transaction or external-write behavior. Evidence: Checks verify sanitized fail-closed enrichment, read-only native research, missing/closed-market safety and bounded gate sequencing. All external requests in this phase were the already approved serial read-only GET probe; no wallet data, write, new paid provider, signature, broadcast, deployment or release was involved.
+  - preapproved-phase22-continuation (test:core-product-phase-plan, test:jev-shadow): After Phase 21 approval, continue only into Phase 22 already included in the user-approved Phases 18–23 plan; do not request routine phase-by-phase reapproval or exceed the existing scope. Evidence: The phase-plan regression states Phases 18–23 were approved as one bounded continuation, confirms Phase 22 is the named successor, and Jev-state tests verify approved phases advance sequentially only after passing checks and gate approval. Phase 22 is confined to MCP Chinese/English output and text/structured/native-view parity.
+- Jev confidence by review item: status=0.990, nextAction=0.990, riskLevel=0.990, criterion_provider-observation-honesty=0.980, criterion_documented-status-normalization=0.970, criterion_bounded-retry-response-integrity=0.990, criterion_failure-parity-and-approved-scope=0.970, criterion_preapproved-phase22-continuation=0.980, deferredScope=0.990
+- Jev criterion findings: Criterion provider-observation-honesty: met (0.980 confidence) — Treat returned inventory, status, timestamps and filter equality as bounded observations; do not claim catalog completeness or a freshness SLA from missing provider evidence.; Criterion documented-status-normalization: met (0.970 confidence) — Normalize the documented Binance market-status enum safely and retain unknown values as unknown.; Criterion bounded-retry-response-integrity: met (0.990 confidence) — Bound retry attempts and waits, honor both supported Retry-After formats, and fail malformed provider responses without retry or payload leakage.; Criterion failure-parity-and-approved-scope: met (0.970 confidence) — Provider failures remain explicit and safe across MCP/native research; Phase 21 introduces no transaction or external-write behavior.; Criterion preapproved-phase22-continuation: met (0.980 confidence) — After Phase 21 approval, continue only into Phase 22 already included in the user-approved Phases 18–23 plan; do not request routine phase-by-phase reapproval or exceed the existing scope.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-10-02T14:13:49.247Z
+- Phase: `agent-output-language-quality`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.810`
+- Agreement: `true`
+- Latency: `1164 ms`
+- Phase transition: `pause`
+- Transition reason: Criterion evidence-and-uncertainty-fidelity lacks a sufficiently confident Jev review (0.810); clarify its evidence before advancing.
+- Acceptance criteria and supplied evidence:
+  - bilingual-intent-and-no-trade (test:asset-intent-query, test:demo-mode, test:mcp-natural-language): Chinese and English natural-language requests resolve within the supported intent boundary, and explicit no-trade instructions do not suggest or trigger quote or wallet follow-up actions. Evidence: Intent regressions cover Chinese and English phrasing, ambiguous and unsupported inputs, and explicit no-trade wording. Demo and live MCP journeys verify resolved identity, no-trade presentation, and no side effects.
+  - evidence-and-uncertainty-fidelity (test:presentation, test:mcp-enrichment, test:mcp-app-ui, test:asset-intent-query): Identity, quote and reference prices, timestamps, provenance, missing data, unknown status and ambiguity remain distinguishable and are never fabricated or coerced to zero. Evidence: Presentation, enrichment and native UI regressions check field/provenance parity, unknown versus zero, missing liquidity/status, sanitized provider failures and fail-closed ambiguity.
+  - bilingual-surface-parity (test:mcp-natural-language, test:mcp-app-ui, test:presentation, test:demo-mode): Chinese and English human-facing research content uses the request language and keeps text, structured content and native MCP research-card evidence aligned. Evidence: Live read-only natural-language MCP and deterministic Demo journeys check Chinese and English content, while rendering and presentation regressions compare card values and text/structured evidence.
+  - safety-and-approved-scope (test:core-hardening, test:core-product-phase-plan, test:jev-shadow, test:demo-mode, test:mcp-app-ui): The language and presentation changes remain research-only, preserve execution safety, and stay within the approved Phase 18-23 continuation. Evidence: Safety, Demo, UI, plan and Jev state-machine checks verify research-only behavior, blocked Demo execution, approved sequential phase scope, and no signing or broadcast changes.
+  - build-and-regression-integrity (typecheck, build, test:mcp-natural-language, test:mcp-app-ui, test:presentation): The selected Phase 22 implementation type-checks and builds with all linked regressions passing. Evidence: The phase gate reruns TypeScript type checking, production build, live read-only language journey, native MCP App rendering and presentation-contract tests.
+- Jev confidence by review item: status=0.990, nextAction=1.000, riskLevel=1.000, criterion_bilingual-intent-and-no-trade=0.930, criterion_evidence-and-uncertainty-fidelity=0.810, criterion_bilingual-surface-parity=0.910, criterion_safety-and-approved-scope=0.920, criterion_build-and-regression-integrity=0.970
+- Jev criterion findings: Criterion bilingual-intent-and-no-trade: met (0.930 confidence) — Chinese and English natural-language requests resolve within the supported intent boundary, and explicit no-trade instructions do not suggest or trigger quote or wallet follow-up actions.; Criterion evidence-and-uncertainty-fidelity: met (0.810 confidence) — Identity, quote and reference prices, timestamps, provenance, missing data, unknown status and ambiguity remain distinguishable and are never fabricated or coerced to zero.; Criterion bilingual-surface-parity: met (0.910 confidence) — Chinese and English human-facing research content uses the request language and keeps text, structured content and native MCP research-card evidence aligned.; Criterion safety-and-approved-scope: met (0.920 confidence) — The language and presentation changes remain research-only, preserve execution safety, and stay within the approved Phase 18-23 continuation.; Criterion build-and-regression-integrity: met (0.970 confidence) — The selected Phase 22 implementation type-checks and builds with all linked regressions passing.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-10-02T14:18:42.247Z
+- Phase: `agent-output-language-quality`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.930`
+- Agreement: `true`
+- Latency: `1003 ms`
+- Phase transition: `advance`
+- Transition reason: Baseline and Jev agree on a low-risk continuation.
+- Acceptance criteria and supplied evidence:
+  - bilingual-intent-and-no-trade (test:asset-intent-query, test:demo-mode, test:mcp-natural-language): Chinese and English natural-language requests resolve within the supported intent boundary, and explicit no-trade instructions do not suggest or trigger quote or wallet follow-up actions. Evidence: Intent regressions cover Chinese and English phrasing, ambiguous and unsupported inputs, and explicit no-trade wording. Demo and live MCP journeys verify resolved identity, no-trade presentation, and no side effects.
+  - evidence-and-uncertainty-fidelity (test:presentation, test:mcp-enrichment, test:mcp-app-ui, test:asset-intent-query): Identity, quote and reference prices, timestamps, provenance, missing data, unknown status and ambiguity remain distinguishable and are never fabricated or coerced to zero. Evidence: A new deterministic bilingual presentation fixture asserts exact distinct token/reference prices and timestamps in English and Chinese cards, briefs and native UI; unknown status and absent liquidity remain explicit, and no liquidity zero is fabricated. Linked enrichment and intent regressions cover source identity, provider failures and ambiguity handling.
+  - bilingual-surface-parity (test:mcp-natural-language, test:mcp-app-ui, test:presentation, test:demo-mode): Chinese and English human-facing research content uses the request language and keeps text, structured content and native MCP research-card evidence aligned. Evidence: Live read-only natural-language MCP and deterministic Demo journeys check Chinese and English content, while rendering and presentation regressions compare card values and text/structured evidence.
+  - safety-and-approved-scope (test:core-hardening, test:core-product-phase-plan, test:jev-shadow, test:demo-mode, test:mcp-app-ui): The language and presentation changes remain research-only, preserve execution safety, and stay within the approved Phase 18-23 continuation. Evidence: Safety, Demo, UI, plan and Jev state-machine checks verify research-only behavior, blocked Demo execution, approved sequential phase scope, and no signing or broadcast changes.
+  - build-and-regression-integrity (typecheck, build, test:mcp-natural-language, test:mcp-app-ui, test:presentation): The selected Phase 22 implementation type-checks and builds with all linked regressions passing. Evidence: The phase gate reruns TypeScript type checking, production build, live read-only language journey, native MCP App rendering and presentation-contract tests.
+- Jev confidence by review item: status=0.980, nextAction=1.000, riskLevel=1.000, criterion_bilingual-intent-and-no-trade=0.940, criterion_evidence-and-uncertainty-fidelity=0.960, criterion_bilingual-surface-parity=0.930, criterion_safety-and-approved-scope=0.940, criterion_build-and-regression-integrity=0.970
+- Jev criterion findings: Criterion bilingual-intent-and-no-trade: met (0.940 confidence) — Chinese and English natural-language requests resolve within the supported intent boundary, and explicit no-trade instructions do not suggest or trigger quote or wallet follow-up actions.; Criterion evidence-and-uncertainty-fidelity: met (0.960 confidence) — Identity, quote and reference prices, timestamps, provenance, missing data, unknown status and ambiguity remain distinguishable and are never fabricated or coerced to zero.; Criterion bilingual-surface-parity: met (0.930 confidence) — Chinese and English human-facing research content uses the request language and keeps text, structured content and native MCP research-card evidence aligned.; Criterion safety-and-approved-scope: met (0.940 confidence) — The language and presentation changes remain research-only, preserve execution safety, and stay within the approved Phase 18-23 continuation.; Criterion build-and-regression-integrity: met (0.970 confidence) — The selected Phase 22 implementation type-checks and builds with all linked regressions passing.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-10-02T14:26:48.220Z
+- Phase: `core-local-acceptance`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.670`
+- Agreement: `true`
+- Latency: `1100 ms`
+- Phase transition: `pause`
+- Transition reason: Criterion mcp-research-journey-and-surfaces lacks a sufficiently confident Jev review (0.750); clarify its evidence before advancing.
+- Acceptance criteria and supplied evidence:
+  - independent-sdk-package-consumption (typecheck, build, pack:check, test:cleanroom, test:distribution, test:sdk-example): The SDK builds and the documented package can be consumed from an isolated local artifact with runtime imports, declarations, examples and package metadata intact, without publication. Evidence: Selected checks type-check/build the source, inspect the dry-run package, install the local tarball in an isolated consumer, verify ESM imports/declarations/engine metadata, and check documented SDK usage. No registry publication is invoked.
+  - mcp-research-journey-and-surfaces (test:demo-mode, test:asset-intent-query, test:presentation, test:mcp-natural-language, test:mcp-app-ui, test:mcp-enrichment): Demo and live read-only MCP research preserve supported intent, issuer identity, evidence and Chinese/English presentation across structured content and the native research component. Evidence: Deterministic Demo, live read-only SDK/MCP, enrichment, intent, presentation and bundled UI checks cover resolved representations, language/no-trade intent, evidence parity, data caveats and safe failures.
+  - execution-safety-regressions (test:domain, test:plan-registry, test:mcp-human-confirmation, test:mcp-confirmation-host-fixture, test:guarded-sdk-executor, test:input-balance, test:gas-safety, test:execution-dry-run, test:core-hardening, test:demo-mode): Research/Demo remain non-executing, and synthetic confirmation, plan, balance, gas, signing and broadcast safeguards retain their fail-closed behavior. Evidence: Local domain, registry, synthetic MCP confirmation, guarded executor, balance/gas, offline rehearsal and Demo safety regressions exercise blocked, declined, malformed, changed, expired and replay paths; they do not use a real wallet or broadcast.
+  - reports-and-phase-ledger-reconciled (test:core-product-phase-plan, test:jev-shadow, test:distribution, test:mcp-config): The phase plan, phase-state ledger, Jev history, developer log, interim reports and deferred register agree on the completed and unresolved local-core work. Evidence: The phase-plan regression cross-checks named phase sequence, approval records, current state, report entries, deferred provider limitations and authorized release boundaries; Jev state-machine tests cover sequential approval and pause behavior.
+  - bounded-terminal-delivery-scope (test:core-product-phase-plan, test:distribution, test:jev-shadow, test:guarded-sdk-executor, test:execution-dry-run): Completion is recorded only as local SDK/MCP validation; no website work, commit/push, registry/public release, deployment, real-wallet signing, broadcast or funded settlement is claimed or performed. Evidence: Selected scope and safety regressions assert local terminal-state semantics, package metadata without publication, simulated/offline execution boundaries, and no automatic transition into external release or funded execution.
+- Jev confidence by review item: status=0.950, nextAction=0.980, riskLevel=1.000, criterion_independent-sdk-package-consumption=0.890, criterion_mcp-research-journey-and-surfaces=0.750, criterion_execution-safety-regressions=0.910, criterion_reports-and-phase-ledger-reconciled=0.670, criterion_bounded-terminal-delivery-scope=0.790
+- Jev criterion findings: Criterion independent-sdk-package-consumption: met (0.890 confidence) — The SDK builds and the documented package can be consumed from an isolated local artifact with runtime imports, declarations, examples and package metadata intact, without publication.; Criterion mcp-research-journey-and-surfaces: met (0.750 confidence) — Demo and live read-only MCP research preserve supported intent, issuer identity, evidence and Chinese/English presentation across structured content and the native research component.; Criterion execution-safety-regressions: met (0.910 confidence) — Research/Demo remain non-executing, and synthetic confirmation, plan, balance, gas, signing and broadcast safeguards retain their fail-closed behavior.; Criterion reports-and-phase-ledger-reconciled: met (0.670 confidence) — The phase plan, phase-state ledger, Jev history, developer log, interim reports and deferred register agree on the completed and unresolved local-core work.; Criterion bounded-terminal-delivery-scope: met (0.790 confidence) — Completion is recorded only as local SDK/MCP validation; no website work, commit/push, registry/public release, deployment, real-wallet signing, broadcast or funded settlement is claimed or performed.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-10-02T14:38:41.525Z
+- Phase: `core-local-acceptance`
+- Jev provider: `native-jev`
+- Baseline: `passed_with_deferred_items` / `continue` / risk `low`
+- Jev: `passed_with_deferred_items` / `continue` / risk `low` / confidence `0.590`
+- Agreement: `true`
+- Latency: `1281 ms`
+- Phase transition: `pause`
+- Transition reason: Criterion independent-sdk-package-consumption lacks a sufficiently confident Jev review (0.590); clarify its evidence before advancing.
+- Acceptance criteria and supplied evidence:
+  - independent-sdk-package-consumption (typecheck, build, pack:check, test:cleanroom, test:distribution, test:sdk-example): The SDK builds and the documented package can be consumed from an isolated local artifact with runtime imports, declarations, examples and package metadata intact, without publication. Evidence: Checks typecheck/build, inspect npm pack dry-run, install the local tarball in a fresh-cache isolated consumer, and verify ESM runtime imports, declarations, root exports, Node engine metadata and documented usage. No public registry is contacted for publication.
+  - mcp-research-journey-and-surfaces (test:demo-mode, test:asset-intent-query, test:presentation, test:mcp-natural-language, test:mcp-app-ui, test:mcp-enrichment): Demo and live read-only MCP research preserve supported intent, issuer identity, evidence and Chinese/English presentation across structured content and the native research component. Evidence: Live MCP regression now runs both Chinese and English NVDA research. It asserts resolved identity, two BNB representations, exact text/structured parity, English evidence labels, explicit no-trade follow-up suppression and sideEffects none; Demo, presentation, UI and enrichment tests cover deterministic language/data parity and safe failure.
+  - execution-safety-regressions (test:domain, test:plan-registry, test:mcp-human-confirmation, test:mcp-confirmation-host-fixture, test:guarded-sdk-executor, test:input-balance, test:gas-safety, test:execution-dry-run, test:core-hardening, test:demo-mode): Research/Demo remain non-executing, and synthetic confirmation, plan, balance, gas, signing and broadcast safeguards retain their fail-closed behavior. Evidence: Local domain, registry, synthetic MCP confirmation, guarded executor, balance/gas, offline rehearsal and Demo regressions exercise blocked, declined, malformed, changed, expired and replay paths. Execution rehearsal is synthetic/offline and asserts zero real wallet use and zero broadcast requests.
+  - reports-and-phase-ledger-reconciled (test:core-product-phase-plan, test:jev-shadow, test:distribution, test:mcp-config): The phase plan, phase-state ledger, Jev history, developer log, interim reports and deferred register agree on completed work, evidence class, remaining limitations and the terminal local state. Evidence: The phase-plan regression reads and cross-checks the phase state, Jev history, developer log, product/technical reports, deferred register and explicit six-area Phase 23 matrix. It asserts Phases 18–23 sequential approvals, the recorded Phase 23 pause, and that report language preserves live/host/deferred boundaries.
+  - bounded-terminal-delivery-scope (test:core-product-phase-plan, test:distribution, test:jev-shadow, test:guarded-sdk-executor, test:execution-dry-run): Completion is recorded only as local SDK/MCP validation; no website work, commit/push, registry/public release, deployment, real-wallet signing, broadcast or funded settlement is claimed or performed. Evidence: Selected checks assert local terminal-state semantics, package metadata/dry-run without publication, synthetic offline action boundaries, zero broadcast and no automatic transition into external release or funded execution.
+- Jev confidence by review item: status=0.990, nextAction=0.900, riskLevel=0.940, criterion_independent-sdk-package-consumption=0.590, criterion_mcp-research-journey-and-surfaces=0.970, criterion_execution-safety-regressions=0.960, criterion_reports-and-phase-ledger-reconciled=0.900, criterion_bounded-terminal-delivery-scope=0.830, deferredScope=1.000
+- Jev criterion findings: Criterion independent-sdk-package-consumption: met (0.590 confidence) — The SDK builds and the documented package can be consumed from an isolated local artifact with runtime imports, declarations, examples and package metadata intact, without publication.; Criterion mcp-research-journey-and-surfaces: met (0.970 confidence) — Demo and live read-only MCP research preserve supported intent, issuer identity, evidence and Chinese/English presentation across structured content and the native research component.; Criterion execution-safety-regressions: met (0.960 confidence) — Research/Demo remain non-executing, and synthetic confirmation, plan, balance, gas, signing and broadcast safeguards retain their fail-closed behavior.; Criterion reports-and-phase-ledger-reconciled: met (0.900 confidence) — The phase plan, phase-state ledger, Jev history, developer log, interim reports and deferred register agree on completed work, evidence class, remaining limitations and the terminal local state.; Criterion bounded-terminal-delivery-scope: met (0.830 confidence) — Completion is recorded only as local SDK/MCP validation; no website work, commit/push, registry/public release, deployment, real-wallet signing, broadcast or funded settlement is claimed or performed.
+- Action taken: `none`
+- Safety note: Jev does not control Codex and no external write was authorized.
+
+### Jev phase-gate record — 2026-10-02T14:53:29.227Z
+- Phase: `core-local-acceptance`
+- Jev provider: `native-jev`
+- Baseline: `passed_with_deferred_items` / `continue` / risk `low`
+- Jev: `passed_with_deferred_items` / `continue` / risk `low` / confidence `0.900`
+- Agreement: `true`
+- Latency: `2385 ms`
+- Phase transition: `advance`
+- Transition reason: Baseline and Jev agree on a low-risk continuation.
+- Acceptance criteria and supplied evidence:
+  - independent-sdk-package-consumption (typecheck, build, pack:check, test:cleanroom, test:distribution, test:sdk-example): The SDK builds and the documented package can be consumed from an isolated local artifact with runtime imports, declarations, examples and package metadata intact, without publication. Evidence: A fresh-cache clean-room test installs only the locally packed tarball, imports its public API, strictly compiles consumer TypeScript, and now executes the documented TokenizedStocksService search→marketContext flow against a loopback-only synthetic server. It checks signed request headers, returned issuer identity, separate token/reference prices, status, field provenance and missing-liquidity warnings. The fixture makes no live-provider request. pack:check is npm pack --dry-run; no npm publish command is selected.
+  - mcp-research-journey-and-surfaces (test:demo-mode, test:asset-intent-query, test:presentation, test:mcp-natural-language, test:mcp-app-ui, test:mcp-enrichment): Demo and live read-only MCP research preserve supported intent, issuer identity, evidence and Chinese/English presentation across structured content and the native research component. Evidence: The live MCP regression exercises Chinese and English NVDA research, exact text/structured parity, two BNB representations, English labels and explicit no-trade follow-up suppression, with sideEffects none. Demo, presentation, bundled App and enrichment regressions cover local parity and safe provider-failure behavior.
+  - execution-safety-regressions (test:domain, test:plan-registry, test:mcp-human-confirmation, test:mcp-confirmation-host-fixture, test:guarded-sdk-executor, test:input-balance, test:gas-safety, test:execution-dry-run, test:core-hardening, test:demo-mode): Research/Demo remain non-executing, and synthetic confirmation, plan, balance, gas, signing and broadcast safeguards retain their fail-closed behavior. Evidence: Domain, registry, synthetic MCP confirmation, guarded executor, balance/gas, offline rehearsal and Demo tests exercise declined, malformed, changed, expired, replayed and rejected plans. Tests use synthetic data and assert no real wallet; the offline rehearsal asserts zero broadcast requests, and executor broadcasting is exercised only through a mock callback.
+  - reports-and-phase-ledger-reconciled (test:core-product-phase-plan, test:jev-shadow, test:distribution, test:mcp-config): The phase plan, phase-state ledger, Jev history, developer log, interim reports and deferred register agree on completed work, evidence class, remaining limitations and the terminal local state. Evidence: The phase-plan regression reads and cross-checks the phase-state ledger, Jev records and per-criterion scores, developer log, technical/product reports, deferred register, and six-area completion matrix. It verifies the prior Phase 23 review's 24 passed checks, required selected tests, false external-write/high-risk request flags, and correct hold/terminal transition behavior.
+  - bounded-terminal-delivery-scope (test:core-product-phase-plan, test:distribution, test:jev-shadow, test:guarded-sdk-executor, test:execution-dry-run): Completion is recorded only as local SDK/MCP validation; no website work, commit/push, registry/public release, deployment, real-wallet signing, broadcast or funded settlement is claimed or performed during this Phase 23 review. Evidence: The selected set contains only local build/tests, read-only MCP calls and synthetic safety fixtures: pack:check is a dry-run and cleanroom removes its temporary consumer. The phase-plan test verifies the prior gate records externalWriteRequested=false and highRiskActionRequested=false, plus no transition beyond delivery-complete. No website/deployment, npm publish, Git push, real wallet, signature, network broadcast or funded settlement command is selected.
+- Jev confidence by review item: status=0.990, nextAction=0.970, riskLevel=0.980, criterion_independent-sdk-package-consumption=1.000, criterion_mcp-research-journey-and-surfaces=0.930, criterion_execution-safety-regressions=0.990, criterion_reports-and-phase-ledger-reconciled=0.900, criterion_bounded-terminal-delivery-scope=0.920, deferredScope=1.000
+- Jev criterion findings: Criterion independent-sdk-package-consumption: met (1.000 confidence) — The SDK builds and the documented package can be consumed from an isolated local artifact with runtime imports, declarations, examples and package metadata intact, without publication.; Criterion mcp-research-journey-and-surfaces: met (0.930 confidence) — Demo and live read-only MCP research preserve supported intent, issuer identity, evidence and Chinese/English presentation across structured content and the native research component.; Criterion execution-safety-regressions: met (0.990 confidence) — Research/Demo remain non-executing, and synthetic confirmation, plan, balance, gas, signing and broadcast safeguards retain their fail-closed behavior.; Criterion reports-and-phase-ledger-reconciled: met (0.900 confidence) — The phase plan, phase-state ledger, Jev history, developer log, interim reports and deferred register agree on completed work, evidence class, remaining limitations and the terminal local state.; Criterion bounded-terminal-delivery-scope: met (0.920 confidence) — Completion is recorded only as local SDK/MCP validation; no website work, commit/push, registry/public release, deployment, real-wallet signing, broadcast or funded settlement is claimed or performed during this Phase 23 review.
 - Action taken: `none`
 - Safety note: Jev does not control Codex and no external write was authorized.

@@ -1,11 +1,11 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { McpServer } from "@modelcontextprotocol/server";
+import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import { z } from "zod";
 import { BinanceWeb3Client } from "../binance-web3-client.js";
 import { TokenizedStocksService } from "../services/tokenized-stocks.js";
 import { WalletService } from "../services/wallet.js";
 import { TransactionService } from "../services/transaction.js";
-import { assertExecutable, attachSimulation, confirmPlan } from "../domain/action-plan.js";
+import { assertExecutable, attachSimulation } from "../domain/action-plan.js";
 import type { ActionPlan } from "../domain/types.js";
 import { errorOutcome, outcome, textResult } from "./response.js";
 import { compareAgentAssets, toAgentAsset } from "../domain/agent-normalizers.js";
@@ -21,7 +21,10 @@ import { assertAllowanceCoversPlan, assertInputBalanceCoversPlan } from "../doma
 import { enrichAgentAssets, type MarketContextEnrichmentDiagnostics } from "./asset-enrichment.js";
 import { registerAppResource, registerAppTool, RESOURCE_MIME_TYPE } from "@modelcontextprotocol/ext-apps/server";
 import { buildResearchAppHtml } from "./ui/research-app-html.js";
+import { registerActionPlanConfirmationTool } from "./user-confirmation.js";
+import { inferOutputLanguage, localizeEvidenceMessage } from "../presentation/language.js";
 
+export function buildMcpServer(): McpServer {
 const demoMode = process.env.ARIADNE_MODE === "demo";
 const apiKey = process.env.BINANCE_WEB3_API_KEY;
 const apiSecret = process.env.BINANCE_WEB3_API_SECRET;
@@ -39,8 +42,13 @@ const transactions = new TransactionService(client);
 const plans = new PlanRegistry();
 const elapsedMs = (startedAt: number) => Math.max(0, Math.round((performance.now() - startedAt) * 100) / 100);
 
-function ambiguousAssetResult(error: AmbiguousAssetQueryError) {
-  return textResult(outcome({ summary: error.message, candidateTickers: error.tickers }, "blocked", "Ask the user to choose one underlying ticker or company before continuing", { sideEffects: "none" }));
+function ambiguousAssetResult(error: AmbiguousAssetQueryError, query: string) {
+  const language = inferOutputLanguage(query);
+  const summary = language === "zh-CN"
+    ? `请求涉及多个标的（${error.tickers.join("、")}），请先指定一个股票代码或公司。`
+    : error.message;
+  const nextAction = language === "zh-CN" ? "请先选择一个标的，再继续查询。" : "Ask the user to choose one underlying ticker or company before continuing";
+  return textResult(outcome({ summary, candidateTickers: error.tickers }, "blocked", nextAction, { sideEffects: "none" }));
 }
 
 async function enrichAgentAsset(asset: Parameters<typeof toAgentAsset>[0], requestMarketContext = true) {
@@ -74,21 +82,28 @@ registerAppTool(server, "discover_tokenized_assets", {
     includeMarketContext: z.boolean().optional()
   }
 }, async ({ query, chainId, platforms, includeMarketContext }) => {
+  const language = inferOutputLanguage(query);
   try {
     const { assets, resolvedQuery } = await searchAssetIntent(stocks, query, { chainId });
     const filtered = platforms?.length ? assets.filter((asset) => platforms.includes(asset.platformId)) : assets;
     const enriched = await enrichAgentAssets(stocks, filtered, includeMarketContext !== false);
     const warnings = enriched.flatMap((asset) => asset.dataQuality.warnings).filter((warning, index, all) => all.indexOf(warning) === index);
     return textResult(outcome({
-      summary: enriched.length ? `Discovered ${enriched.length} tokenized-stock representations for ${resolvedQuery}` : `No tokenized-stock representations found for ${query}`,
+      summary: language === "zh-CN"
+        ? enriched.length ? `为 ${resolvedQuery} 找到 ${enriched.length} 个代币化股票发行方版本` : `没有找到与“${query}”匹配的代币化股票版本`
+        : enriched.length ? `Discovered ${enriched.length} tokenized-stock representations for ${resolvedQuery}` : `No tokenized-stock representations found for ${query}`,
       query,
       resolvedQuery,
       assets: enriched,
       count: enriched.length,
-      presentation: enriched.map((asset) => renderAssetCard(asset, { allowQuoteFollowUp: !explicitlyRequestsNoTrade(query) })).join("\n\n---\n\n")
-    }, enriched.length ? warnings.length ? "warning" : "success" : "warning", enriched.length ? "Compare the representations or request a focused market summary" : "Try a broader ticker or remove platform filters", { warnings }), { structuredContent: true });
+      presentation: enriched.length
+        ? enriched.map((asset) => renderAssetCard(asset, { allowQuoteFollowUp: !explicitlyRequestsNoTrade(query), language })).join("\n\n---\n\n")
+        : language === "zh-CN" ? "未返回发行方版本。请尝试更宽泛的股票代码或移除平台筛选。" : "No representations available."
+    }, enriched.length ? warnings.length ? "warning" : "success" : "warning", enriched.length
+      ? language === "zh-CN" ? "比较这些发行方版本，或查看具体行情" : "Compare the representations or request a focused market summary"
+      : language === "zh-CN" ? "尝试更宽泛的股票代码或移除平台筛选" : "Try a broader ticker or remove platform filters", { warnings: warnings.map((warning) => localizeEvidenceMessage(warning, language)) }), { structuredContent: true });
   } catch (error) {
-    if (error instanceof AmbiguousAssetQueryError) return ambiguousAssetResult(error);
+    if (error instanceof AmbiguousAssetQueryError) return ambiguousAssetResult(error, query);
     return textResult(errorOutcome(error, "Check the query and API availability before retrying", "asset_discovery_failed"));
   }
 });
@@ -111,13 +126,19 @@ registerAppTool(server, "compare_asset_representations", {
     }).optional()
   }
 }, async ({ query, chainId, preference }) => {
+  const language = inferOutputLanguage(query);
   try {
     const { assets } = await searchAssetIntent(stocks, query, { chainId });
     const enriched = await enrichAgentAssets(stocks, assets);
     const comparison = compareAgentAssets(enriched, (preference ?? {}) as AssetPreference);
-    return textResult(outcome({ summary: comparison.summary, comparison, presentation: renderComparisonTable(comparison) }, comparison.rows.some((row) => row.excludedReasons.length === 0) ? comparison.warnings.length ? "warning" : "success" : "blocked", comparison.rows.some((row) => row.excludedReasons.length === 0) ? "Review ranked representations and choose whether to request a quote" : "Relax the preference filters or inspect the exclusion reasons", { warnings: comparison.warnings }), { structuredContent: true });
+    const eligibleCount = comparison.rows.filter((row) => row.excludedReasons.length === 0).length;
+    const summary = language === "zh-CN" ? eligibleCount ? `${eligibleCount} / ${comparison.rows.length} 个发行方版本符合指定条件` : "没有发行方版本符合指定条件" : comparison.summary;
+    const nextAction = language === "zh-CN"
+      ? eligibleCount ? "查看排序结果，再决定是否对某个明确选定的版本请求报价" : "放宽筛选条件或查看排除原因"
+      : eligibleCount ? "Review ranked representations and choose whether to request a quote" : "Relax the preference filters or inspect the exclusion reasons";
+    return textResult(outcome({ query, summary, comparison, presentation: renderComparisonTable(comparison, { language }) }, eligibleCount ? comparison.warnings.length ? "warning" : "success" : "blocked", nextAction, { warnings: comparison.warnings.map((warning) => localizeEvidenceMessage(warning, language)) }), { structuredContent: true });
   } catch (error) {
-    if (error instanceof AmbiguousAssetQueryError) return ambiguousAssetResult(error);
+    if (error instanceof AmbiguousAssetQueryError) return ambiguousAssetResult(error, query);
     return textResult(errorOutcome(error, "Check the query and API availability before retrying", "asset_comparison_failed"));
   }
 });
@@ -141,6 +162,7 @@ registerAppTool(server, "research_tokenized_stock", {
     }).optional()
   }
 }, async ({ query, chainId, platforms, preference }) => {
+  const language = inferOutputLanguage(query);
   try {
     const workflowStartedAt = performance.now();
     const searchStartedAt = performance.now();
@@ -168,7 +190,8 @@ registerAppTool(server, "research_tokenized_stock", {
         : "Review exclusion reasons or relax the preference filters";
     const nextSteps = researchNextSteps(enriched, comparison, {
       allowQuoteFollowUp: !noTradeRequested,
-      allowWalletExposureFollowUp: !noTradeRequested
+      allowWalletExposureFollowUp: !noTradeRequested,
+      language
     });
     const presentationStartedAt = performance.now();
     const timing = {
@@ -189,12 +212,14 @@ registerAppTool(server, "research_tokenized_stock", {
       marketContextAssets: filtered.length,
       agentReasoningExcluded: true as const
     };
-    if (enriched.length) renderResearchBrief(enriched, comparison, timing, nextSteps, { allowQuoteFollowUp: !noTradeRequested });
+    if (enriched.length) renderResearchBrief(enriched, comparison, timing, nextSteps, { allowQuoteFollowUp: !noTradeRequested, language });
     timing.presentationMs = elapsedMs(presentationStartedAt);
     timing.totalMs = elapsedMs(workflowStartedAt);
-    const presentation = enriched.length ? renderResearchBrief(enriched, comparison, timing, nextSteps, { allowQuoteFollowUp: !noTradeRequested }) : "No representations available.";
+    const presentation = enriched.length ? renderResearchBrief(enriched, comparison, timing, nextSteps, { allowQuoteFollowUp: !noTradeRequested, language }) : language === "zh-CN" ? "未找到可用的代币化股票版本。" : "No representations available.";
     return textResult(outcome({
-      summary: enriched.length ? `Research brief for ${resolvedQuery}: ${enriched.length} issuer representations compared` : `No tokenized-stock representations found for ${query}`,
+      summary: language === "zh-CN"
+        ? enriched.length ? `${resolvedQuery} 研究简报：比较了 ${enriched.length} 个发行方版本` : `没有找到与“${query}”匹配的代币化股票版本`
+        : enriched.length ? `Research brief for ${resolvedQuery}: ${enriched.length} issuer representations compared` : `No tokenized-stock representations found for ${query}`,
       query,
       resolvedQuery,
       chainId,
@@ -203,11 +228,11 @@ registerAppTool(server, "research_tokenized_stock", {
       nextSteps,
       timing,
       presentation,
-      decisionBoundary: "Ariadne presents evidence and preference matches; it does not make an investment decision.",
-      executionBoundary: "This workflow is read-only. No quote, signature, transaction or broadcast was performed."
-    }, status, nextAction, { warnings }), { structuredContent: true });
+      decisionBoundary: language === "zh-CN" ? "Ariadne 只呈现证据和筛选条件匹配情况，不替用户作投资决策。" : "Ariadne presents evidence and preference matches; it does not make an investment decision.",
+      executionBoundary: language === "zh-CN" ? "此流程仅进行只读研究；未请求报价、签名或交易，也未广播交易。" : "This workflow is read-only. No quote, signature, transaction or broadcast was performed."
+    }, status, language === "zh-CN" ? !enriched.length ? "尝试更宽泛的股票代码或移除平台筛选" : eligible.length ? noTradeRequested ? "查看证据和数据缺口；未请求任何交易后续操作" : "查看证据；只有明确选择发行方版本后才可请求报价" : "查看排除原因或放宽筛选条件" : nextAction, { warnings: warnings.map((warning) => localizeEvidenceMessage(warning, language)) }), { structuredContent: true });
   } catch (error) {
-    if (error instanceof AmbiguousAssetQueryError) return ambiguousAssetResult(error);
+    if (error instanceof AmbiguousAssetQueryError) return ambiguousAssetResult(error, query);
     return textResult(errorOutcome(error, "Check the query and API availability before retrying", "stock_research_failed"));
   }
 });
@@ -284,7 +309,7 @@ server.registerTool("screen_assets_by_preferences", {
     const eligible = comparison.rows.filter((row) => !row.excludedReasons.length);
     return textResult(outcome({ summary: `${eligible.length} representations match the requested preferences`, comparison, presentation: renderComparisonTable(comparison), recommendationBoundary: "This is preference-based evidence screening, not investment advice", interpretation: "Eligibility reflects the supplied criteria and observed data; it is not a recommendation to buy or sell." }, eligible.length ? "success" : "blocked", eligible.length ? "Review the evidence and choose whether to request a quote" : "Relax the preferences or inspect exclusion reasons", { warnings: comparison.warnings }));
   } catch (error) {
-    if (error instanceof AmbiguousAssetQueryError) return ambiguousAssetResult(error);
+    if (error instanceof AmbiguousAssetQueryError) return ambiguousAssetResult(error, query);
     return textResult(errorOutcome(error, "Check the query and preference values before retrying", "asset_screening_failed"));
   }
 });
@@ -432,22 +457,9 @@ server.registerTool("create_stock_action_plan", {
   }, plan.status === "failed" ? "blocked" : "success", plan.status === "failed" ? "Resolve the blocking reasons before simulation" : "Simulate the plan before requesting confirmation", { warnings: plan.assetContext?.dataWarnings ?? [], sideEffects: "none" }));
 });
 
-server.registerTool("confirm_stock_action_plan", {
-  description: "Mark a simulated Ariadne action plan as explicitly user-confirmed. This never signs or broadcasts.",
-  inputSchema: { plan: z.any(), confirmationToken: z.string().min(1) }
-}, async ({ plan, confirmationToken }) => {
-  try {
-    const trusted = plans.requireExact(plan as ActionPlan, "simulated");
-    const action = trusted.unsignedActions?.[0] as { kind?: string } | undefined;
-    if (action?.kind === "evm_transaction") {
-      requireReviewedGasBudget(trusted);
-    }
-    const confirmed = confirmPlan(trusted, confirmationToken);
-    plans.advance(plan as ActionPlan, "simulated", confirmed, "confirmed");
-    return textResult(outcome({ summary: "Plan confirmed; signing and broadcast are still separate", plan: confirmed, broadcasted: false }, "success", "Sign externally, then submit or broadcast the signed payload", { sideEffects: "external_signature_required" }));
-  } catch (error) {
-    return textResult({ ...errorOutcome(error, "Simulate the plan and resolve all blocking checks before confirming", "confirmation_rejected"), broadcasted: false });
-  }
+registerActionPlanConfirmationTool(server, plans, (plan) => {
+  const action = plan.unsignedActions?.[0] as { kind?: string } | undefined;
+  if (action?.kind === "evm_transaction") requireReviewedGasBudget(plan);
 });
 
 server.registerTool("submit_signed_rfq_order", {
@@ -525,9 +537,11 @@ server.registerTool("get_broadcast_order_status", {
   return textResult(outcome({ address, chainId, result, summary: "Broadcast order status retrieved" }, "success", "Use the order status to determine whether the transaction settled"));
 });
 
-export { server };
+return server;
+}
 
 if (process.env.ARIADNE_TRANSPORT !== "http") {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
+  serveStdio(() => buildMcpServer(), {
+    onerror: (error) => console.error(`Ariadne MCP transport error: ${error.name}`)
+  });
 }

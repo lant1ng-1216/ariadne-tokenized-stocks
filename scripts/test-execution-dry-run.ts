@@ -65,7 +65,7 @@ const simulated = attachSimulation(registry.requireExact(prepared, "awaiting_con
 assert.equal(simulated.status, "simulated");
 registry.advance(prepared, "awaiting_confirmation", simulated, "simulated");
 requireReviewedGasBudget(simulated);
-const confirmed = confirmPlan(registry.requireExact(simulated, "simulated"), prepared.planId);
+const confirmed = confirmPlan(registry.requireExact(simulated, "simulated"));
 registry.advance(simulated, "simulated", confirmed, "confirmed");
 const reviewed = registry.requireExact(confirmed, "confirmed");
 const tx = (action.payload as any).tx as { to: `0x${string}`; value: string; data: `0x${string}` };

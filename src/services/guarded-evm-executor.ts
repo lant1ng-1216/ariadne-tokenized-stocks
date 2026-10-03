@@ -43,9 +43,9 @@ export class GuardedEvmExecutionService {
   }
 
   /** Confirm the exact simulated plan; signing remains a separate external action. */
-  confirm(plan: ActionPlan, confirmationToken: string): ActionPlan {
+  confirm(plan: ActionPlan): ActionPlan {
     const trusted = this.plans.requireExact(plan, "simulated");
-    const confirmed = confirmPlan(trusted, confirmationToken);
+    const confirmed = confirmPlan(trusted);
     this.plans.advance(trusted, "simulated", confirmed, "confirmed");
     return confirmed;
   }

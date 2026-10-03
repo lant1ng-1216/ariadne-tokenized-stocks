@@ -101,13 +101,13 @@ try {
   const measuredSearchMs = searchResolution.directSearchMs! + searchResolution.catalogReadMs! + searchResolution.catalogMatchMs! + searchResolution.resolvedSearchMs!;
   assert.ok(measuredSearchMs <= payload.timing!.searchMs! + 2, "resolution substages must be accounted for by the enclosing search duration");
   assert.ok(payload.timing!.searchMs! + payload.timing!.marketContextMs! + payload.timing!.comparisonMs! + payload.timing!.presentationMs! <= payload.timing!.totalMs! + 2, "measured stages must be accounted for by the total handler duration");
-  assert.match(payload.outcome?.nextAction ?? "", /no trading follow-up was requested/);
+  assert.match(payload.outcome?.nextAction ?? "", /未请求任何交易后续操作/);
   assert.ok(payload.nextSteps?.every((step) => step.id !== "request_read_only_quote"));
   assert.ok(payload.nextSteps?.every((step) => step.id !== "read_wallet_exposure"));
-  assert.match(payload.presentation ?? "", /Preferred next step: \*\*review the evidence and data gaps\*\*/);
+  assert.match(payload.presentation ?? "", /建议的下一步：\*\*查看证据和数据缺口\*\*/);
   assert.doesNotMatch(payload.presentation ?? "", /request a quote/i, "no-trade research brief must not contain quote CTAs in nested sections");
-  assert.match(payload.executionBoundary ?? "", /No quote, signature, transaction or broadcast/);
-  assert.match(payload.presentation ?? "", /Data source: \*\*Binance Web3 \/api\/v1\/dex\/market\/rwa\/price/);
+  assert.match(payload.executionBoundary ?? "", /此流程仅进行只读研究/);
+  assert.match(payload.presentation ?? "", /数据来源：\*\*Binance Web3 \/api\/v1\/dex\/market\/rwa\/price/);
   assert.equal(liveEnv.ARIADNE_MODE, "live");
 
   const discoveryResult = await client.callTool({
@@ -130,7 +130,32 @@ try {
   assert.equal(discovery.outcome?.sideEffects, "none");
   assert.doesNotMatch(discovery.presentation ?? "", /request a quote/i, "no-trade discovery must not suggest a quote");
 
-  console.log(JSON.stringify({ mode: "live", standaloneSdkJourney: true, sdkMcpIdentityParity: true, sourceAndTimestampProvenance: true, liveTextStructuredParity: true, liveAppResourceLinked: true, naturalLanguageResearch: true, liveAssetDiscovery: true, resolvedQuery: payload.resolvedQuery, representations: payload.assets?.length, status: payload.outcome?.status, sideEffects: payload.outcome?.sideEffects, passed: true }, null, 2));
+  const englishResult = await client.callTool({
+    name: "research_tokenized_stock",
+    arguments: { query: "Research NVDA on BNB Chain. No trading.", chainId: "56" }
+  });
+  const englishText = (englishResult.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
+  assert.ok(englishText, "live English natural-language research must return text");
+  const englishPayload = JSON.parse(englishText!) as {
+    resolvedQuery?: string;
+    assets?: Array<{ chainId?: string; platformId?: string; contractAddress?: string }>;
+    outcome?: { status?: string; sideEffects?: string; nextAction?: string };
+    nextSteps?: Array<{ id: string }>;
+    presentation?: string;
+    executionBoundary?: string;
+  };
+  assert.deepEqual(englishResult.structuredContent, englishPayload, "English live MCP text and structured content must match");
+  assert.equal(englishPayload.resolvedQuery, "NVDA");
+  assert.ok((englishPayload.assets?.length ?? 0) >= 2, "English live MCP should return both NVDA issuer representations");
+  assert.equal(englishPayload.outcome?.sideEffects, "none");
+  assert.match(englishPayload.outcome?.nextAction ?? "", /no trading follow-up was requested/i);
+  assert.match(englishPayload.presentation ?? "", /Ariadne research brief/);
+  assert.match(englishPayload.presentation ?? "", /Observed price:/);
+  assert.doesNotMatch(englishPayload.presentation ?? "", /request a quote/i, "explicit English no-trade intent must suppress quote CTAs throughout the live brief");
+  assert.ok(englishPayload.nextSteps?.every((step) => step.id !== "request_read_only_quote" && step.id !== "read_wallet_exposure"));
+  assert.match(englishPayload.executionBoundary ?? "", /read-only/);
+
+  console.log(JSON.stringify({ mode: "live", standaloneSdkJourney: true, sdkMcpIdentityParity: true, sourceAndTimestampProvenance: true, liveTextStructuredParity: true, liveAppResourceLinked: true, chineseNaturalLanguageResearch: true, englishNaturalLanguageResearch: true, liveAssetDiscovery: true, resolvedQuery: payload.resolvedQuery, representations: payload.assets?.length, status: payload.outcome?.status, sideEffects: payload.outcome?.sideEffects, passed: true }, null, 2));
 } finally {
   await client.close();
 }

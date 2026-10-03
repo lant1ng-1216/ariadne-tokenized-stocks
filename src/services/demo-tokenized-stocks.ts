@@ -16,7 +16,9 @@ const demoAssets: StockAsset[] = [
   { assetId: "56:0xa9ee28c80f960b889dfbd1902055218cba016f75", chainId: "56", platformId: "ondo", contractAddress: "0xa9ee28c80f960b889dfbd1902055218cba016f75", tokenSymbol: "NVDAon", tokenName: "NVIDIA (Ondo)", tokenLogoUrl: "https://onchainos.bnbstatic.com/images/web3-data/public/token/logos/4357ecbcd49d4dea9bca1072cb0da0f6.png", issuerLogoUrl: issuerMetadata.ondo.logoUrl, issuerWebsite: issuerMetadata.ondo.website, underlyingTicker: "NVDA", underlyingName: "NVIDIA Corporation" },
   { assetId: "56:0x02fca66c1d1afb4e2a7884261eb00f63598a7436", chainId: "56", platformId: "bstock", contractAddress: "0x02fca66c1d1afb4e2a7884261eb00f63598a7436", tokenSymbol: "NVDAB", tokenName: "NVIDIA (bStocks)", tokenLogoUrl: "https://onchainos.bnbstatic.com/images/web3-data/public/token/logos/9dc00cf6f4c44054b6be2d2e032b76c0.png", issuerLogoUrl: issuerMetadata.bstock.logoUrl, issuerWebsite: issuerMetadata.bstock.website, underlyingTicker: "NVDA", underlyingName: "NVIDIA Corporation" }
 ];
+export const DEMO_DATA_WARNING = "Demo Mode data is synthetic, deterministic, and not live market data";
 const DEMO_MARKET_UPDATED_AT = Date.parse("2026-09-30T04:00:00.000Z");
+const DEMO_FIXED_SNAPSHOT_WARNING = "Demo snapshot timestamp is fixed for reproducibility and may be stale";
 
 const catalogSeeds = [
   ["AAPL", "Apple Inc.", "AAPLon", "ondo", "0x390a684ef9cade28a7ad0dfa61ab1eb3842618c4", "https://onchainos.bnbstatic.com/images/web3-data/public/token/logos/F728DD7CABE8942D7CC78CDCF757A895.png", "344.63", "343.47"],
@@ -29,7 +31,41 @@ const catalogSeeds = [
   ["COIN", "Coinbase Global, Inc.", "COINon", "ondo", "0xf8589b526fdd65f7f301c605a6e04f0f1b4b3620", undefined, "388.30", "387.91"]
 ] as const;
 
+function catalogAssets(): StockAsset[] {
+  return catalogSeeds.map(([ticker, name, symbol, platformId, contractAddress, tokenLogoUrl]) => ({
+    assetId: `56:${contractAddress.toLowerCase()}`,
+    chainId: "56",
+    platformId,
+    contractAddress,
+    tokenSymbol: symbol,
+    tokenName: `${name} (${platformId === "ondo" ? "Ondo" : "bStocks"})`,
+    tokenLogoUrl,
+    issuerLogoUrl: issuerMetadata[platformId].logoUrl,
+    issuerWebsite: issuerMetadata[platformId].website,
+    underlyingTicker: ticker,
+    underlyingName: name
+  }));
+}
+
+function allDemoAssets(): StockAsset[] {
+  return [...demoAssets, ...catalogAssets()];
+}
+
+function priceFor(asset: StockAsset): { tokenPrice: string; referencePrice: string } {
+  const seed = catalogSeeds.find((item) => item[2] === asset.tokenSymbol);
+  return {
+    tokenPrice: seed?.[6] ?? (asset.platformId === "ondo" ? "221.08" : "221.09"),
+    referencePrice: seed?.[7] ?? "220.92"
+  };
+}
+
+function gapPercent(tokenPrice: string, referencePrice: string): string {
+  return `${(((Number(tokenPrice) - Number(referencePrice)) / Number(referencePrice)) * 100).toFixed(4)}%`;
+}
+
 export class DemoTokenizedStocksService extends TokenizedStocksService {
+  readonly dataMode = "synthetic" as const;
+
   override async platforms(platformId?: string): Promise<RwaPlatform[]> {
     return ([
       { platformId: "ondo", name: "Ondo", tickerCount: 459, chainDistribution: [{ chainId: "56", tokenCount: 458 }], website: issuerMetadata.ondo.website, logoUrl: issuerMetadata.ondo.logoUrl },
@@ -38,25 +74,11 @@ export class DemoTokenizedStocksService extends TokenizedStocksService {
   }
 
   override async list(options: { chainId?: string; platformId?: string } = {}): Promise<TokenizedStockListing[]> {
-    const allAssets = [...demoAssets, ...catalogSeeds.map(([ticker, name, symbol, platformId, contractAddress, tokenLogoUrl]) => ({
-      assetId: `56:${contractAddress.toLowerCase()}`,
-      chainId: "56",
-      platformId,
-      contractAddress,
-      tokenSymbol: symbol,
-      tokenName: `${name} (${platformId === "ondo" ? "Ondo" : "bStocks"})`,
-      tokenLogoUrl,
-      issuerLogoUrl: issuerMetadata[platformId].logoUrl,
-      issuerWebsite: issuerMetadata[platformId].website,
-      underlyingTicker: ticker,
-      underlyingName: name
-    }))];
+    const allAssets = allDemoAssets();
     return allAssets
       .filter((asset) => (!options.chainId || asset.chainId === options.chainId) && (!options.platformId || asset.platformId === options.platformId))
       .map((asset, index) => {
-        const seed = catalogSeeds.find((item) => item[2] === asset.tokenSymbol);
-        const tokenPrice = seed?.[6] ?? (asset.platformId === "ondo" ? "221.08" : "221.09");
-        const referencePrice = seed?.[7] ?? "220.92";
+        const { tokenPrice, referencePrice } = priceFor(asset);
         return {
           ...asset,
           underlyingNameZh: asset.underlyingTicker === "NVDA" ? "英伟达" : undefined,
@@ -67,12 +89,12 @@ export class DemoTokenizedStocksService extends TokenizedStocksService {
             tokenPrice,
             referencePrice,
             priceGap: (Number(tokenPrice) - Number(referencePrice)).toFixed(2),
-            priceGapPercent: `${(((Number(tokenPrice) - Number(referencePrice)) / Number(referencePrice)) * 100).toFixed(4)}%`,
-            tokenPriceUpdatedAt: Date.now(),
+            priceGapPercent: gapPercent(tokenPrice, referencePrice),
+            tokenPriceUpdatedAt: DEMO_MARKET_UPDATED_AT,
             marketStatus: "unknown",
             openState: true,
             volume24H: `${(9_000_000_000 - index * 340_000_000).toFixed(0)}`,
-            dataWarnings: ["Demo Mode data is deterministic and is not live market data", "The platform did not provide a recognized marketStatus", "Liquidity was not provided and must not be interpreted as zero"]
+            dataWarnings: [DEMO_DATA_WARNING, DEMO_FIXED_SNAPSHOT_WARNING, "The platform did not provide a recognized marketStatus", "Liquidity was not provided and must not be interpreted as zero"]
           },
           marketCap: `${5_000_000_000_000 - index * 180_000_000_000}`,
           peRatioTTM: `${24 + index}`
@@ -86,22 +108,33 @@ export class DemoTokenizedStocksService extends TokenizedStocksService {
 
   override async search(query: string, options: { chainId?: string; platformId?: string } = {}): Promise<StockAsset[]> {
     const normalized = query.trim().toLowerCase();
-    if (!(normalized === "nvda" || normalized.includes("nvidia"))) return [];
-    return demoAssets.filter((asset) => (!options.chainId || asset.chainId === options.chainId) && (!options.platformId || asset.platformId === options.platformId));
+    if (!normalized) return [];
+    return allDemoAssets().filter((asset) => {
+      const matchesIdentity = [asset.underlyingTicker, asset.tokenSymbol, asset.underlyingName, asset.tokenName]
+        .some((value) => value?.toLowerCase().includes(normalized));
+      return matchesIdentity && (!options.chainId || asset.chainId === options.chainId) && (!options.platformId || asset.platformId === options.platformId);
+    });
   }
 
   override async marketContext(asset: StockAsset): Promise<MarketContext> {
+    const fixture = allDemoAssets().find((candidate) =>
+      candidate.chainId === asset.chainId &&
+      candidate.platformId === asset.platformId &&
+      candidate.contractAddress.toLowerCase() === asset.contractAddress.toLowerCase()
+    );
+    if (!fixture) throw new Error("No deterministic Demo Mode market fixture exists for this representation");
+    const { tokenPrice, referencePrice } = priceFor(fixture);
     return {
-      asset,
-      tokenPrice: asset.platformId === "ondo" ? "221.08" : "221.09",
-      referencePrice: "220.92",
-      priceGap: asset.platformId === "ondo" ? "0.16" : "0.17",
-      priceGapPercent: asset.platformId === "ondo" ? "0.0724%" : "0.0770%",
+      asset: fixture,
+      tokenPrice,
+      referencePrice,
+      priceGap: (Number(tokenPrice) - Number(referencePrice)).toFixed(2),
+      priceGapPercent: gapPercent(tokenPrice, referencePrice),
       tokenPriceUpdatedAt: DEMO_MARKET_UPDATED_AT,
       marketStatus: "unknown",
       openState: true,
       volume24H: "demo-data",
-      dataWarnings: ["Demo Mode data is deterministic and is not live market data", "The platform did not provide a recognized marketStatus", "Liquidity was not provided and must not be interpreted as zero"]
+      dataWarnings: [DEMO_DATA_WARNING, DEMO_FIXED_SNAPSHOT_WARNING, "The platform did not provide a recognized marketStatus", "Liquidity was not provided and must not be interpreted as zero"]
     };
   }
 

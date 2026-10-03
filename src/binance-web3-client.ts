@@ -8,6 +8,8 @@ export type BinanceWeb3Config = {
   baseUrl?: string;
   proxyUrl?: string;
   maxRetries?: number;
+  /** Stop retrying when Retry-After/backoff would exceed this wait budget (default 10 seconds). */
+  maxRetryDelayMs?: number;
   retryBaseDelayMs?: number;
   timeoutMs?: number;
   onRequest?: (observation: RequestObservation) => void;
@@ -32,10 +34,40 @@ export type BinanceResponse<T> = {
   success: boolean;
 };
 
+const DEFAULT_MAX_RETRY_DELAY_MS = 10_000;
+
+function isBinanceResponse(value: unknown): value is BinanceResponse<unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value) &&
+    typeof (value as Record<string, unknown>).code === "number" &&
+    typeof (value as Record<string, unknown>).msg === "string" &&
+    typeof (value as Record<string, unknown>).success === "boolean" &&
+    Object.hasOwn(value, "data");
+}
+
+function parseRetryAfterDelayMs(value: string | undefined, now = Date.now()): number | undefined {
+  const raw = value?.trim();
+  if (!raw) return undefined;
+  if (/^\d+(?:\.\d+)?$/.test(raw)) return Number(raw) * 1000;
+  const retryAt = Date.parse(raw);
+  return Number.isFinite(retryAt) ? Math.max(0, retryAt - now) : undefined;
+}
+
 export class BinanceWeb3Client {
   private readonly baseUrl: string;
 
   constructor(private readonly config: BinanceWeb3Config) {
+    if (config.maxRetries !== undefined && (!Number.isInteger(config.maxRetries) || config.maxRetries < 0 || config.maxRetries > 5)) {
+      throw new RangeError("maxRetries must be an integer between 0 and 5");
+    }
+    if (config.maxRetryDelayMs !== undefined && (!Number.isFinite(config.maxRetryDelayMs) || config.maxRetryDelayMs < 0)) {
+      throw new RangeError("maxRetryDelayMs must be a finite nonnegative number");
+    }
+    if (config.retryBaseDelayMs !== undefined && (!Number.isFinite(config.retryBaseDelayMs) || config.retryBaseDelayMs < 0)) {
+      throw new RangeError("retryBaseDelayMs must be a finite nonnegative number");
+    }
+    if (config.timeoutMs !== undefined && (!Number.isFinite(config.timeoutMs) || config.timeoutMs <= 0)) {
+      throw new RangeError("timeoutMs must be a finite positive number");
+    }
     this.baseUrl = (config.baseUrl ?? "https://web3.binance.com/build").replace(/\/$/, "");
   }
 
@@ -52,27 +84,39 @@ export class BinanceWeb3Client {
   }
 
   private async request<T>(method: string, requestPath: string, body: string): Promise<BinanceResponse<T>> {
-    const maxRetries = Math.max(0, this.config.maxRetries ?? 2);
+    const maxRetries = this.config.maxRetries ?? 2;
     for (let attempt = 0; ; attempt++) {
       const startedAt = Date.now();
       try {
         const result = await this.requestOnce<T>(method, requestPath, body);
-        this.config.onRequest?.({ method, path: requestPath, durationMs: Date.now() - startedAt, status: result.payload.code === 0 ? 200 : undefined, code: result.payload.code, success: true, attempt, rateLimitHeaders: result.rateLimitHeaders });
+        this.config.onRequest?.({ method, path: requestPath, durationMs: Date.now() - startedAt, status: result.httpStatus, code: result.payload.code, success: true, attempt, rateLimitHeaders: result.rateLimitHeaders });
         return result.payload;
       } catch (error) {
         const retryable = error instanceof BinanceWeb3Error ? error.retryable : true;
         this.config.onRequest?.({ method, path: requestPath, durationMs: Date.now() - startedAt, status: error instanceof BinanceWeb3Error ? error.status : undefined, code: error instanceof BinanceWeb3Error ? error.code : undefined, success: false, attempt, rateLimitHeaders: error instanceof BinanceWeb3Error && error.details && typeof error.details === "object" && "rateLimitHeaders" in error.details ? (error.details as any).rateLimitHeaders : undefined });
         if (!retryable || attempt >= maxRetries) throw error;
-        const retryAfter = error instanceof BinanceWeb3Error && error.details && typeof error.details === "object" && "rateLimitHeaders" in error.details
-          ? Number((error.details as { rateLimitHeaders?: Record<string, string> }).rateLimitHeaders?.["retry-after"] ?? (error.details as { rateLimitHeaders?: Record<string, string> }).rateLimitHeaders?.["Retry-After"])
-          : NaN;
-        const delay = Number.isFinite(retryAfter) ? Math.max(0, retryAfter * 1000) : (this.config.retryBaseDelayMs ?? 200) * 2 ** attempt;
+        const retryAfterHeader = error instanceof BinanceWeb3Error && error.details && typeof error.details === "object" && "rateLimitHeaders" in error.details
+          ? (error.details as { rateLimitHeaders?: Record<string, string> }).rateLimitHeaders?.["retry-after"] ??
+            (error.details as { rateLimitHeaders?: Record<string, string> }).rateLimitHeaders?.["Retry-After"]
+          : undefined;
+        const retryAfterDelayMs = parseRetryAfterDelayMs(retryAfterHeader);
+        const delay = retryAfterDelayMs ?? (this.config.retryBaseDelayMs ?? 200) * 2 ** attempt;
+        const maxRetryDelayMs = Math.max(0, this.config.maxRetryDelayMs ?? DEFAULT_MAX_RETRY_DELAY_MS);
+        if (delay > maxRetryDelayMs) {
+          throw new BinanceWeb3Error(
+            "Binance Web3 API retry delay exceeds the configured budget",
+            error instanceof BinanceWeb3Error ? error.status : 0,
+            "RETRY_DELAY_EXCEEDS_BUDGET",
+            false,
+            { retryAfterMs: delay, maxRetryDelayMs }
+          );
+        }
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
   }
 
-  private async requestOnce<T>(method: string, requestPath: string, body: string): Promise<{ payload: BinanceResponse<T>; rateLimitHeaders: Record<string, string> }> {
+  private async requestOnce<T>(method: string, requestPath: string, body: string): Promise<{ payload: BinanceResponse<T>; rateLimitHeaders: Record<string, string>; httpStatus: number }> {
     const timestamp = new Date().toISOString();
     const signedPath = `/build${requestPath}`;
     const preHash = `${timestamp}${method}${signedPath}${body}`;
@@ -102,7 +146,16 @@ export class BinanceWeb3Client {
       throw new BinanceWeb3Error(`Binance Web3 API request failed: ${message}`, 0, "NETWORK_TIMEOUT", true, { timeoutMs: this.config.timeoutMs ?? 30_000 });
     }
 
-    const payload = await response.json() as BinanceResponse<T>;
+    let rawPayload: unknown;
+    try {
+      rawPayload = await response.json();
+    } catch {
+      throw new BinanceWeb3Error("Binance Web3 API returned invalid JSON", response.status, "INVALID_JSON", false);
+    }
+    if (!isBinanceResponse(rawPayload)) {
+      throw new BinanceWeb3Error("Binance Web3 API returned an invalid response envelope", response.status, "INVALID_RESPONSE", false);
+    }
+    const payload = rawPayload as BinanceResponse<T>;
     const rateLimitHeaders: Record<string, string> = {};
     for (const [key, value] of response.headers.entries()) {
       if (key.toLowerCase().includes("rate") || key.toLowerCase().includes("limit") || key.toLowerCase().includes("retry-after")) rateLimitHeaders[key] = value;
@@ -112,6 +165,6 @@ export class BinanceWeb3Client {
       const retryable = response.status >= 500 || code === 429 || code === 42900 || code === 50000 || code === 50001;
       throw new BinanceWeb3Error(`Binance Web3 API ${response.status}: ${payload.msg || "request failed"}`, response.status, code, retryable, { payload, rateLimitHeaders });
     }
-    return { payload, rateLimitHeaders };
+    return { payload, rateLimitHeaders, httpStatus: response.status };
   }
 }

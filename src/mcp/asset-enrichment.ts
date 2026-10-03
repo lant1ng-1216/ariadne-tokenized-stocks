@@ -4,9 +4,11 @@ import type { AgentTokenizedAsset, MarketContextFailureCategory } from "../domai
 import type { MarketContext, StockAsset } from "../domain/types.js";
 import { BinanceWeb3Error } from "../errors.js";
 import { performance } from "node:perf_hooks";
+import { DEMO_DATA_WARNING } from "../services/demo-tokenized-stocks.js";
 
 export type MarketContextReader = {
   marketContexts(assets: StockAsset[]): Promise<MarketContext[]>;
+  dataMode?: "synthetic";
 };
 
 export type MarketContextEnrichmentDiagnostics = {
@@ -34,7 +36,7 @@ export async function enrichAgentAssets(
 ): Promise<AgentTokenizedAsset[]> {
   if (!requestMarketContext) {
     onDiagnostics?.({ batchCalls: 0, assetsRequested: assets.length, durationMs: 0 });
-    return assets.map((asset) => toAgentAsset(asset));
+    return assets.map((asset) => toAgentAsset(asset, undefined, {}, stocks.dataMode ? { source: stocks.dataMode } : {}));
   }
 
   const startedAt = performance.now();
@@ -57,14 +59,15 @@ export async function enrichAgentAssets(
         issuerLogoUrl: context.asset.issuerLogoUrl ?? asset.issuerLogoUrl,
         issuerWebsite: context.asset.issuerWebsite ?? asset.issuerWebsite
       };
-      return toAgentAsset(enrichedAsset, context, {}, {}, { marketContextRequested: true });
+      const isSynthetic = stocks.dataMode === "synthetic" || context.dataWarnings.includes(DEMO_DATA_WARNING);
+      return toAgentAsset(enrichedAsset, context, {}, isSynthetic ? { source: "synthetic" } : {}, { marketContextRequested: true });
     });
     onDiagnostics?.({ batchCalls: 1, assetsRequested: assets.length, durationMs: elapsedMs(startedAt) });
     return enriched;
   } catch (error) {
     const failureCategory = failureCategoryFor(error);
     onDiagnostics?.({ batchCalls: 1, assetsRequested: assets.length, durationMs: elapsedMs(startedAt), failureCategory });
-    return assets.map((asset) => toAgentAsset(asset, undefined, {}, {}, {
+    return assets.map((asset) => toAgentAsset(asset, undefined, {}, stocks.dataMode ? { source: stocks.dataMode } : {}, {
       marketContextRequested: true,
       marketContextUnavailable: true,
       marketContextFailureCategory: failureCategory

@@ -217,6 +217,11 @@ for (const invalidPrice of ["0", "-1", "abc", "1e3", "NaN"]) {
 }
 assert.equal(normalizeMarketContext(asset, { statusInfo: { marketStatus: "regular" } }).marketStatus, "open");
 assert.equal(normalizeMarketContext(asset, { statusInfo: { marketStatus: "halted" } }).marketStatus, "closed");
+for (const status of ["premarket", "postmarket", "overnight"]) {
+  assert.equal(normalizeMarketContext(asset, { statusInfo: { marketStatus: status } }).marketStatus, "offhours", `${status} should remain distinguishable from regular open trading`);
+}
+assert.equal(normalizeMarketContext(asset, { statusInfo: { marketStatus: "pause" } }).marketStatus, "closed", "a provider-reported pause must remain non-tradable");
+assert.equal(normalizeMarketContext(asset, { statusInfo: { marketStatus: "future-provider-value" } }).marketStatus, "unknown", "undocumented provider states must not be guessed");
 
 const quote = normalizeQuote(asset, { code: 0, success: true, data: [{ quoteId: "q1", toTokenAmount: "10", priceImpactPercent: "0.4", vendorName: "LiquidMesh", approveTarget: "0xapprove" }] });
 assert.equal(quote.success, true);
@@ -279,17 +284,17 @@ assert.equal(simulatedPlan.status, "simulated");
 assert.equal(simulatedPlan.safetyReport?.checks.find((check) => check.name === "authorization_visibility")?.passed, true);
 assert.equal(simulatedPlan.safetyReport?.checks.find((check) => check.name === "price_impact")?.passed, true);
 assert.throws(() => assertExecutable(simulatedPlan), /confirmation/);
-const confirmedPlan = confirmPlan(simulatedPlan, "p1");
+const confirmedPlan = confirmPlan(simulatedPlan);
 assert.equal(confirmedPlan.status, "confirmed");
 assert.doesNotThrow(() => assertExecutable(confirmedPlan));
 assert.throws(() => assertExecutable({ ...confirmedPlan, safetyReport: { passed: true, checks: [], blockingReasons: [] } }), /incomplete safety report/);
-assert.throws(() => confirmPlan(confirmedPlan, "p1"), /simulation and safety/);
+assert.throws(() => confirmPlan(confirmedPlan), /simulation and safety/);
 const failedSimulationPlan = attachSimulation(preparedPlan, { ...simulation, success: false, warnings: ["failed"] });
 assert.equal(failedSimulationPlan.status, "failed");
-assert.throws(() => confirmPlan(failedSimulationPlan, "p1"), /simulation and safety/);
+assert.throws(() => confirmPlan(failedSimulationPlan), /simulation and safety/);
 assert.equal(attachSimulation(confirmedPlan, simulation).status, "failed");
 assert.equal(isPlanExpired({ ...confirmedPlan, expiresAt: 1 }, 2), true);
-assert.throws(() => confirmPlan({ ...simulatedPlan, expiresAt: 1 }, "p1", 2), /expired/);
+assert.throws(() => confirmPlan({ ...simulatedPlan, expiresAt: 1 }, 2), /expired/);
 const executable = { ...confirmedPlan, unsignedActions: [{ kind: "evm_transaction" }] };
 const executor = new ExecutionService(async (action) => ({ action, signature: "test-signature" }));
 const signed = await executor.signConfirmed(executable);

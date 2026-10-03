@@ -30,8 +30,7 @@ export function attachSimulation(plan: ActionPlan, simulation: SimulationResult,
   return { ...plan, simulation, safetyReport, status: safetyReport.passed && simulation.success ? "simulated" : "failed" };
 }
 
-export function confirmPlan(plan: ActionPlan, confirmationToken: string, now = Date.now()): ActionPlan {
-  if (!confirmationToken || confirmationToken !== plan.planId) throw new Error("Invalid confirmation token");
+export function confirmPlan(plan: ActionPlan, now = Date.now()): ActionPlan {
   if (isPlanExpired(plan, now)) throw new Error("Cannot confirm an expired plan");
   if (!hasPassedChecks(plan, requiredExecutionChecks) || plan.status !== "simulated") throw new Error("Plan must pass simulation and safety checks before confirmation");
   return { ...plan, status: "confirmed", requiresUserConfirmation: false };

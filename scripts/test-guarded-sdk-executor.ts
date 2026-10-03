@@ -78,7 +78,7 @@ async function prepareAndConfirm(service: GuardedEvmExecutionService, plan: Acti
   service.registerPrepared(plan);
   const simulated = await service.simulate(plan);
   assert.equal(simulated.status, "simulated");
-  return service.confirm(simulated, plan.planId);
+  return service.confirm(simulated);
 }
 
 const { service, calls } = createService();

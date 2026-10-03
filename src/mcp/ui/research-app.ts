@@ -1,15 +1,24 @@
-import { App } from "@modelcontextprotocol/ext-apps/app-with-deps";
-import { renderResearchView, type ResearchViewMode } from "./research-view.js";
+import {
+  App,
+  applyDocumentTheme,
+  applyHostFonts,
+  applyHostStyleVariables
+} from "@modelcontextprotocol/ext-apps-v1/app-with-deps";
+import { renderResearchView } from "./research-view.js";
+
+type HostContext = Parameters<NonNullable<App["onhostcontextchanged"]>>[0];
 
 const root = document.querySelector<HTMLElement>("#app") ?? (() => {
   throw new Error("Ariadne research view mount point is missing");
 })();
 
 let currentPayload: unknown;
-let currentMode: ResearchViewMode = "overview";
 
 function showFallback(message: string) {
-  root.innerHTML = `<main class="research-shell"><header class="topbar"><div class="brand-mark">A</div><div class="brand"><strong>ARIADNE</strong><span>MARKET CONTEXT</span></div></header><section class="empty-state"><div class="eyebrow">TEXT MODE AVAILABLE</div><h1>Research data is available in the conversation.</h1><p>${message}</p><p>This Agent host may not forward MCP App results to the embedded view. Use the text result above, or open the same MCP service in an MCP Apps-compatible host.</p></section></main>`;
+  root.innerHTML = `<main class="research-shell">
+    <header class="result-heading"><div class="brandline"><span class="brand-thread" aria-hidden="true"></span><span class="brand-name">Ariadne</span><span class="brand-divider">·</span><span class="brand-context">Research</span></div></header>
+    <section class="empty-state"><h1>Research data is available in the conversation.</h1><p>${message}</p><p>This Agent host may not render the MCP App. The text result remains available in the conversation.</p></section>
+  </main>`;
 }
 
 function readTextPayload(content: unknown): unknown {
@@ -21,18 +30,27 @@ function readTextPayload(content: unknown): unknown {
 
 function render() {
   if (currentPayload === undefined) return;
-  root.innerHTML = renderResearchView(currentPayload, currentMode);
+  root.innerHTML = renderResearchView(currentPayload);
 }
 
-root.addEventListener("click", (event) => {
-  const target = event.target instanceof Element ? event.target.closest<HTMLButtonElement>("button[data-view]") : null;
-  if (target?.dataset.view === "overview" || target?.dataset.view === "representations") {
-    currentMode = target.dataset.view;
-    render();
-  }
-});
+function applyHostContext(context: HostContext) {
+  if (context.theme) applyDocumentTheme(context.theme);
+  if (context.styles?.variables) applyHostStyleVariables(context.styles.variables);
+  if (context.styles?.css?.fonts) applyHostFonts(context.styles.css.fonts);
 
-const app = new App({ name: "Ariadne Research View", version: "0.1.0" }, {}, { autoResize: true });
+  const insets = context.safeAreaInsets;
+  if (insets) {
+    for (const edge of ["top", "right", "bottom", "left"] as const) {
+      const value = insets[edge];
+      if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
+        document.documentElement.style.setProperty(`--host-safe-area-${edge}`, `${value}px`);
+      }
+    }
+  }
+}
+
+const app = new App({ name: "Ariadne Research View", version: "0.2.0" }, {}, { autoResize: true });
+app.onhostcontextchanged = (context) => applyHostContext(context);
 app.ontoolresult = (result) => {
   const structured = result.structuredContent;
   currentPayload = structured && typeof structured === "object" ? structured : readTextPayload(result.content);
@@ -40,8 +58,10 @@ app.ontoolresult = (result) => {
     showFallback(result.isError ? "The research tool returned an error without a readable result." : "The host did not provide a structured research result.");
     return;
   }
-  currentMode = "overview";
   render();
 };
 app.ontoolcancelled = () => showFallback("The research request was cancelled. Its text response, if any, remains in the conversation.");
-app.connect().catch(() => showFallback("This host did not complete the MCP Apps handshake."));
+app.connect().then(() => {
+  const context = app.getHostContext();
+  if (context) applyHostContext(context);
+}).catch(() => showFallback("This host did not complete the MCP Apps handshake."));
