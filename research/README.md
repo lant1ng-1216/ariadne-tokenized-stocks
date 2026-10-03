@@ -13,6 +13,8 @@ This directory contains the evidence and reproducibility assets used by the Aria
 
 - `data/api-observations.json` — selected API and safety observations.
 - `data/capability-matrix.json` — capability-level verification status.
+- `data/provider-catalog-observation.json` — bounded, sanitized BSC catalog observation; it is not a complete-universe claim.
+- `data/binance-rwa-contract.json` — field and endpoint facts reviewed against the official Binance documentation.
 - `experiments/records/readonly.jsonl` — append-only read and preparation observations.
 - `experiments/records/safety.jsonl` — append-only safety and simulation observations.
 - `experiments/audit-results.json` — machine-readable integrity and coverage audit.
@@ -45,6 +47,6 @@ The audited experiment figures are stored in `figures/nature-sample/` in editabl
 
 Each figure has a contract describing its claim, evidence source and limitations. Values are generated from recorded observations rather than manually entered into the artwork.
 
-## Product upgrade records
+## Reading the evidence
 
-The staged Agent-native upgrade is documented in the Phase 1–7 review files under `docs/UPGRADE_PHASE_*.md`. These records distinguish completed work, validation evidence and explicit limitations; they are not a substitute for the final technical report.
+The reports under `docs/` summarize what the source, local tests and bounded provider observations establish. The structured files preserve the underlying sanitized evidence and its limitations. No directory count, timestamp, or test result should be read as proof of a complete market catalog, a provider freshness guarantee, or a successful funded trade.

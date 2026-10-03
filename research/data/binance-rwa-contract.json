@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "recordType": "provider-contract-review",
+  "reviewedAt": "2026-10-03",
+  "source": {
+    "title": "Binance Web3 API — RWA Data",
+    "url": "https://web3.binance.com/en/dev-docs/catalog/web3-wallet/api/rest-api/rwa-data",
+    "publisher": "Binance Web3 API",
+    "official": true,
+    "downloadableSchema": "The documentation page's schema-download link timed out during this review; findings below describe the rendered official documentation, not a retrieved OpenAPI file."
+  },
+  "endpoints": {
+    "platforms": {
+      "path": "/api/v1/dex/market/rwa/platforms",
+      "tickerCount": "Number of underlying assets corresponding to RWA tokens.",
+      "chainDistributionTokenCount": "Number of RWA tokens on a chain; the same underlying asset deployed on different chains is counted separately.",
+      "responseTimestamp": "Server response time in Unix milliseconds."
+    },
+    "tokens": {
+      "path": "/api/v1/dex/market/rwa/tokens",
+      "filters": {
+        "binanceChainId": "Optional; omitted returns data from all chains.",
+        "platformId": "Optional; omitted returns all platforms.",
+        "tabId": "Optional sector filter; omitted returns all sectors; documented values are 1 through 13."
+      },
+      "documentedResponseShape": "A data array of RWA tokenized assets plus an envelope-level server timestamp.",
+      "renderedDocumentationDoesNotList": ["page", "pageSize", "offset", "cursor", "limit", "total count", "continuation token"],
+      "assetType": { "1": "Stock", "2": "Pre-IPO", "3": "ETF" },
+      "marketStatus": ["premarket", "regular", "postmarket", "overnight", "closed", "pause"],
+      "marketStatusReasonFields": ["openState", "reasonCode", "reasonMsg", "nextOpenTime", "nextCloseTime"],
+      "quoteFields": ["tokenPrice", "referencePrice", "volume24H", "marketCap", "peRatioTTM"],
+      "notDocumentedOnTokenListItem": ["tokenPriceUpdatedAt", "liquidity"]
+    },
+    "search": {
+      "path": "/api/v1/dex/market/rwa/search",
+      "requiredQuery": "keyword (ticker, company name, or contract address)",
+      "optionalFilter": "platformId",
+      "results": "Matched ticker rows containing tokenized assets across platforms and chains.",
+      "chainFilter": "The rendered endpoint documentation does not list a chainId query parameter."
+    },
+    "price": {
+      "path": "/api/v1/dex/market/rwa/price",
+      "identity": "binanceChainId plus comma-separated tokenContractAddresses; up to 100 addresses per request.",
+      "perAssetTimestamp": "tokenPriceUpdatedAt is distinct from the envelope-level server timestamp."
+    }
+  },
+  "boundedCatalogObservation": {
+    "observationFile": "research/data/provider-catalog-observation.json",
+    "declaredBscTokenCount": 545,
+    "declaredBscTokenCountBasis": "Sum platform chainDistribution.tokenCount entries for binanceChainId 56; this is not platform tickerCount.",
+    "returnedUniqueBscRepresentations": 488,
+    "returnedUniqueBscRepresentationsBasis": "Distinct normalized BSC identities (chainId plus lowercase token contract address) in the observed token-list rows.",
+    "difference": 57,
+    "interpretation": "The observed difference remains unexplained. The official rendered documentation does not define pagination or a total-count contract for the token-list endpoint. Pagination cannot be asserted as the cause; upstream completeness remains unverified.",
+    "tabFilterObservation": "Two tabId queries returned equal identity sets in this sample; that does not prove that the filter is ignored.",
+    "noRepeatProviderRequestDuringContractReview": true
+  },
+  "implementationFidelity": {
+    "assetType": "The SDK retains the documented numeric asset type from search and token-list results; unknown integer codes remain visible rather than being relabeled.",
+    "marketState": "The SDK preserves the provider's detailed market status and documented reason/open/close context alongside a conservative normalized state used by safety checks.",
+    "timestamps": "Envelope and per-asset price timestamps retain distinct provenance. Missing timestamps are not synthesized, and timestamp presence is not treated as a freshness guarantee.",
+    "safety": "Provider pause, unknown state, invalid time values, and contradictory open-state fields do not become evidence that a market is safely open."
+  },
+  "boundedConclusion": "This record summarizes the rendered official documentation and local source review. It does not establish complete catalog coverage, runtime pagination behavior, or a quote-freshness service level agreement."
+}

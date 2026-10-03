@@ -3,15 +3,10 @@
 ## 1. Unified architecture
 
 ```text
-Natural-language user intent
-        ↓
-Agent or direct-user interaction
-        ↓
-Ariadne interaction core
-        ↓
-Binance Web3 API modules
-        ↓
-BSC and external-wallet execution layer
+Natural-language user → Agent host → Ariadne MCP ─┐
+                                                   ├→ Shared Ariadne domain core → Binance Web3 APIs
+Developer application → Ariadne TypeScript SDK ───┘                  │
+                                                                     └→ External wallet boundary
 ```
 
 ## 2. Semantic objects
@@ -54,7 +49,7 @@ BSC and external-wallet execution layer
 - `prepare_action_from_intent`
 - `simulate_stock_action_plan`
 
-These tools are deterministic MCP entry points. The calling Agent converts natural language into the MCP schema. The local Ariadne web product provides a direct UI over the same interaction core instead of requiring an Agent to perform the final presentation.
+These tools are deterministic MCP entry points. The calling Agent converts natural language into the MCP schema. Hosts that support MCP Apps can render Ariadne's bundled read-only research view; other hosts can use the same structured result and text response.
 
 ### Low-level adapter capabilities
 
@@ -78,7 +73,7 @@ Ticker, token symbol, issuer/platform, chain, contract, observed price, referenc
 
 ### Current comparison presentation
 
-Numbered issuer-aware representation entries keep the contract and market evidence together. This avoids relying on downstream Agent clients to render a Markdown table correctly. The local web product now renders the same comparison as issuer-aware cards with mechanical sorting and an evidence detail drawer.
+Numbered issuer-aware representation entries keep the contract and market evidence together. This avoids relying on downstream Agent clients to render a Markdown table correctly. The MCP App research view presents the same evidence as issuer-aware cards with progressive detail; developers using the SDK can compose their own UI from the typed domain objects.
 
 ### Agent summary
 
@@ -123,7 +118,7 @@ Scheduled DCA; automatic rebalance; event calendar; DeFi positions and calldata;
 | Simulation | Verified | Multi-asset portfolio simulation |
 | External signing | External-only; raw signed EVM transaction is checked against its confirmed plan | Funded-wallet validation |
 | Broadcast | MCP and guarded SDK workflows validate plan, signature, gas, balances, reviewed allowance and one-attempt replay locally | Funded-wallet validation; RFQ/multi-action remain unsupported by guarded flow |
-| Wallet / portfolio | MCP and direct web read-only views verified | Strategy and rebalance preview |
+| Wallet / portfolio | MCP read-only exposure verified | Strategy and rebalance preview |
 | DeFi Positions | Upstream blocked | Re-test after service recovery |
 | Demo Mode | Implemented locally across directory, research, exposure and quote | Broader fixture maintenance |
 | Asset logos / metadata | Implemented from official RWA and platform API fields | Cache policy and refresh observability |

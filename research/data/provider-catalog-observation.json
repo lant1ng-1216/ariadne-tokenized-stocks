@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "phase": "provider-data-limitations-closure",
+  "recordType": "provider-catalog-observation",
   "observedAt": "2026-10-03T00:27:00.832Z",
   "requestPolicy": {
     "method": "GET",

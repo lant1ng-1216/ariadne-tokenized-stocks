@@ -1,7 +1,6 @@
 import { BinanceWeb3Client } from "../src/binance-web3-client.js";
 import { TokenizedStocksService } from "../src/services/tokenized-stocks.js";
 import { compareRepresentationIdentities, representationIdentityKey, summarizeQuoteTimestampAges, summarizeTokenPriceProbe } from "../src/services/asset-coverage-audit.js";
-import { buildAssetDirectoryView } from "../src/web/asset-directory.js";
 import { normalizeProviderTimestamp } from "../src/domain/normalizers.js";
 
 const apiKey = process.env.BINANCE_WEB3_API_KEY;
@@ -48,10 +47,6 @@ for (const observedChainId of reconciledChainIds) {
   };
 }
 
-const directory = buildAssetDirectoryView(listings, platforms, { chainId, limit: 50, sourceResponseTimestampMs: catalogSnapshot.sourceResponseTimestampMs });
-const nextPage = buildAssetDirectoryView(listings, platforms, { chainId, offset: 50, limit: 50, sourceResponseTimestampMs: catalogSnapshot.sourceResponseTimestampMs });
-const firstPageIds = new Set(directory.items.map((item) => item.id));
-const pageOverlap = nextPage.items.filter((item) => firstPageIds.has(item.id)).length;
 const issuerCounts = Object.fromEntries(
   [...new Set(listings.map((item) => item.platformId))].sort().map((platformId) => [
     platformId,
@@ -181,7 +176,7 @@ console.log(JSON.stringify({
     platformMetadata: metadataByPlatform,
     platformDeclaredChainCounts: declaredChainCounts
   },
-  filtersAndPagination: {
+  providerFilterObservations: {
     chainMismatchCount,
     unfilteredVsChainFilteredSetChecks: chainSetChecks,
     perIssuerFilterResults: platformFilterChecks,
@@ -191,11 +186,6 @@ console.log(JSON.stringify({
       uniqueRepresentations: unionOfSectorTabIds.size,
       missingFromEveryTab: unfilteredAssetsMissingFromAllSectorTabs
     },
-    firstPageItems: directory.items.length,
-    secondPageItems: nextPage.items.length,
-    pageOverlap,
-    hasMoreAfterFirstPage: directory.pagination.hasMore,
-    hasMoreAfterSecondPage: nextPage.pagination.hasMore,
     nvdaSearchResultCount: nvda.length,
     nvdaSearchChainFilterNote: "TokenizedStocksService.search applies chainId filtering locally after the upstream search response; this is not an independent provider chain-filter check."
   },
@@ -216,11 +206,15 @@ console.log(JSON.stringify({
     serverResponseTimestampPresent: normalizeProviderTimestamp(dedicatedPriceSnapshot?.timestamp) !== undefined,
     endpoint: "/api/v1/dex/market/rwa/price"
   } : { queryRepresentations: 0, returnedRepresentations: 0 },
-  provenance: directory.provenance,
+  provenance: {
+    source: "Binance Web3 API",
+    endpoint: "/api/v1/dex/market/rwa/tokens",
+    responseTimestampMs: catalogSnapshot.sourceResponseTimestampMs ?? null
+  },
   sideEffects: "none",
   limitations: [
     "Counts describe this timestamped response for the requested chain; they are not a permanent API maximum or a guarantee of all tokenized equities/RWA across chains.",
-    "The API's upstream pagination/cap behavior is not independently documented by this client; local UI pagination slices the fetched response.",
+    "The API's upstream pagination/cap behavior and completeness are not established by this observation.",
     "Issuer/platform ticker counts can cover more chains than the chain-filtered token listing; compare declared chain distribution with this observed response.",
     "Documented tabId queries returned the same set in this observation; this does not establish whether the provider ignored the filter or every row matched every tab."
   ],
@@ -229,7 +223,6 @@ console.log(JSON.stringify({
     noIssuerFilterMismatches: filterMismatchCount === 0,
     chainQueriesMatchUnfilteredSubsets: Object.values(chainSetChecks).every((result) => result.matchesUnfilteredSet),
     issuerQueriesMatchTheirCatalogSubsets: Object.values(platformFilterChecks).every((result) => result.matchesUnfilteredSet),
-    localPagesDoNotOverlap: pageOverlap === 0,
     noDuplicateRowsInRequestedChain: listings.length === catalogRepresentationIds.size,
     noDuplicateRowsInUnfilteredResponse: allChainListings.length === new Set(allChainListings.map(representationKey)).size,
     sectorResponsesHaveNoDuplicateOrOutOfScopeIdentities: sectorResponseIdentityIntegrityPassed,
@@ -249,7 +242,7 @@ console.log(JSON.stringify({
   }
 }, null, 2));
 
-if (chainMismatchCount || filterMismatchCount || pageOverlap ||
+if (chainMismatchCount || filterMismatchCount ||
   Object.values(chainSetChecks).some((result) => !result.matchesUnfilteredSet) ||
   Object.values(platformFilterChecks).some((result) => !result.matchesUnfilteredSet) ||
   !sectorResponseIdentityIntegrityPassed ||

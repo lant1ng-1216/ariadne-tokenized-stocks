@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "source": "docs/DEVELOPER_EXPERIENCE_LOG.md and scripts/probe-defi-positions.ts",
+  "source": "docs/DEVELOPMENT_LOG.md and scripts/probe-defi-positions.ts",
   "observedAt": "2026-09-20",
   "observations": [
     {

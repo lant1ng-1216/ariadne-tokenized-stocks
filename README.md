@@ -2,7 +2,7 @@
 
 ## AI-native interaction infrastructure for onchain finance
 
-Ariadne gives AI agents, developers and direct users one coherent way to discover, understand, compare and act on tokenized equities and real-world assets. Its TypeScript SDK and MCP server turn fragmented onchain data and execution modules into issuer-aware financial objects, research evidence and reviewable action states on BNB Chain.
+Ariadne gives developers and existing AI Agents one coherent way to discover, understand, compare and act on tokenized equities and real-world assets. Its TypeScript SDK and MCP server turn fragmented onchain data and execution modules into issuer-aware financial objects, research evidence and reviewable action states on BNB Chain.
 
 **Make onchain markets intelligible and actionable for AI.**
 
@@ -21,15 +21,14 @@ The SDK keeps discovery and execution separate. The MCP layer exposes the same d
 
 The product is organized as an AI-native interaction core: users express intent, while Ariadne resolves issuer-aware assets, organizes market context, compares representations and prepares reviewable next steps.
 
-## Product surfaces
+## Product interfaces
 
-Ariadne is designed as one semantic core with three access surfaces:
+Ariadne has one shared domain and safety core with two ways to integrate it:
 
-- the TypeScript SDK for developers and institutional integrations;
-- the MCP server for existing Agents such as Codex and Claude Code;
-- the Ariadne web product for direct research, issuer comparison, wallet context and read-only quote interaction without requiring a third-party Agent to summarize the result.
+- the TypeScript SDK for developers building their own applications and agent workflows;
+- the MCP server for users and developers working through compatible Agent hosts such as Codex and Claude Code.
 
-The current repository implements the SDK and MCP core, a local Hosted MCP proof of concept and a local web Demo/Live Read-only surface. The web surface is not a public deployment, and public Hosted MCP, npm publication and final distribution remain subsequent release decisions.
+The MCP server can also expose an MCP App research card in hosts that support the UI extension. That card is part of the MCP interaction, not a separate Ariadne website. This repository contains the SDK/MCP product, its tests and examples, and the technical research needed to understand the implementation and its evidence boundaries.
 
 ## System boundary
 
@@ -77,7 +76,6 @@ The complete evidence model, audit output and reproducible figure inputs are mai
 - Return stable issuer-by-issuer evidence entries, explicit identity/market-data coverage and read-only next steps instead of relying on fragile Markdown tables.
 - Report Ariadne workflow timing with an explicit boundary that excludes calling-Agent reasoning and final-answer rendering.
 - Browse the verified BSC RWA directory with official token and issuer metadata, then move into issuer comparison, evidence inspection, public-address exposure or explicit-issuer quote preview.
-- Run a direct multi-page web product with dedicated SDK, MCP, asset-directory, research, portfolio and read-only quote surfaces.
 - Record request attempts, latency, business codes and rate-limit headers.
 - Retry documented transient failures while keeping broadcast operations explicit and non-automatic.
 
@@ -119,15 +117,7 @@ Demo Mode is deterministic and read-only. It does not create executable plans, s
 
 For offline local checks, run `npm run typecheck`, `npm run test:domain` and `npm run test:demo-mode`. Live API checks require your own credentials and are documented separately.
 
-The no-funds simulation path does not broadcast a transaction. If the Agent host supports automatic tool selection, it may select `research_tokenized_stock` from a natural-language request; otherwise invoke that tool explicitly. Tool selection behavior depends on the host and is not guaranteed by Ariadne.
-
-For a direct browser experience that does not depend on Codex or Claude Code summarization, run:
-
-```bash
-npm run web:demo
-```
-
-Then open `http://127.0.0.1:3000`. The Next.js App Router serves the direct product experience; its read-only API runs separately and is proxied through the same origin. Demo Mode uses deterministic data and never accepts a private key, creates an ActionPlan or broadcasts. `npm run web:live` starts the same Next.js site with the local Live Read-only API and server-side Binance credentials from `.env`; it remains local-only.
+The no-funds simulation path does not broadcast a transaction. If the Agent host supports automatic tool selection, it may select `research_tokenized_stock` from a natural-language request; otherwise invoke that tool explicitly. Tool selection behavior depends on the host and is not guaranteed by Ariadne. MCP App rendering also depends on the host; the bundled native research view is verified locally, but its visual presentation can vary by client.
 
 ## Evidence and limitations
 
@@ -136,6 +126,7 @@ The complete evaluation protocol, observations, failure taxonomy and deferred te
 - Real RFQ settlement requires an external wallet signature and remains deferred.
 - Funded post-trade balance and successful broadcast validation remain deferred until a funded wallet is intentionally used.
 - Three documented DeFi Positions request variants returned upstream business code `50000`; Ariadne records this as an upstream blocker rather than an empty result.
+- The SDK package is not published to npm; the Hosted MCP implementation is a local proof of concept, not a production endpoint.
 - Demo video and final submission material are intentionally outside the current implementation scope.
 
 ## Repository map
@@ -145,5 +136,8 @@ The complete evaluation protocol, observations, failure taxonomy and deferred te
 - `research/` — evidence data, experiment records and reproducible figure generation;
 - [`docs/CAPABILITY_MAP_AGENT_NATIVE_RWA.md`](docs/CAPABILITY_MAP_AGENT_NATIVE_RWA.md) — capability and Track mapping;
 - [`docs/TECHNICAL_RESEARCH_REPORT.md`](docs/TECHNICAL_RESEARCH_REPORT.md) — complete technical evaluation;
-- [`docs/PRODUCT_SURFACE_ARCHITECTURE.md`](docs/PRODUCT_SURFACE_ARCHITECTURE.md) — product boundaries, surfaces and track maturity;
-- [`docs/DEVELOPER_EXPERIENCE_LOG.md`](docs/DEVELOPER_EXPERIENCE_LOG.md) — factual API development log.
+- [`docs/PRODUCT_SURFACE_ARCHITECTURE.md`](docs/PRODUCT_SURFACE_ARCHITECTURE.md) — SDK/MCP responsibilities and product boundaries;
+- [`docs/DEVELOPMENT_LOG.md`](docs/DEVELOPMENT_LOG.md) — concise product-development history and verification record;
+- [`docs/PRODUCT_EXPERIENCE_REPORT.md`](docs/PRODUCT_EXPERIENCE_REPORT.md) — Agent/MCP interaction observations and usability findings;
+- [`docs/PRODUCT_LIMITATIONS.md`](docs/PRODUCT_LIMITATIONS.md) — known product and provider boundaries;
+- [`docs/BINANCE_RWA_API_CONTRACT_AUDIT.md`](docs/BINANCE_RWA_API_CONTRACT_AUDIT.md) — official provider-contract review and bounded conclusions.

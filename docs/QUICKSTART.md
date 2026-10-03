@@ -46,16 +46,6 @@ Find tokenized NVIDIA stock on BSC. Give me the contract, issuer, token price, r
 
 Demo Mode never creates an executable action plan, signs, broadcasts or represents deterministic data as live market data.
 
-## Direct web Demo Mode
-
-If you want to inspect the product without asking Codex or Claude Code to render a second summary, start the local web surface:
-
-```bash
-npm run web:demo
-```
-
-Open `http://127.0.0.1:3000`. The Next.js App Router provides the multi-page product: SDK and MCP explanations, a deterministic asset directory, issuer comparison, field-level evidence, a public-address wallet-exposure preview and explicit-issuer read-only quote preview. No private key, seed phrase, ActionPlan, signature or broadcast is accepted by this surface.
-
 ## Live Mode
 
 For live read-only data and quote preparation:
@@ -66,12 +56,6 @@ cp .env.example .env
 
 Set your own Binance Web3 API credentials in `.env`, then run `npm run mcp:config:live` and copy its output into your MCP client's server configuration. Keep `.env` local; do not commit credentials. Real signing and broadcasting remain separate user-wallet operations.
 
-In Live Mode, use the same natural-language prompts in a host that supports MCP tool selection. Whether the host selects the appropriate tool automatically depends on that host and its configuration; the user can also invoke the research tool explicitly. Any quote, signature, transaction or broadcast remains an explicit later boundary.
+In Live Mode, use the same natural-language prompts in a host that supports MCP tool selection. Whether the host selects the appropriate tool automatically depends on that host and its configuration; the user can also invoke the research tool explicitly. The server may expose an MCP App research card when the host supports MCP Apps; other hosts can display the same result as structured content and text. Any quote, signature, transaction or broadcast remains an explicit later boundary.
 
-For the controlled browser surface in Live Mode:
-
-```bash
-npm run web:live
-```
-
-This starts the Next.js site and a separate local API process. Binance credentials remain server-side; only GET-based catalog discovery, asset research, public-address exposure and read-only quote preview are exposed. Live Mode loads the current catalog returned by the BSC RWA API, including supplied token and issuer metadata. It is not a public deployment.
+To use the SDK without an Agent host, follow the [standalone SDK guide](SDK_USAGE.md). It documents local package building and a clean-room consumer check.

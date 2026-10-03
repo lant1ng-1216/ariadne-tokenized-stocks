@@ -1,134 +1,69 @@
-# Ariadne Product Surface Architecture
+# Ariadne 产品架构与边界
 
-## Purpose
+## 产品定位
 
-Ariadne is the AI-native interaction infrastructure for onchain finance. It connects Agents, developers and direct users to tokenized equities and real-world assets through one shared identity, research and execution model exposed through three product surfaces:
+Ariadne 是面向链上金融的 AI 原生交互基础设施。本仓库聚焦于同一套 SDK 与 MCP 核心：让 Agent 和开发者能够发现、识别、比较并研究链上代币化股票与 RWA，并在明确的安全边界内准备和审查后续操作。
 
-1. the TypeScript SDK for developers and institutions;
-2. the MCP server for existing Agents such as Codex and Claude Code;
-3. the Ariadne web product for users who want to research and compare tokenized assets directly.
+它不是一个独立 Agent，也不替代用户的钱包。自然语言理解和工具选择由接入的 Agent 宿主负责；Ariadne 负责资产身份、数据来源与缺失信息、领域逻辑、风险检查和可审查的结果结构。
 
-The three surfaces share one domain model and one safety policy. They differ in how intent is expressed and how evidence is presented.
-
-## Product boundary
+## 核心结构
 
 ```text
-Direct web user ───────┐
-                       ├─> Ariadne interaction core ─> Binance Web3 APIs
-Existing Agent ─ MCP ──┤             │
-Developer ─ SDK ───────┘             ├─> comparison and research evidence
-                                     ├─> ActionPlan and simulation
-                                     └─> external wallet signing boundary
+Agent 用户 ──自然语言──> Agent 宿主 ──MCP──┐
+                                            ├──> Ariadne 领域与安全核心 ──> Binance Web3 API
+开发者应用 ─────────────── TypeScript SDK ───┘                │
+                                                             ├──> 研究与比较结果
+                                                             ├──> ActionPlan 与模拟
+                                                             └──> 外部钱包签名边界
 ```
 
-The calling Agent may interpret natural language, select tools and explain results. Ariadne remains responsible for:
+MCP 与 SDK 共用同一领域模型和服务逻辑。MCP 将这些能力提供给现有 Agent，并可在支持 MCP Apps 的宿主中返回原生研究卡片；独立使用 SDK 的开发者则将结构化结果呈现在自己的应用界面中。
 
-- issuer-aware tokenized-asset identity;
-- chain, contract and platform normalization;
-- market context, reference-price comparison and data-quality warnings;
-- preference-based screening without silently turning it into investment advice;
-- quote, allowance, ActionPlan and simulation boundaries;
-- explicit external-signature and broadcast constraints.
+## 责任边界
 
-The local web product calls the same interaction core directly. It does not depend on Codex or Claude Code to perform a second summary before the user can understand the result; public hosting remains a separate release decision.
+| 层 | 负责内容 | 不负责内容 |
+| --- | --- | --- |
+| Agent 宿主 | 自然语言理解、工具选择、对话呈现与用户交互 | 不应伪造工具执行结果或替用户授权交易 |
+| Ariadne MCP | 暴露高层研究工作流、细粒度工具、结构化结果、统一状态与可选 MCP App 研究视图 | 不控制宿主 UI；不持有私钥 |
+| Ariadne SDK | API 请求、资产归一化、行情上下文、组合分析、计划准备与受保护的执行边界 | 不负责接入方应用的最终用户界面；不持有私钥 |
+| 外部钱包 / 签名器 | 在用户控制下签名 | Ariadne 不接收助记词或私钥，也不代签 |
 
-## Direct-product view contracts
+## 主要工作流
 
-The web product consumes structured view models rather than Markdown generated for an Agent transcript. Its research view contains:
+### 研究与比较
 
-- query identity and chain context;
-- one representation object per issuer, including token identity, contract, market snapshot and comparison eligibility;
-- explicit logo availability and metadata source, so a missing logo is visible instead of guessed;
-- field-level metadata evidence explaining whether a logo or issuer reference was supplied or unavailable;
-- coverage, completeness, missing fields, warnings and verified links;
-- neutral next steps and an immutable read-only boundary;
-- optional Ariadne-only timing, excluding calling-Agent reasoning and final rendering.
+以公司或 ticker 为入口，发现 API 返回的代币化表示，并保留发行方、平台、链、合约和代币符号之间的差异。结果可包含代币价格、参考价格、价差、市场状态、来源、时间戳、缺失字段和警告。搜索命中不是完整目录的证明；未知值保持未知，不会被补成看似确定的数据。
 
-The direct web surface also exposes a separate public-address wallet context view. It reports holdings, matched tokenized-stock identities, unresolved holdings and unavailable prices as separate evidence states. This route is intentionally read-only and is not a wallet connection or execution surface. A separate quote-preview view requires an explicit issuer and displays route evidence without creating an ActionPlan or approval transaction.
+MCP 的高层工具 `research_tokenized_stock` 将发现、比较、行情上下文和下一步提示组合为一次只读研究。需要更细控制的开发者仍可调用底层工具或直接使用 SDK。
 
-The TypeScript adapter is implemented in `src/web/research-workspace.ts`. It is a view-model boundary, not a second business service: the SDK and MCP remain the source of asset identity, market context, comparison and safety semantics.
+### MCP 原生研究界面
 
-## Surface responsibilities
+对支持 MCP Apps 的宿主，研究工具可以关联 Ariadne 自带的只读研究卡片，呈现发行方、链与合约身份、市场证据、来源和数据缺口。界面是 MCP 结果的渐进式可视化，不是另一个业务后端。宿主是否展示以及具体视觉样式由宿主能力决定；其他宿主仍可读取文本与结构化结果。
 
-| Surface | Primary user | Current role | Product direction |
-|---|---|---|---|
-| TypeScript SDK | Developers, institutions and integrators | Typed access to Binance Web3 data, normalization and execution boundaries | Stable library with versioned domain contracts and examples |
-| MCP server | Users of existing Agents | Agent-callable research, comparison, portfolio and action-preparation tools | High-level intent tools first; low-level tools remain for control and testing |
-| Ariadne web product | Direct users and reviewers | Local Demo Mode and controlled local Live Read-only Mode implemented | Research workspace, issuer comparison, asset cards, provenance, public-address exposure, quote preview and guided read-only actions |
+### 操作准备与执行
 
-## Product modes
+操作路径按阶段区分：
 
-### Research mode — current core
+```text
+读取数据 → 生成计划 → 模拟 → 明确确认 → 外部签名 → 校验并尝试广播
+```
 
-Research mode is the most mature path. It should let a user search a company or ticker and receive:
+报价、授权、余额、市场状态、滑点和可验证价格影响属于计划检查的一部分。标准 BSC EVM 路径的 SDK/MCP 防护会绑定未变更的计划、校验外部签名、限制 Gas、重新检查余额和 allowance，并限制每个计划一次广播尝试。确认只代表 Ariadne 状态前进，不是签名或广播授权。
 
-- the available tokenized representations;
-- issuer and platform identity;
-- contract and chain;
-- token price, reference price and price gap;
-- market state and freshness;
-- missing data and warnings;
-- neutral next steps.
+RFQ 和其他路线存在各自的外部签名边界。当前不能据此声称已有真实资金结算成功、交易后资产已对账或所有执行类型均受同一 SDK 防护覆盖。
 
-The MCP implementation exposes this through `research_tokenized_stock`. The web product presents the same evidence as issuer-aware cards, a mechanical comparison workspace and an inspectable provenance drawer.
+## 能力成熟度
 
-### Preparation mode — implemented but not complete as a product experience
+| 能力 | 当前状态 | 明确边界 |
+| --- | --- | --- |
+| RWA 发现与发行方表示比较 | SDK、MCP 和合成 Demo 流程已实现 | 上游目录完整性与计数语义未验证 |
+| 行情上下文与来源 | 保留来源字段、时间戳与数据警告 | 无已验证的新鲜度 SLA；上游目录缺少部分时间戳、流动性或状态 |
+| Agent 意图研究 | 提供高层 MCP 工具，中文和英文有本地覆盖 | 自动选工具取决于宿主，不由 Ariadne 保证 |
+| MCP App 研究卡 | 提供只读原生 UI 资源并有确定性本地渲染测试 | 不等于所有 Agent 宿主上的视觉一致性验证 |
+| SDK 分发 | 可本地构建 npm tarball 并通过隔离消费者测试 | 尚未发布到 npm |
+| Hosted MCP | 有本地 Streamable HTTP Demo | 不是线上服务；公开部署还需认证、隔离、运维与凭证方案 |
+| 交易执行 | 计划、模拟、确认与单次受保护的标准 EVM 广播路径已实现本地验证 | 未验证真实资金广播、RFQ 结算或交易后对账 |
 
-Preparation mode can request quotes, inspect allowance, create an ActionPlan and simulate an unsigned action. It must always show:
+## 本仓库范围
 
-- which representation was selected and why;
-- quote validity and price impact;
-- missing liquidity or market-state information;
-- allowance and balance blockers;
-- whether the next step requires an external signature.
-
-The SDK and MCP preparation boundaries are implemented and tested. The web product currently exposes explicit-issuer read-only quote evidence; ActionPlan creation and simulation remain SDK/MCP workflows until a later authorized web execution phase.
-
-### Guarded execution mode — local path implemented, funded validation deferred
-
-The SDK and MCP now provide Ariadne-guarded staged execution for one standard BSC EVM action: simulation, explicit confirmation, external signing, signed-transaction verification, gas and balance checks, and one broadcast attempt. No private key is handled. This synthetic/local implementation has not been validated with a funded wallet or on-chain settlement. RFQ signing/settlement, native-input assets, multi-action execution and post-trade balance reconciliation remain deferred.
-
-## Track integration status
-
-| Track capability | Current state | Product interpretation |
-|---|---|---|
-| RWA Data | Implemented and verified | Core asset identity and issuer layer |
-| Market | Implemented and verified with data limitations | Research and comparison layer; missing liquidity/status remain visible |
-| Trading | Quote, unsigned preparation and guarded standard-BSC-EVM execution path implemented | External signing is required; funded success remains unverified |
-| Transaction | Simulation, signature/fee/balance validation and replay boundary verified locally | Synthetic tests only; funded success and settlement remain deferred |
-| Wallet and portfolio | Read-only exposure implemented across MCP and local web surfaces | Portfolio context exists; unmatched assets and missing prices remain visible; automated strategy is not yet complete |
-| DeFi | Protocol/investment discovery verified | Positions are upstream-blocked; deposit/redeem/LP flows are not implemented |
-| b402 Payments | Not implemented | Future paid data/service distribution layer |
-| Agent wallet / wallet skill | Not implemented | Future signing and delegated execution layer |
-| BNB Agent Studio | Not implemented | Future hosted Agent deployment layer |
-| SDK and MCP | Local product core implemented | Public package, registry and hosted distribution remain release decisions |
-
-The goal is not to force every track into the first release. The goal is to make the interaction core broad enough that later track capabilities can be added without creating a new incompatible plugin for every workflow.
-
-## Web product expression
-
-The web product does not reproduce raw JSON or rely on a downstream Agent to invent the visual hierarchy. The current multi-page interface contains:
-
-1. a natural-language or ticker search entry;
-2. issuer-aware asset cards;
-3. a comparison workspace for multiple representations;
-4. a data-quality and provenance panel;
-5. a neutral next-action area for market context, read-only quote and wallet exposure;
-6. a clearly separated preparation and execution boundary.
-
-Each asset card renders a verified underlying logo with a distinct issuer badge and shows an explicit unavailable state when upstream metadata does not provide one. Logo URLs retain API provenance and are never inferred from a ticker.
-
-## Maturity and release gates
-
-The current maturity boundary is:
-
-- technical prototype: passed;
-- local Agent integration: passed;
-- local Hosted MCP proof of concept: passed;
-- local web Demo Mode and controlled Live Read-only Mode: passed;
-- product expression: multi-page visual and interaction system implemented locally; refinement remains ongoing;
-- public package and Hosted MCP: not released;
-- funded execution and post-trade verification: intentionally deferred;
-- final competition materials: intentionally deferred.
-
-The next product work should validate cross-surface consistency, deepen capability expression and complete public-delivery quality before adding high-risk execution or public hosting.
+仓库公开内容围绕 Ariadne 的 SDK/MCP 核心、示例、测试、配置模板、技术研究与产品使用说明组织。

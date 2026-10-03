@@ -27,7 +27,7 @@ The shortest user-facing path is `research_tokenized_stock`: it combines discove
 
 ## Install the standalone SDK
 
-The package can be consumed independently of Ariadne's website and MCP server. It is **not published to npm** yet; install a local tarball from a source checkout:
+The SDK can be consumed independently of the MCP server and any Agent host. It is **not published to npm** yet; install a local tarball from a source checkout:
 
 ```bash
 # Obtain and prepare the Ariadne source checkout
@@ -76,7 +76,7 @@ const context = await stocks.marketContext(asset);
 
 `onRequest` receives method, path, duration, attempt, success/status/code and selected rate-limit headers; it does not include the API key, secret, signature, or request body. Avoid logging other sensitive data in your own surrounding code. `BinanceWeb3Error` exposes `status`, provider `code`, `retryable`, and optional `details`; network failures use status `0` and code `NETWORK_TIMEOUT`. `maxRetries` accepts 0–5 attempts after the first request. Both numeric-seconds and HTTP-date `Retry-After` values are honored; a provider-requested wait longer than `maxRetryDelayMs` fails fast rather than retrying too early or waiting without bound. Invalid JSON and malformed response envelopes are non-retryable errors and do not echo the response body. Defaults remain two retries, 30-second per-attempt timeout and a 10-second retry-delay budget.
 
-The lower-level tools remain available for developers, testing and specialized orchestration. The public SDK entry point is `src/index.ts`; it exports SDK and domain APIs without requiring the website or an Agent.
+The lower-level tools remain available for developers, testing and specialized orchestration. The public SDK entry point is `src/index.ts`; it exports SDK and domain APIs without requiring the MCP server or an Agent.
 
 The SDK preserves platform-aware asset identity, market warnings, RFQ/standard execution mode and unsigned transaction boundaries. It never stores a wallet private key or signs on behalf of a user.
 
@@ -95,7 +95,3 @@ For standard BSC EVM actions through MCP, set `maxGasCostBnb` explicitly when pr
 In MCP, a prepared ActionPlan is bound to a process-local registry. The caller must return the unchanged plan for simulation and confirmation; changing the asset, amount, quote, safety checks or unsigned action is rejected. After successful simulation, `confirm_stock_action_plan` asks the connected MCP host to show a form elicitation containing the exact plan summary and explicit approve/decline choices. Only an accepted `decision: approve` advances the registry; decline, cancel, a malformed reply, or a host without form-elicitation support leaves the plan simulated. The host is a trusted presentation/response boundary: MCP cannot cryptographically prove that a human saw or selected the choice, so a custom client must not synthesize approval on the Agent's behalf. Approval advances Ariadne's local state only; it does not sign or broadcast. Plans expire and are lost when the MCP process restarts, so prepare a fresh plan after reconnecting. Before MCP broadcasts an externally signed EVM transaction, it decodes the raw transaction and verifies its chain ID, target, native value, calldata and recovered signer against the confirmed plan. It makes only one broadcast attempt per plan. The registry is not durable authorization; gas fees and nonce remain controlled by the external signer. The MCP RFQ submission tool also requires a confirmed, unchanged plan; because an RFQ-specific simulation/confirmation workflow is not yet available, RFQ submission through MCP remains blocked. The SDK's lower-level external signing API is a separate integrator-controlled boundary.
 
 For RFQ routes, call `prepareRfqSigningRequest()` and pass the returned typed data to an external wallet. Submit the wallet-produced signature with `submitRfqOrder()` and poll `rfqOrderStatus()`.
-
-## Direct web surface
-
-The repository also contains a local web product that consumes the same normalized domain semantics without relying on an Agent transcript. `npm run web:demo` starts a deterministic browser workspace; `npm run web:live` starts a server-side credentialed, read-only workspace. The browser surface supports research/comparison, public-address exposure and explicit-issuer quote preview. It does not expose private-key input, ActionPlan creation, approval transactions, signing or broadcast.
