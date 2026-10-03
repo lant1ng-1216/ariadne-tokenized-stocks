@@ -89,7 +89,7 @@ export type AssetSearchOptions = {
   platformId?: string;
 };
 
-export const CATALOG_SCOPE_WARNING = "Provider directory results are returned records, not a verified complete catalog; pagination and total-count semantics are unverified";
+export const CATALOG_SCOPE_WARNING = "Provider search and directory results are returned matches, not a verified complete catalog; pagination and total-count semantics are unverified";
 
 export type TokenizedStockCatalogSnapshot = {
   listings: TokenizedStockListing[];
@@ -131,14 +131,15 @@ export class TokenizedStocksService {
     for (const match of response.data ?? []) {
       for (const asset of match.assets ?? []) {
         if (options.chainId && asset.binanceChainId !== options.chainId) continue;
-        results.push(normalizeStockAsset({
+        const normalized = normalizeStockAsset({
           binanceChainId: asset.binanceChainId,
           tokenContractAddress: asset.tokenContractAddress,
           platformId: asset.platformId,
           tokenSymbol: asset.tokenSymbol,
           underlyingTicker: match.ticker,
           underlyingName: match.companyName
-        }));
+        });
+        results.push({ ...normalized, collectionWarnings: [CATALOG_SCOPE_WARNING] });
       }
     }
     return results;

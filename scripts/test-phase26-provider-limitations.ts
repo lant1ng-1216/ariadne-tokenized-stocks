@@ -3,6 +3,15 @@ import { readFile } from "node:fs/promises";
 
 const observation = JSON.parse(await readFile("records/phase26-provider-observation.json", "utf8")) as {
   requestPolicy: { requestCount: number; maxRetries: number };
+  requests: Array<{ index: number; endpoint: string; purpose: string; httpStatus: number; queryParameters: Record<string, string> }>;
+  methodology: {
+    declaredBscCount: string;
+    uniqueDirectoryRepresentations: string;
+    platformBreakdown: string;
+    recognizedStatuses: string;
+    quoteAgeMs: string;
+    sourceValuesRetained: string;
+  };
   observations: {
     platformMetadataDeclaredBscRecords: number;
     directoryUniqueRepresentationsReturned: number;
@@ -26,6 +35,20 @@ const phasePlan = await readFile("docs/CORE_PRODUCT_PHASE_PLAN.md", "utf8");
 
 assert.equal(observation.requestPolicy.requestCount, 6, "the provider evidence remains a single six-request sample");
 assert.equal(observation.requestPolicy.maxRetries, 0, "the evidence sample must not silently include retries");
+assert.deepEqual(observation.requests.map(({ index, queryParameters }) => ({ index, queryParameters })), [
+  { index: 1, queryParameters: {} },
+  { index: 2, queryParameters: { binanceChainId: "56" } },
+  { index: 3, queryParameters: { binanceChainId: "56", tabId: "1" } },
+  { index: 4, queryParameters: { binanceChainId: "56", tabId: "13" } },
+  { index: 5, queryParameters: { keyword: "NVDA" } },
+  { index: 6, queryParameters: { binanceChainId: "56", tokenContractAddresses: "the two BSC NVDA representations returned by request 5; address values omitted" } }
+], "the sanitized record must retain query scope without copying address values or raw responses");
+assert.ok(observation.methodology.declaredBscCount.includes("Sum platform chainDistribution.tokenCount"));
+assert.ok(observation.methodology.uniqueDirectoryRepresentations.includes("distinct normalized BSC asset identities"));
+assert.ok(observation.methodology.platformBreakdown.includes("returned platformId"));
+assert.ok(observation.methodology.recognizedStatuses.includes("normalized to a recognized"));
+assert.ok(observation.methodology.quoteAgeMs.includes("subtract each returned tokenPriceUpdatedAt"));
+assert.ok(observation.methodology.sourceValuesRetained.includes("cannot independently recompute"));
 assert.equal(observation.observations.platformMetadataDeclaredBscRecords, 545);
 assert.equal(observation.observations.directoryUniqueRepresentationsReturned, 488);
 assert.equal(observation.observations.declaredMinusReturnedDifference, 57);
@@ -56,6 +79,7 @@ assert.match(phasePlan, /Do not infer that a snapshot is complete or fresh from 
 
 assert.ok(observation.limitations[4]?.includes("single bounded observation"));
 assert.ok(observation.limitations[4]?.includes("not a complete catalog or a recurring measurement"));
+assert.ok(observation.limitations[5]?.includes("full independent recomputation requires a new authorized read-only observation"));
 assert.equal(observation.rawProviderPayloadIncluded, false);
 assert.equal(observation.credentialsIncluded, false);
 assert.match(phasePlan, /phase26-provider-observation\.json[\s\S]*no provider payload or credentials/);

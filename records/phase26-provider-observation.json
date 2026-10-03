@@ -10,13 +10,21 @@
     "timeoutMs": 8000
   },
   "requests": [
-    { "index": 1, "endpoint": "/api/v1/dex/market/rwa/platforms", "purpose": "platform metadata", "httpStatus": 200 },
-    { "index": 2, "endpoint": "/api/v1/dex/market/rwa/tokens", "purpose": "BSC directory snapshot", "httpStatus": 200 },
-    { "index": 3, "endpoint": "/api/v1/dex/market/rwa/tokens", "purpose": "directory tabId=1 identity set", "httpStatus": 200 },
-    { "index": 4, "endpoint": "/api/v1/dex/market/rwa/tokens", "purpose": "directory tabId=13 identity set", "httpStatus": 200 },
-    { "index": 5, "endpoint": "/api/v1/dex/market/rwa/search", "purpose": "NVDA representation lookup", "httpStatus": 200 },
-    { "index": 6, "endpoint": "/api/v1/dex/market/rwa/price", "purpose": "NVDA timestamped price snapshot", "httpStatus": 200 }
+    { "index": 1, "endpoint": "/api/v1/dex/market/rwa/platforms", "queryParameters": {}, "purpose": "platform metadata", "httpStatus": 200 },
+    { "index": 2, "endpoint": "/api/v1/dex/market/rwa/tokens", "queryParameters": { "binanceChainId": "56" }, "purpose": "BSC directory snapshot", "httpStatus": 200 },
+    { "index": 3, "endpoint": "/api/v1/dex/market/rwa/tokens", "queryParameters": { "binanceChainId": "56", "tabId": "1" }, "purpose": "directory tabId=1 identity set", "httpStatus": 200 },
+    { "index": 4, "endpoint": "/api/v1/dex/market/rwa/tokens", "queryParameters": { "binanceChainId": "56", "tabId": "13" }, "purpose": "directory tabId=13 identity set", "httpStatus": 200 },
+    { "index": 5, "endpoint": "/api/v1/dex/market/rwa/search", "queryParameters": { "keyword": "NVDA" }, "purpose": "NVDA representation lookup; BSC identities compared", "httpStatus": 200 },
+    { "index": 6, "endpoint": "/api/v1/dex/market/rwa/price", "queryParameters": { "binanceChainId": "56", "tokenContractAddresses": "the two BSC NVDA representations returned by request 5; address values omitted" }, "purpose": "NVDA timestamped price snapshot", "httpStatus": 200 }
   ],
+  "methodology": {
+    "declaredBscCount": "Sum platform chainDistribution.tokenCount for binanceChainId 56.",
+    "uniqueDirectoryRepresentations": "Count distinct normalized BSC asset identities (chainId plus lowercase token contract address) in the returned token-list rows.",
+    "platformBreakdown": "Group those distinct identities by the returned platformId.",
+    "recognizedStatuses": "Count returned rows whose market status normalized to a recognized closed or offhours value; rows without a recognized value are counted separately.",
+    "quoteAgeMs": "At observation time, subtract each returned tokenPriceUpdatedAt from the probe observation epoch timestamp.",
+    "sourceValuesRetained": "Only bounded aggregate results are retained; raw responses, individual provider quote timestamps, and token contract addresses are omitted, so a public reader cannot independently recompute every aggregate from this file alone."
+  },
   "observations": {
     "platformMetadataDeclaredBscRecords": 545,
     "directoryUniqueRepresentationsReturned": 488,
@@ -39,7 +47,8 @@
     "Equal identity sets for two tabId values do not prove that the filter is ignored or establish filter semantics.",
     "Directory rows did not include per-token quote-update timestamps or liquidity; 46 rows lacked a recognized market status.",
     "The two sampled quote ages do not establish a freshness service-level agreement or acceptable maximum age.",
-    "This is a single bounded observation, not a complete catalog or a recurring measurement."
+    "This is a single bounded observation, not a complete catalog or a recurring measurement.",
+    "The public aggregate record documents query parameters and calculation methods, but omits raw rows and selected token identities; full independent recomputation requires a new authorized read-only observation."
   ],
   "rawProviderPayloadIncluded": false,
   "credentialsIncluded": false

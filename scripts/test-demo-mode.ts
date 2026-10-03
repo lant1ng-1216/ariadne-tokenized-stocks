@@ -6,6 +6,8 @@ import { DEMO_CATALOG_SCOPE_WARNING, DemoTokenizedStocksService } from "../src/s
 
 const demoCatalogSnapshot = await new DemoTokenizedStocksService({} as any).listSnapshot({ chainId: "56" });
 assert.deepEqual(demoCatalogSnapshot.warnings, [DEMO_CATALOG_SCOPE_WARNING], "SDK Demo snapshots must return the explicit limited-synthetic-sample warning");
+const demoSearchResults = await new DemoTokenizedStocksService({} as any).search("NVDA", { chainId: "56" });
+assert.ok(demoSearchResults.length > 0 && demoSearchResults.every((asset) => asset.collectionWarnings?.includes(DEMO_CATALOG_SCOPE_WARNING)), "SDK Demo search matches must disclose the limited synthetic sample");
 
 const transport = new StdioClientTransport({
   command: "node",

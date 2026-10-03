@@ -277,7 +277,7 @@ Offline domain, core, presentation, Agent-model, execution-rehearsal, onboarding
 - Phase transition: `pause`
 - Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ## Phase 18 implementation follow-up — 2026-10-02
 
@@ -344,7 +344,7 @@ The second Jev re-review again passed all 10 checks and marked all three criteri
 - Phase transition: `pause`
 - Transition reason: Both baseline and Jev must return passed.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-21T18:34:50.053Z
 - Phase: `ux-phase-01`
@@ -356,7 +356,7 @@ The second Jev re-review again passed all 10 checks and marked all three criteri
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-21T18:34:51.651Z
 - Phase: `real-transaction-validation`
@@ -368,7 +368,7 @@ The second Jev re-review again passed all 10 checks and marked all three criteri
 - Phase transition: `pause`
 - Transition reason: Both baseline and Jev must return passed.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-21T18:38:29.329Z
 - Phase: `core-capability-hardening`
@@ -380,7 +380,7 @@ The second Jev re-review again passed all 10 checks and marked all three criteri
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-21T18:45:50.811Z
 - Phase: `agent-native-workflow-expansion`
@@ -392,7 +392,7 @@ The second Jev re-review again passed all 10 checks and marked all three criteri
 - Phase transition: `pause`
 - Transition reason: Both baseline and Jev must return passed.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-21T18:46:14.214Z
 - Phase: `agent-native-workflow-expansion`
@@ -404,7 +404,7 @@ The second Jev re-review again passed all 10 checks and marked all three criteri
 - Phase transition: `pause`
 - Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-21T18:46:26.915Z
 - Phase: `agent-native-workflow-expansion`
@@ -416,7 +416,7 @@ The second Jev re-review again passed all 10 checks and marked all three criteri
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-21T18:47:45.252Z
 - Phase: `agent-native-workflow-expansion`
@@ -428,7 +428,7 @@ The second Jev re-review again passed all 10 checks and marked all three criteri
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-21T18:49:17.521Z
 - Phase: `evidence-and-report-synchronization`
@@ -440,7 +440,7 @@ The second Jev re-review again passed all 10 checks and marked all three criteri
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-21T18:50:07.079Z
 - Phase: `final-local-review`
@@ -452,7 +452,7 @@ The second Jev re-review again passed all 10 checks and marked all three criteri
 - Phase transition: `pause`
 - Transition reason: Both baseline and Jev must return passed.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-21T19:08:58.517Z
 - Phase: `distribution-readiness`
@@ -464,7 +464,7 @@ The second Jev re-review again passed all 10 checks and marked all three criteri
 - Phase transition: `pause`
 - Transition reason: Both baseline and Jev must return passed.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-21T19:19:47.923Z
 - Phase: `cleanroom-consumer-validation`
@@ -476,7 +476,7 @@ The second Jev re-review again passed all 10 checks and marked all three criteri
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-21T19:19:48.887Z
 - Phase: `release-decision`
@@ -488,7 +488,7 @@ The second Jev re-review again passed all 10 checks and marked all three criteri
 - Phase transition: `pause`
 - Transition reason: Both baseline and Jev must return passed.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-21T19:34:30.818Z
 - Phase: `product-presentation-upgrade`
@@ -500,7 +500,7 @@ The second Jev re-review again passed all 10 checks and marked all three criteri
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-21T19:35:30.456Z
 - Phase: `hosted-mcp-feasibility`
@@ -512,7 +512,7 @@ The second Jev re-review again passed all 10 checks and marked all three criteri
 - Phase transition: `pause`
 - Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-21T19:35:45.143Z
 - Phase: `hosted-mcp-feasibility`
@@ -524,7 +524,7 @@ The second Jev re-review again passed all 10 checks and marked all three criteri
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-21T19:49:19.898Z
 - Phase: `hosted-demo-poc`
@@ -536,7 +536,7 @@ The second Jev re-review again passed all 10 checks and marked all three criteri
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-21T19:49:20.255Z
 - Phase: `hosted-deployment-decision`
@@ -548,7 +548,7 @@ The second Jev re-review again passed all 10 checks and marked all three criteri
 - Phase transition: `pause`
 - Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-21T19:49:39.919Z
 - Phase: `hosted-deployment-decision`
@@ -560,7 +560,7 @@ The second Jev re-review again passed all 10 checks and marked all three criteri
 - Phase transition: `pause`
 - Transition reason: Both baseline and Jev must return passed.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ## Response-contract hardening — 2026-09-22
 
@@ -611,7 +611,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-22T14:59:26.657Z
 - Phase: `web-research-workspace-contract`
@@ -623,7 +623,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Both baseline and Jev must return passed.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-22T15:01:02.837Z
 - Phase: `web-research-workspace-contract`
@@ -635,7 +635,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-22T15:08:46.318Z
 - Phase: `web-research-workspace-ui`
@@ -647,7 +647,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Jev confidence is below the configured threshold.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-22T15:22:33.762Z
 - Phase: `metadata-and-provenance`
@@ -659,7 +659,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-22T15:25:46.783Z
 - Phase: `controlled-live-readonly-backend`
@@ -671,7 +671,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Jev confidence is below the configured threshold.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-22T15:26:36.659Z
 - Phase: `controlled-live-readonly-backend`
@@ -683,7 +683,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Jev confidence is below the configured threshold.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-22T15:32:43.030Z
 - Phase: `readonly-observability-boundary`
@@ -695,7 +695,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-22T15:45:37.735Z
 - Phase: `richer-comparison-interactions`
@@ -707,7 +707,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-22T15:53:55.382Z
 - Phase: `wallet-exposure-readonly`
@@ -719,7 +719,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-22T15:59:46.468Z
 - Phase: `read-only-quote-flow`
@@ -731,7 +731,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-22T16:03:02.622Z
 - Phase: `product-docs-consistency`
@@ -743,7 +743,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-22T16:03:25.098Z
 - Phase: `product-docs-consistency`
@@ -755,7 +755,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-22T16:06:43.181Z
 - Phase: `final-local-review-before-public-sync`
@@ -767,7 +767,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-22T16:07:03.813Z
 - Phase: `final-local-review-before-public-sync`
@@ -779,7 +779,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Both baseline and Jev must authorize low-risk continuation, allowing explicitly recorded deferred items.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-22T16:36:13.136Z
 - Phase: `web-directory-foundation`
@@ -791,7 +791,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-22T16:36:38.095Z
 - Phase: `web-directory-foundation`
@@ -803,7 +803,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Jev confidence is below the configured threshold.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-22T16:38:08.252Z
 - Phase: `web-directory-foundation`
@@ -815,7 +815,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Jev confidence is below the configured threshold.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-22T16:38:54.288Z
 - Phase: `web-directory-foundation`
@@ -827,7 +827,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-22T17:12:23.432Z
 - Phase: `web-information-architecture-and-visual-system`
@@ -839,7 +839,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-22T17:12:42.013Z
 - Phase: `web-information-architecture-and-visual-system`
@@ -851,7 +851,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-22T17:17:55.056Z
 - Phase: `web-product-narrative-and-capability-pages`
@@ -863,7 +863,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-22T17:25:34.199Z
 - Phase: `web-cross-surface-validation-and-public-quality`
@@ -875,7 +875,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-22T17:25:54.060Z
 - Phase: `web-cross-surface-validation-and-public-quality`
@@ -887,7 +887,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-22T17:27:28.595Z
 - Phase: `web-cross-surface-validation-and-public-quality`
@@ -899,7 +899,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Both baseline and Jev must authorize low-risk continuation, allowing explicitly recorded deferred items.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-23T10:44:29.040Z
 - Phase: `website-navigation-language-and-shared-ui-polish`
@@ -911,7 +911,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-23T10:44:58.440Z
 - Phase: `website-navigation-language-and-shared-ui-polish`
@@ -923,7 +923,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Both baseline and Jev must authorize low-risk continuation, allowing explicitly recorded deferred items.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-23T12:05:29.469Z
 - Phase: `website-homepage-hero-reconstruction`
@@ -935,7 +935,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-23T12:06:48.749Z
 - Phase: `website-homepage-hero-reconstruction`
@@ -947,7 +947,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-23T12:07:53.523Z
 - Phase: `website-homepage-hero-reconstruction`
@@ -959,7 +959,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Both baseline and Jev must authorize low-risk continuation, allowing explicitly recorded deferred items.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-23T13:06:16.275Z
 - Phase: `website-nextjs-architecture-migration-and-cleanup`
@@ -971,7 +971,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Both baseline and Jev must authorize low-risk continuation, allowing explicitly recorded deferred items.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-23T14:45:18.038Z
 - Phase: `homepage-asset-discovery-implementation`
@@ -983,7 +983,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Both baseline and Jev must authorize low-risk continuation, allowing explicitly recorded deferred items.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-23T17:47:09.769Z
 - Phase: `homepage-asset-universe-redesign`
@@ -995,7 +995,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-24T03:46:48.714Z
 - Phase: `homepage-below-hero-product-narrative`
@@ -1007,7 +1007,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-24T06:29:03.530Z
 - Phase: `homepage-audience-module`
@@ -1019,7 +1019,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-24T10:13:42.947Z
 - Phase: `homepage-work-surfaces-recomposition`
@@ -1031,7 +1031,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-24T10:47:42.573Z
 - Phase: `homepage-audience-module-concept-redesign`
@@ -1043,7 +1043,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T07:00:40.192Z
 - Phase: `jev-workflow-activation`
@@ -1055,7 +1055,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Both baseline and Jev must authorize low-risk continuation, allowing explicitly recorded deferred items.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T07:01:59.505Z
 - Phase: `jev-workflow-activation`
@@ -1067,7 +1067,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T07:10:53.792Z
 - Phase: `agent-natural-language-repair`
@@ -1079,7 +1079,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T07:28:24.175Z
 - Phase: `web-consistency-repair`
@@ -1091,7 +1091,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### 2026-09-29 acceptance follow-up
 - Live read-only MCP natural-language regression: full Chinese NVIDIA/BNB Chain research request resolved to `NVDA`; two issuer representations returned; `sideEffects: none`; no quote, signature, transaction or broadcast.
@@ -1110,7 +1110,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T07:35:55.005Z
 - Phase: `product-core-review`
@@ -1122,7 +1122,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T07:36:52.410Z
 - Phase: `product-core-review`
@@ -1134,7 +1134,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T08:05:49.823Z
 - Phase: `agent-mcp-live-acceptance`
@@ -1146,7 +1146,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Codex MCP live acceptance — 2026-09-29
 - The connected Codex session invoked Ariadne's read-only `research_tokenized_stock` tool with complete Chinese and English natural-language requests (not pre-extracted ticker-only inputs). Both resolved NVIDIA to `NVDA` on chain `56` and returned two issuer representations (`ondo`, `bstock`). Both honored explicit no-trade wording: `sideEffects: none`, no quote follow-up, and the next action was review of evidence/data gaps.
@@ -1170,7 +1170,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T08:39:31.017Z
 - Phase: `research-brief-quality-review`
@@ -1182,7 +1182,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `pause`
 - Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T08:39:59.913Z
 - Phase: `research-brief-quality-review`
@@ -1194,7 +1194,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T08:44:15.720Z
 - Phase: `mcp-latency-reliability`
@@ -1206,7 +1206,7 @@ The Live MCP suite registered 18 tools and retained the safety assertions for un
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ## Addendum — MCP market-context and catalog provenance (2026-09-29)
 
@@ -1248,7 +1248,7 @@ Post-gate local verification also passed the package build, Hosted Demo MCP loop
 - Phase transition: `pause`
 - Transition reason: Both baseline and Jev must authorize low-risk continuation, allowing explicitly recorded deferred items.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T09:39:37.854Z
 - Phase: `asset-coverage-and-provenance`
@@ -1260,7 +1260,7 @@ Post-gate local verification also passed the package build, Hosted Demo MCP loop
 - Phase transition: `pause`
 - Transition reason: Both baseline and Jev must authorize low-risk continuation, allowing explicitly recorded deferred items.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T10:08:05.373Z
 - Phase: `asset-coverage-and-provenance`
@@ -1272,7 +1272,7 @@ Post-gate local verification also passed the package build, Hosted Demo MCP loop
 - Phase transition: `pause`
 - Transition reason: Both baseline and Jev must authorize low-risk continuation, allowing explicitly recorded deferred items.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ## Follow-up — catalog timestamp, filter-set audit, and phase checklist (2026-09-29)
 
@@ -1314,7 +1314,7 @@ The official contract lists only chain, platform, and sector-tab filters for `/t
 - Phase transition: `pause`
 - Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T10:39:48.918Z
 - Phase: `asset-coverage-and-provenance`
@@ -1326,7 +1326,7 @@ The official contract lists only chain, platform, and sector-tab filters for `/t
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ## Follow-up — standalone SDK consumer verification (phase 4; Jev-approved, 2026-09-29)
 
@@ -1372,7 +1372,7 @@ The local live MCP-natural-language and SDK clean-room checks initially encounte
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T11:03:43.328Z
 - Phase: `mcp-agent-interop-validation`
@@ -1384,7 +1384,7 @@ The local live MCP-natural-language and SDK clean-room checks initially encounte
 - Phase transition: `pause`
 - Transition reason: Both baseline and Jev must authorize low-risk continuation, allowing explicitly recorded deferred items.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T11:30:38.614Z
 - Phase: `mcp-agent-interop-validation`
@@ -1396,7 +1396,7 @@ The local live MCP-natural-language and SDK clean-room checks initially encounte
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T11:33:52.467Z
 - Phase: `execution-safety-readiness`
@@ -1408,7 +1408,7 @@ The local live MCP-natural-language and SDK clean-room checks initially encounte
 - Phase transition: `pause`
 - Transition reason: Jev unavailable; remain paused and use the deterministic result for observation only.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T11:36:09.875Z
 - Phase: `execution-safety-readiness`
@@ -1420,7 +1420,7 @@ The local live MCP-natural-language and SDK clean-room checks initially encounte
 - Phase transition: `advance`
 - Transition reason: Baseline and Jev agree on a low-risk continuation.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ## Interim correction — independent Phase 6 execution-safety audit (2026-09-29)
 
@@ -1438,7 +1438,7 @@ The audit separately reviewed the SDK's exported callback-driven `ExecutionServi
 - Phase transition: `pause`
 - Transition reason: Jev confidence is below the configured threshold.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ## Interim execution-safety addendum — standalone SDK and allowance freshness (2026-09-29)
 
@@ -1466,7 +1466,7 @@ The fresh Phase 6 gate ran all 12 local checks successfully, including build, th
 - Phase transition: `pause`
 - Transition reason: Jev confidence is below the configured threshold.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T18:08:35.377Z
 - Phase: `execution-safety-readiness`
@@ -1486,7 +1486,7 @@ The fresh Phase 6 gate ran all 12 local checks successfully, including build, th
   - sdk-plan-provenance (test:guarded-sdk-executor, test:core-hardening, test:plan-registry): The guarded SDK accepts only the unchanged plan object produced by SDK preparation and rejects forged, modified, proxied, accessor-bearing, or serialization-hook data before inspection or storage. Evidence: Regressions reject cloned and modified plans, Proxy objects, accessors, and toJSON hooks while asserting hooks or Proxy traps are not invoked.
   - offline-rehearsal-boundary (test:execution-dry-run): The end-to-end synthetic rehearsal covers expected rejection paths and demonstrates zero network broadcast requests and no real wallet use. Evidence: The fixture traverses prepare, simulate, confirm, test-only signing, and pre-broadcast checks; it rejects nine negative cases and reports broadcastRequests 0 and realWalletUsed false.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T18:09:47.283Z
 - Phase: `execution-safety-readiness`
@@ -1508,7 +1508,7 @@ The fresh Phase 6 gate ran all 12 local checks successfully, including build, th
 - Jev confidence by review item: status=0.970, nextAction=0.980, riskLevel=1.000, criterion_plan-stages-and-replay=0.970, criterion_simulation-fail-closed=0.990, criterion_allowance-boundary=0.890, criterion_signed-transaction-identity=0.570, criterion_gas-and-balances=0.990, criterion_sdk-plan-provenance=0.980, criterion_offline-rehearsal-boundary=1.000, deferredScope=1.000
 - Jev criterion findings: Criterion plan-stages-and-replay: met (0.970 confidence) — Prepared plans are stage-bound, unchanged, time-limited, and cannot be replayed for a second broadcast attempt.; Criterion simulation-fail-closed: met (0.990 confidence) — Execution requires an explicit successful simulation result; missing, unknown, or failed simulation status must not be treated as success.; Criterion allowance-boundary: met (0.890 confidence) — Quote-declared spender and allowance evidence are bound to the plan, and allowance is re-read immediately before the guarded broadcast callback.; Criterion signed-transaction-identity: met (0.570 confidence) — Before the guarded broadcast callback, the externally signed transaction must match the confirmed plan and expected signer, chain, target, value, and calldata.; Criterion gas-and-balances: met (0.990 confidence) — The confirmed gas budget bounds signed transaction fees, and current native BNB and input-token balances must cover the planned action before broadcast.; Criterion sdk-plan-provenance: met (0.980 confidence) — The guarded SDK accepts only the unchanged plan object produced by SDK preparation and rejects forged, modified, proxied, accessor-bearing, or serialization-hook data before inspection or storage.; Criterion offline-rehearsal-boundary: met (1.000 confidence) — The end-to-end synthetic rehearsal covers expected rejection paths and demonstrates zero network broadcast requests and no real wallet use.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T18:19:04.421Z
 - Phase: `execution-safety-readiness`
@@ -1531,7 +1531,7 @@ The fresh Phase 6 gate ran all 12 local checks successfully, including build, th
 - Jev confidence by review item: status=0.980, nextAction=0.980, riskLevel=0.990, criterion_plan-stages-and-replay=0.980, criterion_simulation-fail-closed=0.980, criterion_allowance-boundary=0.900, criterion_signed-payload-matching=1.000, criterion_signer-signature-integrity=1.000, criterion_gas-and-balances=0.980, criterion_sdk-plan-provenance=0.980, criterion_offline-rehearsal-boundary=1.000, deferredScope=0.990
 - Jev criterion findings: Criterion plan-stages-and-replay: met (0.980 confidence) — Prepared plans are stage-bound, unchanged, time-limited, and cannot be replayed for a second broadcast attempt.; Criterion simulation-fail-closed: met (0.980 confidence) — Execution requires an explicit successful simulation result; missing, unknown, or failed simulation status must not be treated as success.; Criterion allowance-boundary: met (0.900 confidence) — Quote-declared spender and allowance evidence are plan-bound, and allowance is re-read immediately before the guarded broadcast callback.; Criterion signed-payload-matching: met (1.000 confidence) — The parsed signed transaction must match the confirmed plan chain ID, target, native value, and calldata before execution.; Criterion signer-signature-integrity: met (1.000 confidence) — The signed transaction signature must recover to the expected plan wallet; malformed, unsigned, wrong-wallet, or unconfirmed requests must be rejected.; Criterion gas-and-balances: met (0.980 confidence) — The confirmed gas budget bounds signed fees, and current native BNB and input-token balances cover the plan before the broadcast callback.; Criterion sdk-plan-provenance: met (0.980 confidence) — The guarded SDK accepts only the unchanged plan object issued by SDK preparation and rejects forged, modified, proxied, accessor-bearing, or serialization-hook data before inspection or storage.; Criterion offline-rehearsal-boundary: met (1.000 confidence) — The end-to-end synthetic rehearsal covers expected rejection paths and demonstrates zero network broadcasts and no real wallet use.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T18:22:37.314Z
 - Phase: `local-delivery-readiness`
@@ -1552,7 +1552,7 @@ The fresh Phase 6 gate ran all 12 local checks successfully, including build, th
 - Jev confidence by review item: status=0.970, nextAction=0.980, riskLevel=1.000, criterion_local-package-consumer=0.990, criterion_mcp-onboarding-config=0.990, criterion_execution-capability-claims=0.980, criterion_phase-six-safety-regression=0.670, criterion_phase-gate-integrity=0.940, criterion_documentation-and-research-limits=0.960
 - Jev criterion findings: Criterion local-package-consumer: met (0.990 confidence) — The standalone SDK builds and packs locally, and a clean consumer can import its runtime exports and TypeScript declarations using the documented Node runtime.; Criterion mcp-onboarding-config: met (0.990 confidence) — Demo and Live MCP configuration examples, onboarding steps, SDK example and package metadata agree with the current repository commands and safety boundaries.; Criterion execution-capability-claims: met (0.980 confidence) — SDK and capability documentation distinguish the guarded standard BSC EVM path from integrator-owned low-level APIs and accurately list unsupported or deferred execution scope.; Criterion phase-six-safety-regression: met (0.670 confidence) — The final local regression preserves fail-closed simulation, plan lifecycle and replay checks, signed transaction identity, current balances, allowance, gas bounds, and zero-network-broadcast rehearsal.; Criterion phase-gate-integrity: met (0.940 confidence) — Jev phase advancement requires unique explicit criteria, complete criterion verdicts, confidence at or above the hard 0.85 floor, and accepted deferred scope; Jev never executes actions itself.; Criterion documentation-and-research-limits: met (0.960 confidence) — Product, technical, development, and capability reports preserve the observed asset coverage/data-quality limitations and execution deferrals rather than claiming completeness or funded settlement.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T18:23:50.092Z
 - Phase: `local-delivery-readiness`
@@ -1577,7 +1577,7 @@ The fresh Phase 6 gate ran all 12 local checks successfully, including build, th
 - Jev confidence by review item: status=0.960, nextAction=0.970, riskLevel=1.000, criterion_local-package-consumer=0.990, criterion_mcp-onboarding-config=0.990, criterion_execution-capability-claims=0.960, criterion_simulation-fail-closed=0.970, criterion_plan-lifecycle-replay=0.710, criterion_signed-transaction-integrity=1.000, criterion_gas-balance-allowance=1.000, criterion_zero-broadcast-boundary=1.000, criterion_phase-gate-integrity=0.980, criterion_documentation-and-research-limits=0.970
 - Jev criterion findings: Criterion local-package-consumer: met (0.990 confidence) — The standalone SDK builds and packs locally, and a clean consumer can import its runtime exports and TypeScript declarations using the documented Node runtime.; Criterion mcp-onboarding-config: met (0.990 confidence) — Demo and Live MCP configuration examples, onboarding steps, SDK example and package metadata agree with current repository commands and safety boundaries.; Criterion execution-capability-claims: met (0.960 confidence) — SDK and capability documentation distinguish the guarded standard BSC EVM path from integrator-owned low-level APIs and accurately list unsupported or deferred execution scope.; Criterion simulation-fail-closed: met (0.970 confidence) — Missing, unknown, or failed simulation status never becomes a successful simulation or a confirmable plan.; Criterion plan-lifecycle-replay: met (0.710 confidence) — PlanRegistry enforces only legal awaiting-confirmation to simulated to confirmed transitions, rejects expired or changed plans, and allows at most one broadcast reservation.; Criterion signed-transaction-integrity: met (1.000 confidence) — A signed EVM payload is decoded and matched to the confirmed plan chain ID, target, value and calldata, and its recovered signer must match the intended wallet.; Criterion gas-balance-allowance: met (1.000 confidence) — The reviewed gas budget and latest BNB/input-token balances and ERC-20 allowance are checked before the guarded broadcast callback.; Criterion zero-broadcast-boundary: met (1.000 confidence) — The synthetic end-to-end rehearsal uses no real wallet and makes zero network broadcast requests; SDK guarded execution uses only a mock broadcaster after checks.; Criterion phase-gate-integrity: met (0.980 confidence) — Jev phase advancement requires unique explicit criteria, complete criterion verdicts, confidence at or above the hard 0.85 floor, and accepted deferred scope; Jev does not execute actions.; Criterion documentation-and-research-limits: met (0.970 confidence) — Product, technical, development, and capability reports preserve observed asset coverage/data-quality limitations and execution deferrals rather than claiming completeness or funded settlement.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T18:27:04.784Z
 - Phase: `local-delivery-readiness`
@@ -1602,7 +1602,7 @@ The fresh Phase 6 gate ran all 12 local checks successfully, including build, th
 - Jev confidence by review item: status=0.870, nextAction=0.920, riskLevel=1.000, criterion_local-package-consumer=0.960, criterion_mcp-onboarding-config=0.950, criterion_execution-capability-claims=0.880, criterion_simulation-fail-closed=0.990, criterion_plan-lifecycle-replay=0.990, criterion_signed-transaction-integrity=0.990, criterion_gas-balance-allowance=0.990, criterion_zero-broadcast-boundary=0.990, criterion_phase-gate-integrity=0.930, criterion_documentation-and-research-limits=0.940
 - Jev criterion findings: Criterion local-package-consumer: met (0.960 confidence) — The standalone SDK builds, packs locally, and a clean consumer can install and import its runtime exports and TypeScript declarations using the documented Node runtime.; Criterion mcp-onboarding-config: met (0.950 confidence) — Demo and Live MCP setup, onboarding, SDK example, and package guidance match executable repository commands and safety boundaries.; Criterion execution-capability-claims: met (0.880 confidence) — SDK and capability documentation distinguish guarded standard BSC EVM execution from integrator-owned low-level APIs and list unsupported or deferred scope accurately.; Criterion simulation-fail-closed: met (0.990 confidence) — Missing, unknown, or failed simulation status cannot be treated as successful or produce a confirmable plan.; Criterion plan-lifecycle-replay: met (0.990 confidence) — PlanRegistry allows only legal awaiting-confirmation to simulated to confirmed transitions, rejects changed and expired plans including plans that expire after registration, and permits at most one broadcast reservation.; Criterion signed-transaction-integrity: met (0.990 confidence) — A signed EVM payload is decoded and matched to the confirmed plan chain ID, target, value, calldata, and intended wallet signer.; Criterion gas-balance-allowance: met (0.990 confidence) — Reviewed gas budget, latest BNB/input-token balances, and ERC-20 allowance are checked before guarded broadcast callback.; Criterion zero-broadcast-boundary: met (0.990 confidence) — The synthetic end-to-end rehearsal uses no real wallet and makes zero network broadcast requests; guarded SDK execution uses only a mock broadcaster after checks.; Criterion phase-gate-integrity: met (0.930 confidence) — Jev phase advancement requires unique explicit criteria, complete criterion verdicts, confidence at or above the hard 0.85 floor, and accepted deferred scope; Jev does not execute actions.; Criterion documentation-and-research-limits: met (0.940 confidence) — Product, technical, development, and capability reports preserve observed asset coverage/data-quality limits and execution deferrals rather than claiming completeness or funded settlement.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T19:23:46.140Z
 - Phase: `asset-source-coverage-reconciliation`
@@ -1621,7 +1621,7 @@ The fresh Phase 6 gate ran all 12 local checks successfully, including build, th
 - Jev confidence by review item: status=0.960, nextAction=0.790, riskLevel=0.520, criterion_snapshot-count-reconciliation=0.990, criterion_filter-and-pagination-contract=0.920, criterion_quote-time-provenance=0.990, criterion_audit-boundaries-and-reporting=0.990, deferredScope=0.950
 - Jev criterion findings: Criterion snapshot-count-reconciliation: met (0.990 confidence) — Report actual returned BSC representation identities/counts separately from platform metadata, compare exact chain/platform/contract sets, and preserve the unexplained discrepancy without claiming a complete inventory.; Criterion filter-and-pagination-contract: met (0.920 confidence) — Distinguish observed filter behavior from interpretation, and distinguish local UI slicing from provider-supported pagination.; Criterion quote-time-provenance: met (0.990 confidence) — Do not conflate catalog response time with an individual quote timestamp; identify the supported source of per-representation update times and the current directory gap.; Criterion audit-boundaries-and-reporting: met (0.990 confidence) — Keep the audit read-only, retain unresolved provider behavior as explicit limitations, and never label the observed list exhaustive.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T19:31:00.094Z
 - Phase: `asset-source-coverage-reconciliation`
@@ -1639,7 +1639,7 @@ The fresh Phase 6 gate ran all 12 local checks successfully, including build, th
   - audit-boundaries-and-reporting (test:asset-directory, test:core-hardening, typecheck): Keep provider observations read-only, document unresolved behavior accurately, and never label the observed list exhaustive. Evidence: The inspected audit uses signed GET requests only and exposes no wallet, plan, transaction, or write path. Output reports observed response integrity separately from filter equality and leaves catalogCompleteness.proven false; local checks pass.
   - read-only-risk-boundary (test:jev-shadow): Jev risk guidance recognizes only explicitly approved, bounded read-only requests as potentially low risk while keeping private data, paid actions, writes, wallet signing, broadcast, and deployment outside that allowance. Evidence: The Jev shadow regression asserts the risk rubric includes approved read-only requests and configured credentials while retaining explicit paid-operation and external-write boundaries; the hard 0.85 confidence floor is unchanged.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T19:31:36.049Z
 - Phase: `asset-source-coverage-reconciliation`
@@ -1659,7 +1659,7 @@ The fresh Phase 6 gate ran all 12 local checks successfully, including build, th
 - Jev confidence by review item: status=0.960, nextAction=0.610, riskLevel=0.990, criterion_snapshot-count-reconciliation=0.970, criterion_filter-and-pagination-contract=0.890, criterion_quote-time-provenance=1.000, criterion_audit-boundaries-and-reporting=0.990, criterion_read-only-risk-boundary=0.980, deferredScope=0.980
 - Jev criterion findings: Criterion snapshot-count-reconciliation: met (0.970 confidence) — Report observed representation identities and counts separately from platform metadata, compare exact chain/platform/contract sets, and do not claim a complete inventory.; Criterion filter-and-pagination-contract: met (0.890 confidence) — Separate observed filter-set behavior from response integrity, and distinguish local UI slices from upstream pagination.; Criterion quote-time-provenance: met (1.000 confidence) — Do not treat catalog response time as per-asset quote time; verify dedicated price data against exact representation identity.; Criterion audit-boundaries-and-reporting: met (0.990 confidence) — Keep provider observations read-only, document unresolved behavior accurately, and never label the observed list exhaustive.; Criterion read-only-risk-boundary: met (0.980 confidence) — Jev risk guidance recognizes only explicitly approved, bounded read-only requests as potentially low risk while keeping private data, paid actions, writes, wallet signing, broadcast, and deployment outside that allowance.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T19:36:47.497Z
 - Phase: `asset-source-coverage-reconciliation`
@@ -1679,7 +1679,7 @@ The fresh Phase 6 gate ran all 12 local checks successfully, including build, th
 - Jev confidence by review item: status=0.980, nextAction=0.790, riskLevel=0.980, criterion_snapshot-count-reconciliation=0.960, criterion_filter-and-pagination-contract=0.860, criterion_quote-time-provenance=0.990, criterion_audit-boundaries-and-reporting=0.990, criterion_read-only-risk-boundary=0.990, deferredScope=0.980
 - Jev criterion findings: Criterion snapshot-count-reconciliation: met (0.960 confidence) — Report observed representation identities and counts separately from platform metadata, compare exact chain/platform/contract sets, and do not claim a complete inventory.; Criterion filter-and-pagination-contract: met (0.860 confidence) — Separate observed filter-set behavior from response integrity, and distinguish local UI slices from upstream pagination.; Criterion quote-time-provenance: met (0.990 confidence) — Do not treat catalog response time as per-asset quote time; verify dedicated price data against exact representation identity.; Criterion audit-boundaries-and-reporting: met (0.990 confidence) — Keep provider observations read-only, document unresolved behavior accurately, and never label the observed list exhaustive.; Criterion read-only-risk-boundary: met (0.990 confidence) — Jev risk guidance recognizes explicitly approved, bounded read-only requests as potentially low risk while keeping private data, paid actions, writes, wallet signing, broadcast, and deployment outside that allowance.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T19:38:25.149Z
 - Phase: `asset-source-coverage-reconciliation`
@@ -1700,7 +1700,7 @@ The fresh Phase 6 gate ran all 12 local checks successfully, including build, th
 - Jev confidence by review item: status=0.980, nextAction=0.790, riskLevel=0.980, criterion_snapshot-count-reconciliation=0.850, criterion_filter-and-pagination-contract=0.810, criterion_quote-time-provenance=1.000, criterion_audit-boundaries-and-reporting=0.990, criterion_read-only-risk-boundary=0.990, criterion_preapproved-next-phase-scope=0.930, deferredScope=0.980
 - Jev criterion findings: Criterion snapshot-count-reconciliation: met (0.850 confidence) — Report observed representation identities and counts separately from platform metadata, compare exact chain/platform/contract sets, and do not claim a complete inventory.; Criterion filter-and-pagination-contract: met (0.810 confidence) — Separate observed filter-set behavior from response integrity, and distinguish local UI slices from upstream pagination.; Criterion quote-time-provenance: met (1.000 confidence) — Do not treat catalog response time as per-asset quote time; verify dedicated price data against exact representation identity.; Criterion audit-boundaries-and-reporting: met (0.990 confidence) — Keep provider observations read-only, document unresolved behavior accurately, and never label the observed list exhaustive.; Criterion read-only-risk-boundary: met (0.990 confidence) — Jev risk guidance recognizes explicitly approved, bounded read-only requests as potentially low risk while keeping private data, paid actions, writes, wallet signing, broadcast, and deployment outside that allowance.; Criterion preapproved-next-phase-scope: met (0.930 confidence) — Advance only to the user-confirmed Phase 9, whose directory-data scope and non-exhaustive coverage boundary are explicit; routine module progression does not require another approval.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T19:40:20.764Z
 - Phase: `asset-source-coverage-reconciliation`
@@ -1721,7 +1721,7 @@ The fresh Phase 6 gate ran all 12 local checks successfully, including build, th
 - Jev confidence by review item: status=0.980, nextAction=0.960, riskLevel=0.970, criterion_snapshot-count-reconciliation=0.930, criterion_filter-and-pagination-contract=0.860, criterion_quote-time-provenance=0.990, criterion_audit-boundaries-and-reporting=0.980, criterion_read-only-risk-boundary=0.980, criterion_preapproved-next-phase-scope=0.970, deferredScope=0.960
 - Jev criterion findings: Criterion snapshot-count-reconciliation: met (0.930 confidence) — Report observed representation identities and counts separately from platform metadata, compare exact chain/platform/contract sets, and do not claim a complete inventory.; Criterion filter-and-pagination-contract: met (0.860 confidence) — Separate observed filter-set behavior from response integrity, and distinguish local UI slices from upstream pagination.; Criterion quote-time-provenance: met (0.990 confidence) — Do not treat catalog response time as per-asset quote time; verify dedicated price data against exact representation identity.; Criterion audit-boundaries-and-reporting: met (0.980 confidence) — Keep provider observations read-only, document unresolved behavior accurately, and never label the observed list exhaustive.; Criterion read-only-risk-boundary: met (0.980 confidence) — Jev risk guidance recognizes explicitly approved, bounded read-only requests as potentially low risk while keeping private data, paid actions, writes, wallet signing, broadcast, and deployment outside that allowance.; Criterion preapproved-next-phase-scope: met (0.970 confidence) — Advance only to the user-confirmed Phase 9, whose directory-data scope and non-exhaustive coverage boundary are explicit; routine module progression does not require another approval.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T20:09:54.717Z
 - Phase: `asset-directory-data-quality`
@@ -1743,7 +1743,7 @@ The fresh Phase 6 gate ran all 12 local checks successfully, including build, th
 - Jev confidence by review item: status=0.990, nextAction=0.860, riskLevel=0.910, criterion_single-bounded-snapshot=0.940, criterion_truthful-directory-counts=0.990, criterion_exact-timestamped-price-identity=0.930, criterion_displayed-price-time-consistency=0.870, criterion_bounded-read-only-price-route=1.000, criterion_web-integration-build=1.000, criterion_approved-phase-transition-and-safety=0.910, deferredScope=0.990
 - Jev criterion findings: Criterion single-bounded-snapshot: met (0.940 confidence) — The directory browser makes one bounded catalog request, retains cap information, and rejects inconsistent snapshot metadata.; Criterion truthful-directory-counts: met (0.990 confidence) — Reported counts describe observed source values and do not imply normalized securities or complete market coverage.; Criterion exact-timestamped-price-identity: met (0.930 confidence) — Only a unique positive quote with a valid provider timestamp for the exact chain, platform and contract identity is treated as available; missing, duplicate, invalid and failed results remain explicit.; Criterion displayed-price-time-consistency: met (0.870 confidence) — Live table values and displayed quote-time coverage must refer to the same verified quote snapshot; do not fall back to untimestamped directory prices or mix reference-price snapshots.; Criterion bounded-read-only-price-route: met (1.000 confidence) — The timestamped-price route rejects invalid and over-limit requests before provider access and remains read-only.; Criterion web-integration-build: met (1.000 confidence) — The browser/API implementation typechecks and the production web app builds with the new catalog and quote routes.; Criterion approved-phase-transition-and-safety: met (0.910 confidence) — Continue only to the already approved Phase 10 after all current criteria pass; preserve wallet, transaction, deployment and publication boundaries.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ## 2026-09-30 — Phase 10 implementation evidence (Jev approved; confidence 0.900)
 
@@ -1773,7 +1773,7 @@ The fresh Phase 6 gate ran all 12 local checks successfully, including build, th
 - Jev confidence by review item: status=0.960, nextAction=0.990, riskLevel=1.000, criterion_timestamped-quote-coherence=0.960, criterion_identity-bound-refresh=0.970, criterion_candle-time-provenance=0.830, criterion_market-state-coverage=0.890, criterion_integration-and-build=0.980, criterion_approved-next-phase-and-safety=0.810
 - Jev criterion findings: Criterion timestamped-quote-coherence: met (0.960 confidence) — In live mode, display token price, underlying reference price, and any derived gap only from the same valid timestamped quote for the selected representation; missing or invalid quotes must not fall back to untimestamped directory prices.; Criterion identity-bound-refresh: met (0.970 confidence) — Bind quote/chart data and loading state to the selected chain, platform, contract, mode, and chart interval; only retain a failed refresh as stale when it belongs to the same active identity.; Criterion candle-time-provenance: met (0.830 confidence) — Show last-bar time separately from provider-response time in UTC, and never substitute client request time when the provider response time is absent.; Criterion market-state-coverage: met (0.890 confidence) — Distinguish open/regular, closed/paused/halted, offhours/preopen/afterhours, and unknown market states without turning off-hours into unknown.; Criterion integration-and-build: met (0.980 confidence) — The selected asset detail changes typecheck and compile in both the SDK/API workspace and Next.js app, and its deterministic regressions pass.; Criterion approved-next-phase-and-safety: met (0.810 confidence) — Continue only to the user-approved Phase 11 after Phase 10 evidence passes, preserving read-only research and all wallet, trade, signing, broadcast, deployment, and publication boundaries.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T20:34:17.977Z
 - Phase: `asset-detail-market-context`
@@ -1795,7 +1795,7 @@ The fresh Phase 6 gate ran all 12 local checks successfully, including build, th
 - Jev confidence by review item: status=0.960, nextAction=0.990, riskLevel=1.000, criterion_timestamped-quote-coherence=0.980, criterion_identity-bound-refresh=0.920, criterion_bar-and-provider-time-separation=0.990, criterion_market-state-coverage=0.900, criterion_integration-and-build=0.970, criterion_approved-next-transition=0.920, criterion_side-effect-safety=0.950
 - Jev criterion findings: Criterion timestamped-quote-coherence: met (0.980 confidence) — Live representation price, underlying reference price and derived gap must come only from one valid timestamped quote snapshot; absent or invalid quotes never fall back to untimestamped catalog prices.; Criterion identity-bound-refresh: met (0.920 confidence) — Bind displayed quote and chart data/status to the selected chain, issuer platform, contract, mode and chart interval. A failed poll may retain data only for the exact same identity and must label it stale.; Criterion bar-and-provider-time-separation: met (0.990 confidence) — Treat candle asOf as the final bar time; display it in UTC separately from provider response time. When the provider did not supply a response timestamp, display it as not supplied and do not substitute client time.; Criterion market-state-coverage: met (0.900 confidence) — Map open/regular, closed/paused/halted, offhours/preopen/afterhours, and unknown into distinct accurate UI groups.; Criterion integration-and-build: met (0.970 confidence) — The selected-asset detail context typechecks, builds and passes deterministic integration regressions in both root and Next.js workspaces.; Criterion approved-next-transition: met (0.920 confidence) — After this Phase 10 Jev gate advances, proceed only to Phase 11 because it is explicitly the user-approved next low-risk phase in the existing roadmap.; Criterion side-effect-safety: met (0.950 confidence) — Keep this phase read-only and never infer authorization for trading, wallet/signature use, broadcast, deployment or publication from Jev approval.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ## Phase 11 implementation evidence — SDK/MCP core journey (final Jev approval; confidence 0.890)
 
@@ -1827,7 +1827,7 @@ Open limits: this integration test directly invokes the MCP research tool with n
 - Jev confidence by review item: status=0.980, nextAction=0.990, riskLevel=1.000, criterion_standalone-sdk-consumer=0.980, criterion_sdk-mcp-identity-and-provenance=0.960, criterion_natural-language-ambiguity-and-data-quality=0.960, criterion_read-only-research-boundary=0.980, criterion_approved-phase-closure-and-safety=0.860, deferredScope=1.000
 - Jev criterion findings: Criterion standalone-sdk-consumer: met (0.980 confidence) — An independent developer can install and use the built SDK without Ariadne website or MCP runtime dependencies, with public exports and declarations intact.; Criterion sdk-mcp-identity-and-provenance: met (0.960 confidence) — Standalone SDK and natural-language MCP return the same exact representation identities and disclose the verified provider endpoints and distinct per-asset update timestamps.; Criterion natural-language-ambiguity-and-data-quality: met (0.960 confidence) — Chinese and English requests resolve safely; multiple underlying assets are never silently reduced to a partial upstream hit, and unknown market evidence is represented as incomplete.; Criterion read-only-research-boundary: met (0.980 confidence) — Research-only MCP requests expose warnings and do not create wallet, quote, signing, transaction or broadcast side effects.; Criterion approved-phase-closure-and-safety: met (0.860 confidence) — Advance only after every linked check passes; preserve user-approved scope and do not infer authorization for publishing, deployment, wallet use, signing, trading or broadcast.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T21:00:18.491Z
 - Phase: `sdk-mcp-core-journey`
@@ -1845,7 +1845,7 @@ Open limits: this integration test directly invokes the MCP research tool with n
   - read-only-research-boundary (test:mcp-natural-language, test:mcp-enrichment, test:core-hardening): Research-only MCP requests expose warnings and do not create wallet, quote, signing, transaction or broadcast side effects. Evidence: Live research/discovery returns sideEffects none and deterministic MCP/core-hardening regressions preserve no-transaction behavior and fail-closed data boundaries.
   - approved-phase-closure-and-safety (test:core-product-phase-plan, test:jev-shadow, test:core-hardening): Advance only after every linked check passes; preserve user-approved scope and do not infer authorization for publishing, deployment, wallet use, signing, trading or broadcast. Evidence: Phase-plan, Jev and core safety regressions enforce acceptance-evidence linkage, confidence floor, approved phase sequence and excluded high-risk actions. Documentation explicitly states the MCP integration test invokes the research tool and does not prove universal Agent auto-selection.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T21:02:24.311Z
 - Phase: `sdk-mcp-core-journey`
@@ -1865,7 +1865,7 @@ Open limits: this integration test directly invokes the MCP research tool with n
 - Jev confidence by review item: status=0.960, nextAction=0.990, riskLevel=1.000, criterion_standalone-sdk-consumer=0.980, criterion_sdk-mcp-identity-and-provenance=0.940, criterion_natural-language-ambiguity-and-data-quality=0.860, criterion_read-only-research-boundary=0.870, criterion_approved-phase-closure-and-safety=0.940
 - Jev criterion findings: Criterion standalone-sdk-consumer: met (0.980 confidence) — An independent developer can install and use the built SDK without Ariadne website or MCP runtime dependencies, with public exports and declarations intact.; Criterion sdk-mcp-identity-and-provenance: met (0.940 confidence) — Standalone SDK and natural-language MCP return the same exact representation identities; market values are valid positive prices and rendered source evidence maps fields to provider endpoints and distinct timestamps.; Criterion natural-language-ambiguity-and-data-quality: met (0.860 confidence) — Chinese and English requests resolve safely; multiple underlying assets are never silently reduced to a partial upstream hit, and invalid or unknown market evidence remains visibly incomplete.; Criterion read-only-research-boundary: met (0.870 confidence) — Research-only MCP requests expose warnings and do not create wallet, quote, signing, transaction or broadcast side effects.; Criterion approved-phase-closure-and-safety: met (0.940 confidence) — Advance only after every linked check passes; preserve user-approved scope and do not infer authorization for publishing, deployment, wallet use, signing, trading or broadcast.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T21:03:26.670Z
 - Phase: `sdk-mcp-core-journey`
@@ -1885,7 +1885,7 @@ Open limits: this integration test directly invokes the MCP research tool with n
 - Jev confidence by review item: status=0.950, nextAction=0.980, riskLevel=1.000, criterion_standalone-sdk-consumer=0.990, criterion_sdk-mcp-identity-and-provenance=0.970, criterion_natural-language-ambiguity-and-data-quality=0.890, criterion_read-only-research-boundary=0.960, criterion_approved-phase-closure-and-safety=0.930
 - Jev criterion findings: Criterion standalone-sdk-consumer: met (0.990 confidence) — An independent developer can install and use the built SDK without Ariadne website or MCP runtime dependencies, with public exports and declarations intact.; Criterion sdk-mcp-identity-and-provenance: met (0.970 confidence) — Standalone SDK and natural-language MCP return the same exact representation identities; market values are valid positive prices and rendered source evidence maps fields to provider endpoints and distinct timestamps.; Criterion natural-language-ambiguity-and-data-quality: met (0.890 confidence) — Chinese and English requests resolve safely; multiple underlying assets are never silently reduced to a partial upstream hit, and invalid or unknown market evidence remains visibly incomplete.; Criterion read-only-research-boundary: met (0.960 confidence) — Research-only MCP requests expose warnings and do not create wallet, quote, signing, transaction or broadcast side effects.; Criterion approved-phase-closure-and-safety: met (0.930 confidence) — Advance only after every linked check passes; preserve user-approved scope and do not infer authorization for publishing, deployment, wallet use, signing, trading or broadcast.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T22:59:24.541Z
 - Phase: `mcp-native-research-view`
@@ -1902,7 +1902,7 @@ Open limits: this integration test directly invokes the MCP research tool with n
   - safe-view (test:mcp-app-ui): The research UI escapes untrusted values, rejects unsafe links and adds no wallet, signing, order or broadcast control. Evidence: A hostile payload containing HTML/script/SVG and a javascript URL is rendered; tests verify escaping, unsafe-link omission, read-only labels and absent transaction controls.
   - regression-build-scope (typecheck, build, test:demo-mode, test:core-product-phase-plan): Existing demo research behavior and approved scope boundaries remain intact, and the implementation typechecks and builds. Evidence: Typecheck and build pass; demo tests retain Chinese NVDA, ambiguity and forged-plan rejection; phase-plan test preserves website and execution exclusions.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T23:00:27.888Z
 - Phase: `mcp-native-research-view`
@@ -1921,7 +1921,7 @@ Open limits: this integration test directly invokes the MCP research tool with n
 - Jev confidence by review item: status=0.990, nextAction=0.990, riskLevel=1.000, criterion_app-resource=0.950, criterion_data-parity=0.740, criterion_safe-view=0.990, criterion_regression-build-scope=0.990, deferredScope=1.000
 - Jev criterion findings: Criterion app-resource: met (0.950 confidence) — The three research tools reference one valid MCP Apps resource and return identical text and structured data.; Criterion data-parity: met (0.740 confidence) — A Chinese NVDA request preserves exact representation identities and displays only supplied market values, timestamps, sources and warnings.; Criterion safe-view: met (0.990 confidence) — The research UI escapes untrusted values, rejects unsafe links and adds no wallet, signing, order or broadcast control.; Criterion regression-build-scope: met (0.990 confidence) — Existing demo research behavior and approved scope boundaries remain intact, and the implementation typechecks and builds.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-29T23:02:12.630Z
 - Phase: `mcp-native-research-view`
@@ -1940,7 +1940,7 @@ Open limits: this integration test directly invokes the MCP research tool with n
 - Jev confidence by review item: status=0.990, nextAction=0.990, riskLevel=1.000, criterion_app-resource=0.980, criterion_data-parity=0.960, criterion_safe-view=0.990, criterion_regression-build-scope=0.980, deferredScope=1.000
 - Jev criterion findings: Criterion app-resource: met (0.980 confidence) — The three research tools reference one valid MCP Apps resource and return identical text and structured data.; Criterion data-parity: met (0.960 confidence) — A Chinese NVDA request preserves identical exact asset identities and market evidence across all three MCP tools; the UI shows the exact supplied prices, timestamps, provenance, missing fields and warnings without claiming an SLA.; Criterion safe-view: met (0.990 confidence) — The research UI escapes untrusted values, rejects unsafe links and adds no wallet, signing, order or broadcast control.; Criterion regression-build-scope: met (0.980 confidence) — Existing demo research behavior and approved scope boundaries remain intact, and the implementation typechecks and builds.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T01:38:02.023Z
 - Phase: `mcp-agent-host-rendering-parity`
@@ -1958,7 +1958,7 @@ Open limits: this integration test directly invokes the MCP research tool with n
 - Jev confidence by review item: status=0.890, nextAction=0.980, riskLevel=1.000, criterion_host-rendering=0.530, criterion_live-data-parity=0.860, criterion_local-regression-and-scope=0.560
 - Jev criterion findings: Criterion host-rendering: met (0.530 confidence) — The MCP Apps research view is visible in the Agent conversation and remains read-only without wallet or trading controls.; Criterion live-data-parity: met (0.860 confidence) — Live MCP text and structured results agree on the exact NVDA representations, market evidence, timestamps, provenance, warnings and side-effect boundary.; Criterion local-regression-and-scope: met (0.560 confidence) — The UI integration, existing demo safety behavior, build and phase scope regressions pass without website, wallet or execution changes.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T01:48:22.248Z
 - Phase: `mcp-agent-host-rendering-parity`
@@ -1976,7 +1976,7 @@ Open limits: this integration test directly invokes the MCP research tool with n
 - Jev confidence by review item: status=0.810, nextAction=0.970, riskLevel=1.000, criterion_host-rendering=0.850, criterion_live-data-parity=0.880, criterion_local-regression-and-scope=0.940
 - Jev criterion findings: Criterion host-rendering: met (0.850 confidence) — The user confirms the research card is visible in this Agent conversation, and the actual bundled MCP Apps client completes the protocol handshake and renders the host-delivered research result without wallet or trading controls.; Criterion live-data-parity: met (0.880 confidence) — Live MCP text and structured results agree on exact NVDA representations, market evidence, timestamps, provenance, warnings and no-side-effect behavior.; Criterion local-regression-and-scope: met (0.940 confidence) — The bundled UI protocol flow, existing Demo safety behavior, build and phase-scope checks pass without website, wallet or execution-surface changes.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T01:53:02.766Z
 - Phase: `mcp-agent-host-rendering-parity`
@@ -1995,7 +1995,7 @@ Open limits: this integration test directly invokes the MCP research tool with n
 - Jev confidence by review item: status=0.530, nextAction=0.820, riskLevel=1.000, criterion_host-rendering=0.730, criterion_live-data-parity=0.710, criterion_local-regression-and-scope=0.900, criterion_phase-status-transition=0.520
 - Jev criterion findings: Criterion host-rendering: met (0.730 confidence) — The user confirms the research card is visible in this Agent conversation, and the actual bundled MCP Apps client completes the handshake and renders host-delivered research without wallet or trading controls.; Criterion live-data-parity: met (0.710 confidence) — Live MCP text and structured results agree on exact NVDA representations, market evidence, timestamps, provenance, warnings and no-side-effect behavior.; Criterion local-regression-and-scope: met (0.900 confidence) — The App runtime, Demo safety, build and approved Phase 12-13 scope checks pass without website, wallet or execution changes.; Criterion phase-status-transition: met (0.520 confidence) — The phase ledger advances from mcp-agent-host-rendering-parity to delivery-complete only after all checks pass, all criteria are met at confidence at least 0.85 and Jev returns low-risk continue at at least 0.85; a failed check or paused review keeps Phase 13 active.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T06:15:09.682Z
 - Phase: `mcp-agent-host-rendering-parity`
@@ -2013,7 +2013,7 @@ Open limits: this integration test directly invokes the MCP research tool with n
 - Jev confidence by review item: status=0.640, nextAction=0.730, riskLevel=0.990, criterion_host-rendering=0.840, criterion_live-data-parity=0.180, criterion_local-regression-and-scope=0.930
 - Jev criterion findings: Criterion host-rendering: met (0.840 confidence) — The user confirms the research card is visible in this Agent conversation, and the bundled MCP Apps client renders the host-delivered research result without wallet or trading controls.; Criterion live-data-parity: gap (0.180 confidence) — Live MCP text and structured results agree on exact NVDA representations, market evidence, timestamps, provenance, warnings and no-side-effect behavior.; Criterion local-regression-and-scope: met (0.930 confidence) — All selected Phase 13 local checks pass, including App runtime, Demo safety, exact phase-plan scope, terminal-state transition and failed-check hold behavior; no website, wallet or execution surface is changed.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T06:23:18.913Z
 - Phase: `mcp-agent-host-rendering-parity`
@@ -2031,7 +2031,7 @@ Open limits: this integration test directly invokes the MCP research tool with n
 - Jev confidence by review item: status=0.920, nextAction=0.970, riskLevel=1.000, criterion_host-rendering=0.830, criterion_live-data-parity=0.900, criterion_local-regression-and-scope=0.650, deferredScope=1.000
 - Jev criterion findings: Criterion host-rendering: met (0.830 confidence) — The user confirms the research card is visible, and the bundled MCP App renders host-delivered structured and text-only results.; Criterion live-data-parity: met (0.900 confidence) — Live SDK and MCP research/discovery preserve exact NVDA identities, text and structured parity, timestamped provenance and no-side-effect behavior.; Criterion local-regression-and-scope: met (0.650 confidence) — Selected local, runtime and phase-ledger checks pass without changing website, wallet or execution scope.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T06:29:16.994Z
 - Phase: `mcp-agent-host-rendering-parity`
@@ -2049,7 +2049,7 @@ Open limits: this integration test directly invokes the MCP research tool with n
 - Jev confidence by review item: status=0.930, nextAction=0.980, riskLevel=1.000, criterion_host-rendering=0.960, criterion_live-data-parity=0.850, criterion_local-regression=0.900, deferredScope=1.000
 - Jev criterion findings: Criterion host-rendering: met (0.960 confidence) — The user confirms the card is visible; live MCP tools link its native UI resource and the app bundle renders structured and text host results.; Criterion live-data-parity: met (0.850 confidence) — Live SDK and MCP research/discovery preserve exact NVDA identities, text and structured parity, timestamped provenance and no-side-effect behavior.; Criterion local-regression: met (0.900 confidence) — Selected compile/build, no-trade safety, phase-plan and phase-gate state regression checks pass.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T07:02:47.902Z
 - Phase: `mcp-research-observability`
@@ -2067,7 +2067,7 @@ Open limits: this integration test directly invokes the MCP research tool with n
 - Jev confidence by review item: status=0.980, nextAction=0.980, riskLevel=1.000, criterion_research-timing=0.580, criterion_safe-failure-diagnosis=0.980, criterion_scope-and-regression=0.910
 - Jev criterion findings: Criterion research-timing: met (0.580 confidence) — Research results report finite stage timings and bounded service-method invocation counts, distinguishing direct search, catalog resolution, resolved search, market context, comparison, and presentation without changing no-trade behavior.; Criterion safe-failure-diagnosis: met (0.980 confidence) — Market-context failures remain fail-closed with asset identity preserved, are classified into sanitized network/provider/data-integrity/unexpected categories, and never expose raw exception text.; Criterion scope-and-regression: met (0.910 confidence) — Core type/build, demo behavior, app-view safety, approved phase plan and gate transition regressions pass without website, wallet, signature, broadcast, release, or deployment work.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T07:10:14.224Z
 - Phase: `mcp-research-observability`
@@ -2085,7 +2085,7 @@ Open limits: this integration test directly invokes the MCP research tool with n
 - Jev confidence by review item: status=0.950, nextAction=0.990, riskLevel=1.000, criterion_research-timing=0.980, criterion_safe-failure-diagnosis=0.980, criterion_scope-and-regression=0.820
 - Jev criterion findings: Criterion research-timing: met (0.980 confidence) — For direct ticker and natural-language MCP research, expose finite nonnegative resolver and handler timings whose resolver substages fit inside searchMs and whose sequential measured stages fit inside totalMs; report exact service-method call counts and one market-context batch while preserving read-only behavior.; Criterion safe-failure-diagnosis: met (0.980 confidence) — Market-context failures preserve asset identity, omit unverified market values, use sanitized network/provider/integrity/unexpected categories, and never expose raw exception text in structured or rendered output.; Criterion scope-and-regression: met (0.820 confidence) — The Phase 14 implementation and phase ledger compile, build, retain no-trade behavior and correctly hold or advance only within the approved MCP observability phase; no website or execution surface is altered.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T07:12:40.869Z
 - Phase: `mcp-research-observability`
@@ -2103,7 +2103,7 @@ Open limits: this integration test directly invokes the MCP research tool with n
 - Jev confidence by review item: status=0.960, nextAction=0.890, riskLevel=1.000, criterion_research-timing=0.980, criterion_safe-failure-diagnosis=0.980, criterion_scope-and-regression=0.890
 - Jev criterion findings: Criterion research-timing: met (0.980 confidence) — For direct ticker and natural-language MCP research, expose finite nonnegative resolver and handler timings whose resolver substages fit inside searchMs and whose sequential measured stages fit inside totalMs; report exact service-method call counts and one market-context batch while preserving read-only behavior.; Criterion safe-failure-diagnosis: met (0.980 confidence) — Market-context failures preserve asset identity, omit unverified market values, use sanitized network/provider/integrity/unexpected categories, and never expose raw exception text in structured or rendered output.; Criterion scope-and-regression: met (0.890 confidence) — Phase 14 remains the active held phase until an approved gate advances it; selected core checks pass, no-trade MCP research stays read-only, and the state-machine regression holds on pause and advances only after approval.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T19:21:45.238Z
 - Phase: `mcp-post-simulation-user-confirmation`
@@ -2119,7 +2119,7 @@ Open limits: this integration test directly invokes the MCP research tool with n
   - sdk-approval-responsibility (typecheck, test:guarded-sdk-executor, test:execution-dry-run): SDK confirmation no longer treats planId as a token; standalone SDK applications must collect user approval in their own UI before confirm(plan). Evidence: The SDK executor and offline synthetic rehearsal compile and run using confirm(plan) without a planId credential; SDK usage documentation assigns user approval to the integrating application.
   - no-signing-or-broadcast (test:mcp-human-confirmation, test:guarded-sdk-executor, test:execution-dry-run): The new MCP approval prompt and state transition do not sign or broadcast, and the existing downstream transaction guards continue to pass. Evidence: The MCP host protocol test records zero broadcast requests and no real wallet; the offline regression retains explicit separate signing checks and records zero broadcasts.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T19:22:26.951Z
 - Phase: `mcp-post-simulation-user-confirmation`
@@ -2137,7 +2137,7 @@ Open limits: this integration test directly invokes the MCP research tool with n
 - Jev confidence by review item: status=0.860, nextAction=0.940, riskLevel=0.400, criterion_mcp-host-approval=0.960, criterion_sdk-approval-responsibility=0.830, criterion_no-signing-or-broadcast=0.940
 - Jev criterion findings: Criterion mcp-host-approval: met (0.960 confidence) — Only an accepted MCP form-elicitation response with decision=approve advances an unchanged, registered simulated plan; decline, cancel, unsupported host, malformed reply, or changed plan does not advance it.; Criterion sdk-approval-responsibility: met (0.830 confidence) — SDK confirmation no longer treats planId as a token; standalone SDK applications must collect user approval in their own UI before confirm(plan).; Criterion no-signing-or-broadcast: met (0.940 confidence) — The new MCP approval prompt and state transition do not sign or broadcast, and the existing downstream transaction guards continue to pass.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T19:27:43.837Z
 - Phase: `mcp-post-simulation-user-confirmation`
@@ -2155,7 +2155,7 @@ Open limits: this integration test directly invokes the MCP research tool with n
 - Jev confidence by review item: status=0.980, nextAction=0.980, riskLevel=0.990, criterion_mcp-host-approval=0.790, criterion_sdk-approval-responsibility=0.960, criterion_separate-signing-boundary=0.960
 - Jev criterion findings: Criterion mcp-host-approval: met (0.790 confidence) — Only an accepted MCP form-elicitation response with decision=approve advances an unchanged, registered simulated plan; decline, cancel, unsupported host, malformed reply, or changed plan does not advance it.; Criterion sdk-approval-responsibility: met (0.960 confidence) — SDK confirmation has no planId-as-token API; the integrating application is explicitly responsible for collecting user approval before confirm(plan), and docs state the host/caller limitation.; Criterion separate-signing-boundary: met (0.960 confidence) — This change requests no external signature or broadcast; all post-confirmation signing and transaction guards remain separate and regression-tested.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T19:29:38.353Z
 - Phase: `mcp-post-simulation-user-confirmation`
@@ -2173,7 +2173,7 @@ Open limits: this integration test directly invokes the MCP research tool with n
 - Jev confidence by review item: status=0.970, nextAction=0.980, riskLevel=0.990, criterion_mcp-host-approval=0.950, criterion_sdk-approval-responsibility=0.970, criterion_separate-signing-boundary=0.980
 - Jev criterion findings: Criterion mcp-host-approval: met (0.950 confidence) — The MCP tool ignores an Agent-echoed planId and still requests host elicitation. Only accepted decision=approve advances the exact registered simulated plan; decline, cancel, malformed/unavailable host, or altered plan does not. This verifies the trusted-host response boundary, not proof of a human click.; Criterion sdk-approval-responsibility: met (0.970 confidence) — SDK confirmation has no planId-as-token API; the integrating application must collect user approval before confirm(plan), and docs state the host/caller limitation.; Criterion separate-signing-boundary: met (0.980 confidence) — This change requests no external signature or broadcast; post-confirmation signing and transaction guards remain separate and regression-tested.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ## 2026-10-01 — Phase 16 core-product quality audit (complete; Jev 0.910)
 
@@ -2211,7 +2211,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
   - mcp-native-ui-and-confirmation (test:mcp-app-ui, test:mcp-human-confirmation, test:core-product-phase-plan): The audit accurately distinguishes the user-confirmed read-only research card from the locally tested but actual-host-unverified Phase 15 confirmation elicitation. Evidence: The MCP Apps bundle renders structured/text results and interactions; an in-memory host exercises production confirmation registration and fail-closed decisions; report assertions preserve the connected tool's older schema as a host-validation limitation.
   - safe-transaction-boundary (test:mcp-human-confirmation, test:execution-dry-run, build): The revised confirmation and quality audit do not sign or broadcast, and synthetic execution regressions retain their safety checks. Evidence: The protocol test and offline execution rehearsal report zero broadcast requests and no real wallet; the build succeeds. These checks do not claim funded settlement.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T20:15:45.556Z
 - Phase: `core-product-quality-audit`
@@ -2229,7 +2229,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.970, nextAction=0.610, riskLevel=0.620, criterion_comparison-language=0.880, criterion_mcp-native-ui-and-confirmation=0.550, criterion_safe-transaction-boundary=0.790, deferredScope=0.640
 - Jev criterion findings: Criterion comparison-language: met (0.880 confidence) — MCP comparison output distinguishes filter matching from execution eligibility, makes the empty-filter case explicit, and identifies its rank as price-gap based.; Criterion mcp-native-ui-and-confirmation: insufficient_evidence (0.550 confidence) — The audit accurately distinguishes the user-confirmed read-only research card from the locally tested but actual-host-unverified Phase 15 confirmation elicitation.; Criterion safe-transaction-boundary: met (0.790 confidence) — The revised confirmation and quality audit do not sign or broadcast, and synthetic execution regressions retain their safety checks.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T20:18:00.442Z
 - Phase: `core-product-quality-audit`
@@ -2249,7 +2249,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.990, nextAction=0.620, riskLevel=0.780, criterion_comparison-language=0.980, criterion_research-ui-contract=0.950, criterion_confirmation-protocol=0.980, criterion_host-version-disclosure=0.960, criterion_safe-transaction-boundary=0.990, deferredScope=0.950
 - Jev criterion findings: Criterion comparison-language: met (0.980 confidence) — MCP comparison output distinguishes filter matching from execution eligibility, makes the empty-filter case explicit, and identifies its rank as price-gap based.; Criterion research-ui-contract: met (0.950 confidence) — The local MCP Apps research view renders the bundled result with structured and text-only delivery and preserves the research-only boundary.; Criterion confirmation-protocol: met (0.980 confidence) — The local production MCP confirmation handler requires an accepted explicit approve response for an unchanged simulated plan; every non-approval path remains simulated and does not sign or broadcast.; Criterion host-version-disclosure: met (0.960 confidence) — The audit records that the connected MCP tool still exposes the old confirmationToken contract while local source exposes only plan, and explicitly does not claim actual-host rendering of the new elicitation.; Criterion safe-transaction-boundary: met (0.990 confidence) — The audit does not cross into real wallet signing, broadcast, or funded settlement.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T20:19:19.699Z
 - Phase: `core-product-quality-audit`
@@ -2269,7 +2269,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.990, nextAction=0.270, riskLevel=0.870, criterion_comparison-language=0.990, criterion_research-ui-contract=0.930, criterion_confirmation-protocol=0.990, criterion_host-version-disclosure=0.980, criterion_safe-transaction-boundary=1.000, deferredScope=0.970
 - Jev criterion findings: Criterion comparison-language: met (0.990 confidence) — MCP comparison output distinguishes filter matching from execution eligibility, makes the empty-filter case explicit, and identifies its rank as price-gap based.; Criterion research-ui-contract: met (0.930 confidence) — The local MCP Apps research view renders the bundled result with structured and text-only delivery and preserves the research-only boundary.; Criterion confirmation-protocol: met (0.990 confidence) — The local production MCP confirmation handler requires an accepted explicit approve response for an unchanged simulated plan; every non-approval path remains simulated and does not sign or broadcast.; Criterion host-version-disclosure: met (0.980 confidence) — The audit records that the connected MCP tool still exposes the old confirmationToken contract while local source exposes only plan, and explicitly does not claim actual-host rendering of the new elicitation.; Criterion safe-transaction-boundary: met (1.000 confidence) — The audit does not cross into real wallet signing, broadcast, or funded settlement.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T20:22:10.979Z
 - Phase: `core-product-quality-audit`
@@ -2289,7 +2289,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.990, nextAction=0.980, riskLevel=0.910, criterion_comparison-language=0.990, criterion_research-ui-contract=0.940, criterion_confirmation-protocol=0.990, criterion_host-version-disclosure=0.990, criterion_safe-transaction-boundary=1.000, deferredScope=0.990
 - Jev criterion findings: Criterion comparison-language: met (0.990 confidence) — MCP comparison output distinguishes filter matching from execution eligibility, makes the empty-filter case explicit, and identifies its rank as price-gap based.; Criterion research-ui-contract: met (0.940 confidence) — The local MCP Apps research view renders the bundled result with structured and text-only delivery and preserves the research-only boundary.; Criterion confirmation-protocol: met (0.990 confidence) — The local production MCP confirmation handler requires an accepted explicit approve response for an unchanged simulated plan; every non-approval path remains simulated and does not sign or broadcast.; Criterion host-version-disclosure: met (0.990 confidence) — The audit records that the connected MCP tool still exposes the old confirmationToken contract while local source exposes only plan, and explicitly does not claim actual-host rendering of the new elicitation.; Criterion safe-transaction-boundary: met (1.000 confidence) — The audit does not cross into real wallet signing, broadcast, or funded settlement.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T21:03:23.397Z
 - Phase: `mcp-agent-native-research-ui`
@@ -2305,7 +2305,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
   - research-data-fidelity (test:mcp-app-ui, test:presentation): The redesigned view preserves exact returned asset identities, prices, timestamps, warnings, provenance, missing-field notes, links and text/structured compatibility without fabricating live-data claims. Evidence: UI assertions compare discovery/comparison/research identities and market values, render supplied per-asset timestamps and endpoint-field provenance, preserve caveats and missing fields, escape hostile strings, and keep presentation wording regressions passing.
   - safety-and-regression (test:demo-mode, typecheck, build, test:core-product-phase-plan): The Agent-native UI remains read-only and introduces no wallet, signature, trade or website behavior; relevant core regression and compile checks pass. Evidence: Demo regressions preserve ambiguity/action blocks and the forged-plan guard; typecheck/build and phase-ledger regression pass. The UI harness asserts no wallet/sign/trade affordances; Phase 17 scope excludes website and transaction behavior.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T21:04:11.589Z
 - Phase: `mcp-agent-native-research-ui`
@@ -2323,7 +2323,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.920, nextAction=0.850, riskLevel=0.310, criterion_inline-host-native-ui=0.940, criterion_research-data-fidelity=0.960, criterion_safety-and-regression=0.510
 - Jev criterion findings: Criterion inline-host-native-ui: met (0.940 confidence) — The default MCP result is compact and inline, avoids a dashboard shell, adapts to supplied host theme/style/font and safe-area context with fallbacks, and keeps accessible responsive disclosures.; Criterion research-data-fidelity: met (0.960 confidence) — The redesigned view preserves exact returned asset identities, prices, timestamps, warnings, provenance, missing-field notes, links and text/structured compatibility without fabricating live-data claims.; Criterion safety-and-regression: gap (0.510 confidence) — The Agent-native UI remains read-only and introduces no wallet, signature, trade or website behavior; relevant core regression and compile checks pass.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T21:05:42.357Z
 - Phase: `mcp-agent-native-research-ui`
@@ -2341,7 +2341,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.770, nextAction=0.870, riskLevel=0.990, criterion_inline-host-native-ui=0.960, criterion_research-data-fidelity=0.980, criterion_read-only-ui-safety=0.970
 - Jev criterion findings: Criterion inline-host-native-ui: met (0.960 confidence) — The default MCP result is compact and inline, avoids a dashboard shell, adapts to supplied host theme/style/font and safe-area context with fallbacks, and keeps accessible responsive disclosures.; Criterion research-data-fidelity: met (0.980 confidence) — The redesigned view preserves exact returned asset identities, prices, timestamps, warnings, provenance, missing-field notes, links and text/structured compatibility without fabricating live-data claims.; Criterion read-only-ui-safety: met (0.970 confidence) — The rendered research result identifies itself as research-only and contains no wallet, signing or trade controls; Demo negative-action/forged-plan regressions and relevant compile/phase-ledger checks pass.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T21:09:30.054Z
 - Phase: `mcp-agent-native-research-ui`
@@ -2359,7 +2359,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.980, nextAction=0.250, riskLevel=0.890, criterion_inline-host-native-ui=0.950, criterion_research-data-fidelity=0.980, criterion_read-only-ui-safety=0.970, deferredScope=0.880
 - Jev criterion findings: Criterion inline-host-native-ui: met (0.950 confidence) — The default MCP result is compact and inline, avoids a dashboard shell, adapts to supplied host theme/style/font and safe-area context with fallbacks, and keeps accessible responsive disclosures.; Criterion research-data-fidelity: met (0.980 confidence) — The redesigned view preserves exact returned asset identities, prices, timestamps, warnings, provenance, missing-field notes, links and text/structured compatibility without fabricating live-data claims.; Criterion read-only-ui-safety: met (0.970 confidence) — The rendered research result identifies itself as research-only and contains no wallet, signing or trade controls; Demo negative-action/forged-plan regressions and relevant compile, phase-ledger and gate-state checks pass.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T21:14:14.972Z
 - Phase: `mcp-agent-native-research-ui`
@@ -2375,7 +2375,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
   - research-data-fidelity (test:mcp-app-ui, test:presentation): The view preserves exact returned research values, identity, timestamps, sources, warnings and missing data without unsafe links or unescaped content. Evidence: The UI harness compares discovery/comparison/research values, provenance, caveats and text/structured parity; it rejects hostile markup and unsafe links. Presentation regressions pass.
   - safe-local-delivery (test:mcp-app-ui, test:demo-mode, typecheck, build, test:core-product-phase-plan, test:jev-shadow): Local implementation remains research-only, preserves product regressions and does not add website, wallet, signing or trading behavior. Evidence: The UI harness asserts no trade controls; Demo rejects unsafe actions; typecheck/build and phase-ledger plus pass/hold gate-state regressions pass.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T21:14:50.023Z
 - Phase: `mcp-agent-native-research-ui`
@@ -2393,7 +2393,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.800, nextAction=0.340, riskLevel=0.390, criterion_inline-host-native-ui=0.870, criterion_research-data-fidelity=0.940, criterion_safe-local-delivery=0.940
 - Jev criterion findings: Criterion inline-host-native-ui: met (0.870 confidence) — The local default result is compact and inline, adapts to host theme/style/font/safe-area context, and uses accessible responsive disclosures.; Criterion research-data-fidelity: met (0.940 confidence) — The view preserves exact returned research values, identity, timestamps, sources, warnings and missing data without unsafe links or unescaped content.; Criterion safe-local-delivery: met (0.940 confidence) — Local implementation remains research-only, preserves product regressions and does not add website, wallet, signing or trading behavior.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T21:45:40.245Z
 - Phase: `mcp-agent-native-research-ui`
@@ -2411,7 +2411,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.980, nextAction=1.000, riskLevel=1.000, criterion_inline-host-native-ui=0.990, criterion_research-data-fidelity=0.990, criterion_safe-local-delivery=0.940
 - Jev criterion findings: Criterion inline-host-native-ui: met (0.990 confidence) — The local and refreshed connected MCP UI resource use a compact Agent-native hierarchy, adapt to supplied host style/theme/safe-area context, and keep evidence progressively disclosed.; Criterion research-data-fidelity: met (0.990 confidence) — The view and connected read-only research call preserve exact issuer identities, source timestamps, warnings and missing fields without unsafe links or unescaped content.; Criterion safe-local-delivery: met (0.940 confidence) — The phase remains research-only and preserves safety/regression boundaries without changing website, wallet, signing, trading or transaction behavior.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T22:31:01.134Z
 - Phase: `mcp-confirmation-host-interop`
@@ -2426,7 +2426,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
   - isolated-stdio-fixture (test:mcp-confirmation-host-fixture, test:mcp-human-confirmation): A separate stdio MCP server invokes the production confirmation handler for a synthetic plan, and decline leaves it simulated without wallet, network, signing, or broadcast capabilities. Evidence: The fixture test starts a separate local process over MCP stdio, receives the production form-elicitation request, explicitly declines, checks simulated status, and confirms the test server exposes no signing/broadcast tools and makes zero network requests. The in-memory regression separately covers malformed, cancel, unavailable, changed-plan, and explicit accepted-choice handling; its acceptance branch is synthetic and not a human click.
   - actual-codex-host-form (test:mcp-confirmation-host-fixture): The current connected Codex host visibly presents the exact synthetic confirmation form and a decline/cancel response leaves the exact plan simulated. Evidence: Not established by the linked check: it uses a local MCP stdio test client and test server and never calls or observes the connected Codex host. Verifying this criterion requires temporarily adding the isolated synthetic server to local MCP host configuration and reconnecting.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T22:31:50.738Z
 - Phase: `mcp-confirmation-host-interop`
@@ -2443,7 +2443,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.820, nextAction=0.370, riskLevel=0.260, criterion_isolated-stdio-fixture=0.990, criterion_actual-codex-host-form=0.600
 - Jev criterion findings: Criterion isolated-stdio-fixture: met (0.990 confidence) — A separate stdio MCP server invokes the production confirmation handler for a synthetic plan, and decline leaves it simulated without wallet, network, signing, or broadcast capabilities.; Criterion actual-codex-host-form: insufficient_evidence (0.600 confidence) — The current connected Codex host visibly presents the exact synthetic confirmation form and a decline/cancel response leaves the exact plan simulated.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-09-30T22:33:52.166Z
 - Phase: `mcp-confirmation-host-interop`
@@ -2460,7 +2460,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.800, nextAction=0.480, riskLevel=0.540, criterion_isolated-stdio-fixture=0.990, criterion_actual-codex-host-form=0.610
 - Jev criterion findings: Criterion isolated-stdio-fixture: met (0.990 confidence) — A separate stdio MCP server invokes the production confirmation handler for a synthetic plan, and decline leaves it simulated without wallet, network, signing, or broadcast capabilities.; Criterion actual-codex-host-form: insufficient_evidence (0.610 confidence) — The current connected Codex host visibly presents the exact synthetic confirmation form and a decline/cancel response leaves the exact plan simulated.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-01T15:23:36.973Z
 - Phase: `mcp-confirmation-host-interop`
@@ -2475,7 +2475,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
   - isolated-stdio-confirmation (test:mcp-human-confirmation, test:mcp-confirmation-host-fixture): The production confirmation handler presents the exact synthetic plan to an MCP protocol client and decline/cancel leaves it simulated without wallet, network, signing or broadcast capability. Evidence: Both local MCP protocol checks pass; the isolated stdio host explicitly declines TESTB and asserts simulated status, zero network requests and no wallet, signing or broadcast tools.
   - connected-codex-form (test:mcp-confirmation-host-fixture): The current connected Codex host visibly presents the exact synthetic confirmation form and a decline or cancel response leaves the exact plan simulated. Evidence: The latest connected-host tool invocation returned unavailable after the form-capability flag was true; no form was observed and the separate status call confirms the plan remains simulated. The linked regression is only a local stdio harness, not connected-host UI evidence.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-01T16:23:57.937Z
 - Phase: `mcp-confirmation-host-interop`
@@ -2491,7 +2491,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
   - exact-plan-safe-transition (test:mcp-human-confirmation, test:plan-registry): Only an explicit accepted response for the exact active simulated plan advances it; changed, expired, malformed, declined, cancelled and replayed attempts do not. Evidence: Deterministic modern protocol cases validate exact-plan continuation, explicit approval and decline/cancel; registry regressions reject changed, expired, invalid-stage and replayed plans. No signing or broadcast is involved.
   - connected-agent-form (test:mcp-confirmation-host-fixture): The current connected Agent host visibly presents the exact synthetic confirmation form and its decline/cancel response leaves that exact plan simulated. Evidence: Not established: the linked check is a local stdio client, not the connected host. Read-only inspection of the connected fixture returned the original fixed plan ID with an expired timestamp, so I did not submit it. Actual current-host UI and response behavior remain unverified.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-01T16:24:51.921Z
 - Phase: `mcp-confirmation-host-interop`
@@ -2507,7 +2507,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
   - exact-plan-safe-transition (test:mcp-human-confirmation, test:plan-registry): Only an explicit accepted response for the exact active simulated plan advances it; changed, expired, malformed, declined, cancelled and replayed attempts do not. Evidence: Deterministic modern protocol cases validate exact-plan continuation, explicit approval and decline/cancel; registry regressions reject changed, expired, invalid-stage and replayed plans. No signing or broadcast is involved.
   - connected-agent-form (test:mcp-confirmation-host-fixture): The current connected Agent host visibly presents the exact synthetic confirmation form and its decline/cancel response leaves that exact plan simulated. Evidence: Not established: the linked check is a local stdio client, not the connected host. Read-only inspection of the connected fixture returned the original fixed plan ID with an expired timestamp, so I did not submit it. Actual current-host UI and response behavior remain unverified.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-01T16:30:16.470Z
 - Phase: `mcp-confirmation-host-interop`
@@ -2525,7 +2525,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.710, nextAction=0.900, riskLevel=0.470, criterion_modern-and-legacy-protocol=0.900, criterion_exact-plan-safe-transition=0.950, criterion_connected-agent-form=0.530
 - Jev criterion findings: Criterion modern-and-legacy-protocol: met (0.900 confidence) — The confirmation tool works through modern multi-round-trip elicitation and retains legacy-client compatibility without adding execution side effects.; Criterion exact-plan-safe-transition: met (0.950 confidence) — Only an explicit accepted response for the exact active simulated plan advances it; changed, expired, malformed, declined, cancelled and replayed attempts do not.; Criterion connected-agent-form: insufficient_evidence (0.530 confidence) — The current connected Agent host visibly presents the exact synthetic confirmation form and its decline/cancel response leaves that exact plan simulated.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-01T16:55:29.981Z
 - Phase: `mcp-confirmation-host-interop`
@@ -2541,7 +2541,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
   - exact-plan-safe-transition (test:mcp-human-confirmation, test:plan-registry): Only an explicit approval for the exact active simulated plan advances; malformed, changed, forged, expired, declined, cancelled, and replayed continuations fail closed. Evidence: Deterministic production-handler tests now reject malformed choices, forged continuation state, changed plan contents, expired continuation state, replay, decline, and cancel. Exact explicit approval advances once; registry mutation and replay cases also pass.
   - connected-agent-form (test:mcp-human-confirmation, test:mcp-confirmation-host-fixture): The current connected Agent host visibly renders the exact synthetic confirmation form and its decline or cancel leaves the same plan simulated. Evidence: Not yet established: current connected tools still return fixed plan ID synthetic_confirmation_host_fixture with an expired timestamp; status reports not_found_or_expired while the form capability is advertised. No connected form was rendered in this turn. Local stdio tests are protocol evidence only.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-01T16:56:21.038Z
 - Phase: `mcp-confirmation-host-interop`
@@ -2559,7 +2559,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.620, nextAction=0.850, riskLevel=0.340, criterion_modern-and-legacy-protocol=0.950, criterion_exact-plan-safe-transition=0.960, criterion_connected-agent-form=0.310
 - Jev criterion findings: Criterion modern-and-legacy-protocol: met (0.950 confidence) — Modern multi-round-trip and legacy MCP hosts handle explicit confirmation without adding wallet, network, signing, or broadcast side effects.; Criterion exact-plan-safe-transition: met (0.960 confidence) — Only an explicit approval for the exact active simulated plan advances; malformed, changed, forged, expired, declined, cancelled, and replayed continuations fail closed.; Criterion connected-agent-form: gap (0.310 confidence) — The current connected Agent host visibly renders the exact synthetic confirmation form and its decline or cancel leaves the same plan simulated.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-01T17:00:18.518Z
 - Phase: `mcp-confirmation-host-interop`
@@ -2577,7 +2577,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.600, nextAction=0.840, riskLevel=0.380, criterion_modern-and-legacy-protocol=0.940, criterion_exact-plan-safe-transition=0.950, criterion_connected-agent-form=0.390
 - Jev criterion findings: Criterion modern-and-legacy-protocol: met (0.940 confidence) — Modern multi-round-trip and legacy MCP hosts handle explicit confirmation without adding wallet, network, signing, or broadcast side effects.; Criterion exact-plan-safe-transition: met (0.950 confidence) — Only an explicit approval for the exact active simulated plan advances; malformed, changed, forged, expired, declined, cancelled, and replayed continuations fail closed.; Criterion connected-agent-form: gap (0.390 confidence) — The current connected Agent host visibly renders the exact synthetic confirmation form and its decline or cancel leaves the same plan simulated.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-02T11:48:11.627Z
 - Phase: `mcp-confirmation-host-interop`
@@ -2596,7 +2596,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.940, nextAction=0.990, riskLevel=1.000, criterion_modern-and-legacy-protocol=0.920, criterion_exact-plan-safe-transition=0.830, criterion_connected-agent-form=0.970, criterion_local-regression-and-scope=0.870
 - Jev criterion findings: Criterion modern-and-legacy-protocol: met (0.920 confidence) — Modern and legacy MCP clients handle explicit confirmation without wallet, network, signing, or broadcast side effects.; Criterion exact-plan-safe-transition: met (0.830 confidence) — Only an explicit approval for the exact active simulated plan advances; decline, cancellation, malformed, changed, expired, forged, or replayed continuations fail closed.; Criterion connected-agent-form: met (0.970 confidence) — The current connected MCP host handles an elicitation request for the exact fresh synthetic plan and returns a decline while that same plan remains simulated.; Criterion local-regression-and-scope: met (0.870 confidence) — Phase scope, read-only research UI and Demo behavior, local safety regressions, typecheck and build pass without transaction or release side effects.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-02T11:54:31.161Z
 - Phase: `mcp-confirmation-host-interop`
@@ -2615,7 +2615,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.960, nextAction=0.990, riskLevel=1.000, criterion_modern-and-legacy-protocol=0.970, criterion_exact-plan-safe-transition=0.980, criterion_connected-agent-form=0.990, criterion_local-regression-and-scope=0.860
 - Jev criterion findings: Criterion modern-and-legacy-protocol: met (0.970 confidence) — Modern and legacy MCP clients handle explicit confirmation without wallet, network, signing, or broadcast side effects.; Criterion exact-plan-safe-transition: met (0.980 confidence) — The form discloses the registered plan details; only one explicit approval for that exact plan advances it, while altered or repeated submissions cannot change the registered outcome.; Criterion connected-agent-form: met (0.990 confidence) — The current connected MCP host handles an elicitation request for the exact fresh synthetic plan and returns a decline while that same plan remains simulated.; Criterion local-regression-and-scope: met (0.860 confidence) — Phase scope, read-only research UI and Demo behavior, local safety regressions, typecheck and build pass without transaction or release side effects.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-02T12:04:58.386Z
 - Phase: `sdk-cleanroom-revalidation`
@@ -2633,7 +2633,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.960, nextAction=0.990, riskLevel=1.000, criterion_isolated-sdk-consumption=0.990, criterion_package-surface-and-example=0.910, criterion_bounded-isolated-failure=0.930
 - Jev criterion findings: Criterion isolated-sdk-consumption: met (0.990 confidence) — A freshly packed local tarball installs into an isolated consumer and supports documented ESM imports, public declarations, root exports and Node engine requirements.; Criterion package-surface-and-example: met (0.910 confidence) — The local package artifact includes its public runtime, declarations and docs; package metadata, MCP examples and documented SDK usage remain coherent.; Criterion bounded-isolated-failure: met (0.930 confidence) — The consumer test is repeatable and bounded; timeout or known registry/network failure is explicitly inconclusive, and only the owned temporary consumer directory is cleaned.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-02T12:13:49.254Z
 - Phase: `demo-mode-journey-coverage`
@@ -2652,7 +2652,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.950, nextAction=0.990, riskLevel=1.000, criterion_deterministic-demo-journeys=0.990, criterion_synthetic-evidence-parity=0.970, criterion_failure-and-input-boundaries=0.940, criterion_demo-safety-and-build=0.970
 - Jev criterion findings: Criterion deterministic-demo-journeys: met (0.990 confidence) — The credential-free Demo MCP supports deterministic discovery across its seeded tickers, natural-language research, issuer-aware comparisons, platform filtering, and market-detail lookup without guessing between companies.; Criterion synthetic-evidence-parity: met (0.970 confidence) — All Demo evidence is visibly synthetic and deterministic; fixed/stale timestamps, unknown market status and missing liquidity are explicit and preserved consistently in text, structured content and the native research view.; Criterion failure-and-input-boundaries: met (0.940 confidence) — Unsupported, malformed and ambiguous requests do not fabricate or guess; provider/network/integrity errors fail closed with sanitized categories and missing market values are never treated as zero.; Criterion demo-safety-and-build: met (0.970 confidence) — Demo action preparation and forged transaction paths remain blocked; product, UI, type/build, roadmap-state and Jev-gate regressions pass within local scope.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-02T12:51:28.302Z
 - Phase: `provider-data-resilience`
@@ -2671,7 +2671,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.950, nextAction=0.330, riskLevel=0.340, criterion_provider-observation-honesty=0.870, criterion_documented-status-normalization=0.920, criterion_bounded-retry-response-integrity=0.980, criterion_failure-parity-and-approved-scope=0.910, deferredScope=0.810
 - Jev criterion findings: Criterion provider-observation-honesty: met (0.870 confidence) — Treat returned inventory, status, timestamps and filter equality as bounded observations; do not claim catalog completeness or a freshness SLA from missing provider evidence.; Criterion documented-status-normalization: met (0.920 confidence) — Normalize the documented Binance market-status enum safely and retain unknown values as unknown.; Criterion bounded-retry-response-integrity: met (0.980 confidence) — Bound retry attempts and waits, honor both supported Retry-After formats, and fail malformed provider responses without retry or payload leakage.; Criterion failure-parity-and-approved-scope: met (0.910 confidence) — Provider failures remain explicit and safe across MCP/native research; the phase introduces no transaction or external-write behavior.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-02T12:54:37.442Z
 - Phase: `provider-data-resilience`
@@ -2691,7 +2691,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.990, nextAction=0.990, riskLevel=0.990, criterion_provider-observation-honesty=0.980, criterion_documented-status-normalization=0.970, criterion_bounded-retry-response-integrity=0.990, criterion_failure-parity-and-approved-scope=0.970, criterion_preapproved-phase22-continuation=0.980, deferredScope=0.990
 - Jev criterion findings: Criterion provider-observation-honesty: met (0.980 confidence) — Treat returned inventory, status, timestamps and filter equality as bounded observations; do not claim catalog completeness or a freshness SLA from missing provider evidence.; Criterion documented-status-normalization: met (0.970 confidence) — Normalize the documented Binance market-status enum safely and retain unknown values as unknown.; Criterion bounded-retry-response-integrity: met (0.990 confidence) — Bound retry attempts and waits, honor both supported Retry-After formats, and fail malformed provider responses without retry or payload leakage.; Criterion failure-parity-and-approved-scope: met (0.970 confidence) — Provider failures remain explicit and safe across MCP/native research; Phase 21 introduces no transaction or external-write behavior.; Criterion preapproved-phase22-continuation: met (0.980 confidence) — After Phase 21 approval, continue only into Phase 22 already included in the user-approved Phases 18–23 plan; do not request routine phase-by-phase reapproval or exceed the existing scope.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-02T14:13:49.247Z
 - Phase: `agent-output-language-quality`
@@ -2711,7 +2711,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.990, nextAction=1.000, riskLevel=1.000, criterion_bilingual-intent-and-no-trade=0.930, criterion_evidence-and-uncertainty-fidelity=0.810, criterion_bilingual-surface-parity=0.910, criterion_safety-and-approved-scope=0.920, criterion_build-and-regression-integrity=0.970
 - Jev criterion findings: Criterion bilingual-intent-and-no-trade: met (0.930 confidence) — Chinese and English natural-language requests resolve within the supported intent boundary, and explicit no-trade instructions do not suggest or trigger quote or wallet follow-up actions.; Criterion evidence-and-uncertainty-fidelity: met (0.810 confidence) — Identity, quote and reference prices, timestamps, provenance, missing data, unknown status and ambiguity remain distinguishable and are never fabricated or coerced to zero.; Criterion bilingual-surface-parity: met (0.910 confidence) — Chinese and English human-facing research content uses the request language and keeps text, structured content and native MCP research-card evidence aligned.; Criterion safety-and-approved-scope: met (0.920 confidence) — The language and presentation changes remain research-only, preserve execution safety, and stay within the approved Phase 18-23 continuation.; Criterion build-and-regression-integrity: met (0.970 confidence) — The selected Phase 22 implementation type-checks and builds with all linked regressions passing.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-02T14:18:42.247Z
 - Phase: `agent-output-language-quality`
@@ -2731,7 +2731,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.980, nextAction=1.000, riskLevel=1.000, criterion_bilingual-intent-and-no-trade=0.940, criterion_evidence-and-uncertainty-fidelity=0.960, criterion_bilingual-surface-parity=0.930, criterion_safety-and-approved-scope=0.940, criterion_build-and-regression-integrity=0.970
 - Jev criterion findings: Criterion bilingual-intent-and-no-trade: met (0.940 confidence) — Chinese and English natural-language requests resolve within the supported intent boundary, and explicit no-trade instructions do not suggest or trigger quote or wallet follow-up actions.; Criterion evidence-and-uncertainty-fidelity: met (0.960 confidence) — Identity, quote and reference prices, timestamps, provenance, missing data, unknown status and ambiguity remain distinguishable and are never fabricated or coerced to zero.; Criterion bilingual-surface-parity: met (0.930 confidence) — Chinese and English human-facing research content uses the request language and keeps text, structured content and native MCP research-card evidence aligned.; Criterion safety-and-approved-scope: met (0.940 confidence) — The language and presentation changes remain research-only, preserve execution safety, and stay within the approved Phase 18-23 continuation.; Criterion build-and-regression-integrity: met (0.970 confidence) — The selected Phase 22 implementation type-checks and builds with all linked regressions passing.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-02T14:26:48.220Z
 - Phase: `core-local-acceptance`
@@ -2751,7 +2751,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.950, nextAction=0.980, riskLevel=1.000, criterion_independent-sdk-package-consumption=0.890, criterion_mcp-research-journey-and-surfaces=0.750, criterion_execution-safety-regressions=0.910, criterion_reports-and-phase-ledger-reconciled=0.670, criterion_bounded-terminal-delivery-scope=0.790
 - Jev criterion findings: Criterion independent-sdk-package-consumption: met (0.890 confidence) — The SDK builds and the documented package can be consumed from an isolated local artifact with runtime imports, declarations, examples and package metadata intact, without publication.; Criterion mcp-research-journey-and-surfaces: met (0.750 confidence) — Demo and live read-only MCP research preserve supported intent, issuer identity, evidence and Chinese/English presentation across structured content and the native research component.; Criterion execution-safety-regressions: met (0.910 confidence) — Research/Demo remain non-executing, and synthetic confirmation, plan, balance, gas, signing and broadcast safeguards retain their fail-closed behavior.; Criterion reports-and-phase-ledger-reconciled: met (0.670 confidence) — The phase plan, phase-state ledger, Jev history, developer log, interim reports and deferred register agree on the completed and unresolved local-core work.; Criterion bounded-terminal-delivery-scope: met (0.790 confidence) — Completion is recorded only as local SDK/MCP validation; no website work, commit/push, registry/public release, deployment, real-wallet signing, broadcast or funded settlement is claimed or performed.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-02T14:38:41.525Z
 - Phase: `core-local-acceptance`
@@ -2771,7 +2771,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.990, nextAction=0.900, riskLevel=0.940, criterion_independent-sdk-package-consumption=0.590, criterion_mcp-research-journey-and-surfaces=0.970, criterion_execution-safety-regressions=0.960, criterion_reports-and-phase-ledger-reconciled=0.900, criterion_bounded-terminal-delivery-scope=0.830, deferredScope=1.000
 - Jev criterion findings: Criterion independent-sdk-package-consumption: met (0.590 confidence) — The SDK builds and the documented package can be consumed from an isolated local artifact with runtime imports, declarations, examples and package metadata intact, without publication.; Criterion mcp-research-journey-and-surfaces: met (0.970 confidence) — Demo and live read-only MCP research preserve supported intent, issuer identity, evidence and Chinese/English presentation across structured content and the native research component.; Criterion execution-safety-regressions: met (0.960 confidence) — Research/Demo remain non-executing, and synthetic confirmation, plan, balance, gas, signing and broadcast safeguards retain their fail-closed behavior.; Criterion reports-and-phase-ledger-reconciled: met (0.900 confidence) — The phase plan, phase-state ledger, Jev history, developer log, interim reports and deferred register agree on completed work, evidence class, remaining limitations and the terminal local state.; Criterion bounded-terminal-delivery-scope: met (0.830 confidence) — Completion is recorded only as local SDK/MCP validation; no website work, commit/push, registry/public release, deployment, real-wallet signing, broadcast or funded settlement is claimed or performed.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-02T14:53:29.227Z
 - Phase: `core-local-acceptance`
@@ -2791,7 +2791,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.990, nextAction=0.970, riskLevel=0.980, criterion_independent-sdk-package-consumption=1.000, criterion_mcp-research-journey-and-surfaces=0.930, criterion_execution-safety-regressions=0.990, criterion_reports-and-phase-ledger-reconciled=0.900, criterion_bounded-terminal-delivery-scope=0.920, deferredScope=1.000
 - Jev criterion findings: Criterion independent-sdk-package-consumption: met (1.000 confidence) — The SDK builds and the documented package can be consumed from an isolated local artifact with runtime imports, declarations, examples and package metadata intact, without publication.; Criterion mcp-research-journey-and-surfaces: met (0.930 confidence) — Demo and live read-only MCP research preserve supported intent, issuer identity, evidence and Chinese/English presentation across structured content and the native research component.; Criterion execution-safety-regressions: met (0.990 confidence) — Research/Demo remain non-executing, and synthetic confirmation, plan, balance, gas, signing and broadcast safeguards retain their fail-closed behavior.; Criterion reports-and-phase-ledger-reconciled: met (0.900 confidence) — The phase plan, phase-state ledger, Jev history, developer log, interim reports and deferred register agree on completed work, evidence class, remaining limitations and the terminal local state.; Criterion bounded-terminal-delivery-scope: met (0.920 confidence) — Completion is recorded only as local SDK/MCP validation; no website work, commit/push, registry/public release, deployment, real-wallet signing, broadcast or funded settlement is claimed or performed during this Phase 23 review.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-03T00:14:16.477Z
 - Phase: `developer-path-onboarding`
@@ -2810,7 +2810,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.980, nextAction=0.980, riskLevel=1.000, criterion_dual-path-setup=0.650, criterion_mcp-config-safety=0.910, criterion_standalone-sdk-consumer=0.950, criterion_safety-and-claims=0.900, deferredScope=1.000
 - Jev criterion findings: Criterion dual-path-setup: met (0.650 confidence) — A developer can distinguish the independent TypeScript SDK path from the MCP-in-an-existing-Agent path and follow the credential-free Demo setup without confusing it with Live Mode.; Criterion mcp-config-safety: met (0.910 confidence) — Demo and Live MCP client configurations match their intended launch commands and do not embed credentials.; Criterion standalone-sdk-consumer: met (0.950 confidence) — The documented standalone package entry can be built and consumed outside the source checkout, with runtime imports, declarations and the search-to-market-context journey verified.; Criterion safety-and-claims: met (0.900 confidence) — Documentation keeps approval, external signing and broadcast boundaries explicit and does not claim universal Agent tool selection or public package release.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-03T00:16:02.583Z
 - Phase: `developer-path-onboarding`
@@ -2829,7 +2829,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.980, nextAction=0.990, riskLevel=1.000, criterion_standalone-sdk-consumer=0.970, criterion_agent-mcp-demo-path=0.880, criterion_demo-live-boundary=0.910, criterion_safety-and-release-claims=0.440, deferredScope=1.000
 - Jev criterion findings: Criterion standalone-sdk-consumer: met (0.970 confidence) — The standalone TypeScript SDK instructions lead to a package that can be built and consumed outside the source checkout, including its documented search-to-market-context journey.; Criterion agent-mcp-demo-path: met (0.880 confidence) — The Quickstart shows how to generate a credential-free MCP Demo configuration for an existing Agent and invoke the supported research journey without requiring the user to name a tool when the host supports automatic selection.; Criterion demo-live-boundary: met (0.910 confidence) — Demo and Live Mode instructions and configurations are distinct, and Live API credentials are user-provided locally rather than embedded in checked-in configuration.; Criterion safety-and-release-claims: met (0.440 confidence) — SDK/MCP instructions accurately state approval, external signing and broadcast limits and make no claim that npm, MCP Registry or Hosted MCP is already released.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-03T00:18:37.154Z
 - Phase: `developer-path-onboarding`
@@ -2849,7 +2849,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.980, nextAction=0.990, riskLevel=1.000, criterion_standalone-sdk-consumer=0.900, criterion_agent-mcp-demo-path=0.870, criterion_demo-live-boundary=0.950, criterion_user-approval-signing-boundary=0.940, criterion_local-only-distribution=0.880, deferredScope=1.000
 - Jev criterion findings: Criterion standalone-sdk-consumer: met (0.900 confidence) — The standalone SDK can be built and consumed outside the source checkout, including its documented search-to-market-context journey.; Criterion agent-mcp-demo-path: met (0.870 confidence) — The Quickstart explains how to connect the credential-free MCP Demo to an existing Agent and use its read-only research journey, while accurately qualifying host-dependent automatic tool selection.; Criterion demo-live-boundary: met (0.950 confidence) — Demo and Live setup are distinct, with local user credentials absent from checked-in client configurations.; Criterion user-approval-signing-boundary: met (0.940 confidence) — MCP requires an explicit host approval choice for the exact simulated plan; SDK integrations provide their own user approval UI; any signing remains external and Ariadne does not claim an actual human action from Agent text alone.; Criterion local-only-distribution: met (0.880 confidence) — This phase verifies package readiness only and does not publish npm, create a registry entry, deploy Hosted MCP or claim those surfaces are released.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-03T00:25:38.863Z
 - Phase: `mcp-native-ui-host-review`
@@ -2868,7 +2868,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.990, nextAction=0.950, riskLevel=1.000, criterion_shared-native-research-surface=0.990, criterion_host-adaptation-and-accessibility=1.000, criterion_evidence-fidelity-and-research-safety=1.000, criterion_host-observation-honesty-and-phase-scope=0.930, deferredScope=0.990
 - Jev criterion findings: Criterion shared-native-research-surface: met (0.990 confidence) — Discovery, comparison and one-call research expose the same compact read-only MCP Apps resource, while text and structured results preserve matching research evidence.; Criterion host-adaptation-and-accessibility: met (1.000 confidence) — The research component adapts to host theme, style tokens, fonts and safe-area insets, and retains compact responsive and accessible disclosure behavior.; Criterion evidence-fidelity-and-research-safety: met (1.000 confidence) — The native result preserves source, timestamps, missing/unknown values and caveats without unsafe markup, fabricated data or wallet/trading affordances.; Criterion host-observation-honesty-and-phase-scope: met (0.930 confidence) — Reports distinguish prior user confirmation of Codex visibility, the current connected tool read-only result, deterministic harness evidence, and unverified screenshot/cross-host rendering; the phase remains within approved local research UI scope.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-03T00:42:25.351Z
 - Phase: `provider-data-limitations-closure`
@@ -2887,7 +2887,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.990, nextAction=0.970, riskLevel=0.950, criterion_sdk-freshness-contract=0.990, criterion_catalog-scope-disclosure=0.990, criterion_missing-data-fidelity=0.970, criterion_provider-observation-and-terminal-scope=0.930, deferredScope=0.970
 - Jev criterion findings: Criterion sdk-freshness-contract: met (0.990 confidence) — SDK and Agent-facing market context disclose that provider timestamps alone do not guarantee fresh data and that no market-data freshness SLA has been verified.; Criterion catalog-scope-disclosure: met (0.990 confidence) — Live MCP research describes provider results as returned matches rather than a verified complete catalog, and Demo Mode identifies its limited synthetic sample in tool metadata, outputs and native UI.; Criterion missing-data-fidelity: met (0.970 confidence) — The local changes preserve asset identity and do not turn absent liquidity, timestamps or unknown market status into fabricated positive values.; Criterion provider-observation-and-terminal-scope: met (0.930 confidence) — The six-call provider observation and unresolved 545-versus-488 inventory difference are recorded as bounded evidence, and terminal advancement remains local-only with no external write or high-risk action.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-03T00:48:15.953Z
 - Phase: `provider-data-limitations-closure`
@@ -2906,7 +2906,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.990, nextAction=0.900, riskLevel=0.850, criterion_sdk-freshness-contract=0.960, criterion_catalog-scope-disclosure=0.880, criterion_missing-data-fidelity=0.940, criterion_provider-observation-and-terminal-scope=0.820, deferredScope=0.920
 - Jev criterion findings: Criterion sdk-freshness-contract: met (0.960 confidence) — SDK and Agent-facing market context disclose that provider timestamps alone do not guarantee fresh data and that no market-data freshness SLA has been verified.; Criterion catalog-scope-disclosure: met (0.880 confidence) — Standalone SDK catalog snapshots expose runtime incomplete-catalog warnings; Live MCP labels returned matches as non-exhaustive; Demo SDK/MCP surfaces identify their limited synthetic sample.; Criterion missing-data-fidelity: met (0.940 confidence) — The local changes preserve asset identity and do not turn absent liquidity, timestamps or unknown market status into fabricated positive values.; Criterion provider-observation-and-terminal-scope: met (0.820 confidence) — The six-call provider observation and unresolved 545-versus-488 inventory difference are recorded as bounded evidence, and terminal advancement remains local-only with no external write or high-risk action.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-03T00:52:36.635Z
 - Phase: `provider-data-limitations-closure`
@@ -2927,7 +2927,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.770, nextAction=0.850, riskLevel=0.690, criterion_sdk-freshness-contract=0.300, criterion_catalog-scope-disclosure=0.920, criterion_missing-data-fidelity=0.950, criterion_bounded-observation-integrity=0.970, criterion_explicit-upstream-limitations=0.930, criterion_terminal-local-scope=0.960, deferredScope=0.910
 - Jev criterion findings: Criterion sdk-freshness-contract: met (0.300 confidence) — SDK and Agent-facing market context disclose that provider timestamps alone do not guarantee fresh data and no freshness SLA is verified.; Criterion catalog-scope-disclosure: met (0.920 confidence) — Live SDK snapshots and Live MCP discovery/research identify returned rows as non-exhaustive; Demo SDK/MCP results disclose their limited synthetic sample in runtime/UI output.; Criterion missing-data-fidelity: met (0.950 confidence) — Asset identity is preserved and absent liquidity, timestamps and unknown statuses remain unknown rather than becoming fabricated values.; Criterion bounded-observation-integrity: met (0.970 confidence) — A sanitized, structured record accurately captures the authorized six serial GET observations, per-request success, 545/488 counts, 57 difference and field/status observations without secrets or raw provider data.; Criterion explicit-upstream-limitations: met (0.930 confidence) — The record and user-facing docs explicitly leave pagination/count semantics, catalog completeness, missing directory fields and acceptable price freshness unresolved; no cause is inferred.; Criterion terminal-local-scope: met (0.960 confidence) — Phase 26 ends only at local delivery and does not authorize or perform website edits, publication, deployment, payments, wallet signing or transaction broadcast.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-03T00:59:29.010Z
 - Phase: `provider-data-limitations-closure`
@@ -2949,7 +2949,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.980, nextAction=0.970, riskLevel=0.990, criterion_sdk-freshness-contract=0.920, criterion_agent-facing-freshness-copy=0.980, criterion_catalog-scope-disclosure=0.830, criterion_missing-data-fidelity=0.930, criterion_bounded-observation-integrity=0.980, criterion_explicit-upstream-limitations=0.860, criterion_terminal-local-scope=0.960, deferredScope=0.920
 - Jev criterion findings: Criterion sdk-freshness-contract: met (0.920 confidence) — SDK MarketContext preserves the per-asset quote timestamp separately from the endpoint response timestamp and always states that a provider timestamp does not guarantee freshness or a freshness SLA.; Criterion agent-facing-freshness-copy: met (0.980 confidence) — English and Chinese Agent-facing cards, research briefs and native MCP views display the freshness caveat without dropping source/timestamp context.; Criterion catalog-scope-disclosure: met (0.830 confidence) — Live SDK/MCP results are described as returned matches rather than a verified complete catalog, while Demo surfaces identify their limited synthetic sample.; Criterion missing-data-fidelity: met (0.930 confidence) — Asset identity is preserved and absent liquidity, timestamps and unknown market statuses remain unknown rather than being converted into positive or zero values.; Criterion bounded-observation-integrity: met (0.980 confidence) — The sanitized evidence record accurately captures the one authorized six-request serial GET sample, returned counts, difference, field/status observations and timestamp ages without credentials or raw payloads.; Criterion explicit-upstream-limitations: met (0.860 confidence) — The cause of the observed catalog-count difference, pagination semantics, missing directory fields and any acceptable freshness SLA remain explicitly unresolved without causal speculation.; Criterion terminal-local-scope: met (0.960 confidence) — Phase 26 ends at local delivery only; no website edit, publication, deployment, paid service, signing or broadcast is authorized or performed.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-03T01:02:27.538Z
 - Phase: `provider-data-limitations-closure`
@@ -2973,7 +2973,7 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.970, nextAction=0.970, riskLevel=0.990, criterion_sdk-freshness-contract=0.890, criterion_agent-facing-freshness-copy=0.960, criterion_sdk-catalog-scope-warning=0.970, criterion_live-mcp-catalog-scope-copy=0.950, criterion_demo-catalog-scope-warning=0.940, criterion_missing-data-fidelity=0.860, criterion_bounded-observation-integrity=0.970, criterion_explicit-upstream-limitations=0.810, criterion_terminal-local-scope=0.880, deferredScope=0.930
 - Jev criterion findings: Criterion sdk-freshness-contract: met (0.890 confidence) — SDK MarketContext preserves the per-asset quote timestamp separately from the endpoint response timestamp and always states that a provider timestamp does not guarantee freshness or a freshness SLA.; Criterion agent-facing-freshness-copy: met (0.960 confidence) — English and Chinese Agent-facing cards, research briefs and native MCP views display the freshness caveat without dropping source/timestamp context.; Criterion sdk-catalog-scope-warning: met (0.970 confidence) — A standalone Live SDK directory snapshot returns the explicit runtime warning that the provider result is not a verified complete catalog.; Criterion live-mcp-catalog-scope-copy: met (0.950 confidence) — All three MCP research tools describe returned matches as non-exhaustive, and the native research view renders the Live caveat in English and Chinese.; Criterion demo-catalog-scope-warning: met (0.940 confidence) — Demo SDK, MCP result and native research card identify the fixtures as a limited synthetic sample, not a complete live catalog.; Criterion missing-data-fidelity: met (0.860 confidence) — Asset identity is preserved and absent liquidity, timestamps and unknown market statuses remain unknown rather than being converted into positive or zero values.; Criterion bounded-observation-integrity: met (0.970 confidence) — The sanitized evidence record accurately captures the one authorized six-request serial GET sample, returned counts, difference, field/status observations and timestamp ages without credentials or raw payloads.; Criterion explicit-upstream-limitations: met (0.810 confidence) — The cause of the observed catalog-count difference, pagination semantics, missing directory fields and any acceptable freshness SLA remain explicitly unresolved without causal speculation.; Criterion terminal-local-scope: met (0.880 confidence) — Phase 26 ends at local delivery only; no website edit, publication, deployment, paid service, signing or broadcast is authorized or performed.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
 
 ### Jev phase-gate record — 2026-10-03T01:09:49.747Z
 - Phase: `provider-data-limitations-closure`
@@ -3000,4 +3000,85 @@ Deferred follow-ups, with causes and safe next evidence (not blockers to this co
 - Jev confidence by review item: status=0.980, nextAction=0.980, riskLevel=0.960, criterion_sdk-freshness-contract=0.950, criterion_agent-facing-freshness-copy=0.940, criterion_sdk-catalog-scope-warning=0.990, criterion_live-mcp-catalog-scope-copy=0.950, criterion_demo-catalog-scope-warning=0.850, criterion_inventory-and-pagination-uncertainty=0.980, criterion_tab-filter-semantics-uncertainty=0.930, criterion_directory-fields-and-status-uncertainty=0.890, criterion_freshness-sla-uncertainty=0.990, criterion_missing-data-fidelity=0.870, criterion_bounded-observation-integrity=0.970, criterion_terminal-local-scope=0.940, deferredScope=0.880
 - Jev criterion findings: Criterion sdk-freshness-contract: met (0.950 confidence) — SDK MarketContext preserves the per-asset quote timestamp separately from the endpoint response timestamp and states that timestamps do not guarantee freshness or a freshness SLA.; Criterion agent-facing-freshness-copy: met (0.940 confidence) — English and Chinese Agent-facing cards, briefs and native MCP views display the freshness caveat without dropping source or timestamp context.; Criterion sdk-catalog-scope-warning: met (0.990 confidence) — A standalone Live SDK directory snapshot returns an explicit runtime warning that its provider results are not a verified complete catalog.; Criterion live-mcp-catalog-scope-copy: met (0.950 confidence) — All three MCP research tools describe results as returned matches, and the native research view renders the Live catalog caveat in English and Chinese.; Criterion demo-catalog-scope-warning: met (0.850 confidence) — Demo SDK, MCP results and native research cards identify fixtures as a limited synthetic sample, not a complete live catalog.; Criterion inventory-and-pagination-uncertainty: met (0.980 confidence) — The 545 declared versus 488 returned count discrepancy remains unexplained; pagination and total-count semantics are not presented as verified.; Criterion tab-filter-semantics-uncertainty: met (0.930 confidence) — Equal identity sets for the two sampled tab IDs are reported only as an observation and do not imply that filtering is ignored.; Criterion directory-fields-and-status-uncertainty: met (0.890 confidence) — Missing directory timestamps, liquidity and recognized market statuses remain explicit unknowns and are not converted into invented values.; Criterion freshness-sla-uncertainty: met (0.990 confidence) — Two sampled quote ages are treated as observations only; no maximum acceptable quote age or provider freshness SLA is claimed.; Criterion missing-data-fidelity: met (0.870 confidence) — Asset identity is preserved and absent liquidity, timestamps and unknown market statuses remain unknown instead of becoming positive or zero values.; Criterion bounded-observation-integrity: met (0.970 confidence) — The one authorized six-request serial GET sample is recorded accurately, bounded, and free of raw provider payloads or credentials.; Criterion terminal-local-scope: met (0.940 confidence) — Phase 26 ends at local delivery only; no website edit, publication, deployment, paid service, signing or broadcast is authorized or performed.
 - Action taken: `none`
-- Safety note: Jev does not control Codex and no external write was authorized.
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
+
+### Jev phase-gate record — 2026-10-03T02:21:47.926Z
+- Phase: `provider-data-limitations-closure`
+- Jev provider: `native-jev`
+- Baseline: `needs_rework` / `repair` / risk `medium`
+- Jev: `needs_rework` / `repair` / risk `low` / confidence `0.190`
+- Agreement: `true`
+- Latency: `1889 ms`
+- Phase transition: `pause`
+- Transition reason: Jev did not verify criterion live-mcp-catalog-scope-copy: gap — All MCP research tools and the native research view describe Live results as returned matches, not a verified complete catalog.. Diagnose or repair this criterion before advancing.
+- Acceptance criteria and supplied evidence:
+  - sdk-freshness-contract (test:domain): SDK market context keeps provider response time distinct from per-asset quote time and always says timestamps do not establish freshness or an SLA. Evidence: The domain regression asserts the exact caveat with and without an asset timestamp and verifies response and per-asset timestamps remain distinct.
+  - agent-facing-freshness-copy (test:presentation, test:mcp-app-ui): English and Chinese cards, briefs and native MCP views show freshness caveats while retaining source and timestamp context. Evidence: Presentation and executed MCP App checks inspect both locales and retain source/time fields.
+  - sdk-catalog-scope-warning (test:domain, test:demo-mode, test:onboarding): Live SDK search matches and directory snapshots disclose that returned results are not a verified complete catalog; Demo SDK search and snapshots identify the limited synthetic sample. Evidence: Runtime tests assert Live search and snapshot warnings, Demo search and snapshot warnings, and the corresponding SDK guidance.
+  - live-mcp-catalog-scope-copy (test:mcp-app-ui, test:core-product-phase-plan): All MCP research tools and the native research view describe Live results as returned matches, not a verified complete catalog. Evidence: MCP integration enumerates all three tools, checks their descriptions, and renders the localized Live caveat.
+  - demo-catalog-scope-warning (test:demo-mode, test:mcp-app-ui): Demo SDK, MCP results and native research cards label fixtures as a limited synthetic sample, not a complete live catalog. Evidence: Demo tests assert SDK snapshot/search, MCP result and native card warnings; UI harness checks localized wording.
+  - inventory-and-pagination-uncertainty (test:phase26-limitations): The 545 declared versus 488 returned difference remains unexplained; pagination and total-count semantics are not claimed as verified. Evidence: The limitation test reconciles safe recorded counts with documentation that rejects completeness interpretations.
+  - tab-filter-semantics-uncertainty (test:phase26-limitations): Equal identity sets for two sampled tab IDs remain an observation and do not imply filtering is ignored. Evidence: The regression checks the sampled equality and explicit limitation against causal inference.
+  - directory-fields-and-status-uncertainty (test:phase26-limitations, test:demo-mode): Missing directory timestamps, liquidity and recognized statuses remain unknown rather than receiving invented values. Evidence: The record regression checks omissions and counts; Demo checks preserve unknown status and absent liquidity.
+  - freshness-sla-uncertainty (test:phase26-limitations, test:domain, test:presentation): The two sampled quote ages are observations only and establish neither an acceptable age nor a provider freshness SLA. Evidence: Tests check the bounded ages and wording that timestamps alone do not guarantee freshness.
+  - missing-data-fidelity (test:asset-intent-query, test:mcp-enrichment, test:presentation, test:demo-mode): Asset identity is preserved and absent liquidity, timestamps and unknown market status are not converted into positive or zero values. Evidence: Identity/enrichment and bilingual presentation/Demo regressions cover missing fields and unknown values.
+  - bounded-observation-integrity (test:core-product-phase-plan, test:phase26-limitations): The single six-request GET sample records safe query parameters and aggregation formulas, discloses omitted raw values that prevent full independent recomputation, and contains no credentials or raw provider payload. Evidence: Both regressions verify request bounds, query scope, calculation methodology, explicit recomputation limits, and absence of secrets/raw payloads.
+  - terminal-local-scope (test:core-product-phase-plan, test:mcp-app-ui, test:demo-mode): Phase 26 remains local terminal delivery and does not authorize website edits, publication, deployment, wallet signing or broadcast. Evidence: Phase-plan and UI/Demo tests enforce the local-only and research-only boundary.
+- Jev confidence by review item: status=0.690, nextAction=0.880, riskLevel=0.420, criterion_sdk-freshness-contract=0.990, criterion_agent-facing-freshness-copy=0.890, criterion_sdk-catalog-scope-warning=0.910, criterion_live-mcp-catalog-scope-copy=0.620, criterion_demo-catalog-scope-warning=0.890, criterion_inventory-and-pagination-uncertainty=0.840, criterion_tab-filter-semantics-uncertainty=0.850, criterion_directory-fields-and-status-uncertainty=0.950, criterion_freshness-sla-uncertainty=0.900, criterion_missing-data-fidelity=0.570, criterion_bounded-observation-integrity=0.230, criterion_terminal-local-scope=0.190, deferredScope=0.620
+- Jev criterion findings: Criterion sdk-freshness-contract: met (0.990 confidence) — SDK market context keeps provider response time distinct from per-asset quote time and always says timestamps do not establish freshness or an SLA.; Criterion agent-facing-freshness-copy: met (0.890 confidence) — English and Chinese cards, briefs and native MCP views show freshness caveats while retaining source and timestamp context.; Criterion sdk-catalog-scope-warning: met (0.910 confidence) — Live SDK search matches and directory snapshots disclose that returned results are not a verified complete catalog; Demo SDK search and snapshots identify the limited synthetic sample.; Criterion live-mcp-catalog-scope-copy: gap (0.620 confidence) — All MCP research tools and the native research view describe Live results as returned matches, not a verified complete catalog.; Criterion demo-catalog-scope-warning: met (0.890 confidence) — Demo SDK, MCP results and native research cards label fixtures as a limited synthetic sample, not a complete live catalog.; Criterion inventory-and-pagination-uncertainty: met (0.840 confidence) — The 545 declared versus 488 returned difference remains unexplained; pagination and total-count semantics are not claimed as verified.; Criterion tab-filter-semantics-uncertainty: met (0.850 confidence) — Equal identity sets for two sampled tab IDs remain an observation and do not imply filtering is ignored.; Criterion directory-fields-and-status-uncertainty: met (0.950 confidence) — Missing directory timestamps, liquidity and recognized statuses remain unknown rather than receiving invented values.; Criterion freshness-sla-uncertainty: met (0.900 confidence) — The two sampled quote ages are observations only and establish neither an acceptable age nor a provider freshness SLA.; Criterion missing-data-fidelity: met (0.570 confidence) — Asset identity is preserved and absent liquidity, timestamps and unknown market status are not converted into positive or zero values.; Criterion bounded-observation-integrity: met (0.230 confidence) — The single six-request GET sample records safe query parameters and aggregation formulas, discloses omitted raw values that prevent full independent recomputation, and contains no credentials or raw provider payload.; Criterion terminal-local-scope: met (0.190 confidence) — Phase 26 remains local terminal delivery and does not authorize website edits, publication, deployment, wallet signing or broadcast.
+- Action taken: `none`
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
+
+### Jev phase-gate record — 2026-10-03T02:34:20.387Z
+- Phase: `provider-data-limitations-closure`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.850`
+- Agreement: `true`
+- Latency: `1706 ms`
+- Phase transition: `advance`
+- Transition reason: Baseline and Jev agree on a low-risk continuation.
+- Acceptance criteria and supplied evidence:
+  - sdk-freshness-contract (test:domain): SDK market context distinguishes provider response timestamps from per-asset quote timestamps and states that timestamps do not establish data freshness or a freshness SLA. Evidence: The SDK domain regression asserts exact caveat presence with and without a per-asset timestamp and checks distinct response and quote timestamps.
+  - agent-facing-freshness-copy (test:presentation, test:mcp-app-ui): English and Chinese Agent-facing cards, briefs, and the native MCP research view retain freshness caveats together with source and timestamp context. Evidence: Bilingual presentation contracts and the executed MCP App harness inspect warning copy and retain source/time evidence in rendered results.
+  - sdk-catalog-scope-warning (test:domain, test:demo-mode, test:onboarding): Live SDK search matches and directory snapshots disclose that returned provider results are not a verified complete catalog; Demo results identify their limited synthetic sample. Evidence: Live/Demo SDK runtime assertions check search and snapshot warning fields; onboarding states the provider results are not a completeness guarantee.
+  - live-mcp-catalog-scope-copy (test:mcp-app-ui, test:mcp-live-catalog-warning): All three Live MCP research tools disclose returned-match scope in tool metadata and actual results; the native research view renders the same warning. Evidence: A loopback-only synthetic provider launches the MCP server in Live mode; the test calls discovery, comparison and research, checks English/Chinese structured warnings, and renders the actual research result. The UI harness separately checks the shared native view resource.
+  - demo-catalog-scope-warning (test:demo-mode, test:mcp-app-ui): Demo SDK/MCP responses and native research cards label fixtures as a limited synthetic sample, not a complete live catalog. Evidence: Demo integration assertions inspect actual SDK/MCP warning fields and the rendered card, including the limited-sample disclosure.
+  - inventory-and-pagination-uncertainty (test:phase26-limitations): The 545 declared versus 488 returned representation observation remains unexplained; pagination and total-count semantics are not claimed as verified. Evidence: The focused regression reconciles the sanitized recorded counts with the documented unresolved cause and explicit no-completeness claim.
+  - tab-filter-semantics-uncertainty (test:phase26-limitations): Equal identity sets observed for two sampled tab IDs are reported as an observation and do not establish that provider filtering is ignored. Evidence: The regression checks the sampled identity-set equality and the explicit limitation against inferring filter semantics.
+  - directory-fields-and-status-uncertainty (test:phase26-limitations, test:domain): Missing directory timestamps/liquidity and unrecognized market statuses remain unknown rather than receiving invented values. Evidence: The observation regression checks missing-field counts/statuses; domain normalization tests preserve missing values and unknown states.
+  - freshness-sla-uncertainty (test:phase26-limitations, test:domain, test:presentation): The sampled quote ages establish neither an acceptable maximum age nor a provider freshness SLA. Evidence: The evidence regression checks the two recorded quote-age observations and unresolved SLA; SDK and bilingual presentation checks explicitly reject a freshness guarantee.
+  - missing-data-fidelity (test:asset-intent-query, test:mcp-enrichment, test:presentation, test:demo-mode): Asset identity is preserved, and absent liquidity/timestamps or unknown market status are not converted into positive or zero values. Evidence: Identity/enrichment regressions assert exact requested representations and fail-closed mismatches; presentation and Demo tests verify absent data and unknown states remain explicit.
+  - bounded-observation-integrity (test:phase26-limitations, test:core-product-phase-plan): The single approved six-request serial GET sample records its safe query scope and aggregation methods, discloses limits on independent recomputation, and contains no raw provider payloads or credentials. Evidence: Both tests check the six-request/zero-retry observation, query parameters, aggregation definitions, recomputation limitation and absence of provider payloads/credentials.
+  - terminal-local-scope (test:core-product-phase-plan, test:onboarding, test:jev-shadow): Phase 26's reviewed deliverable is local SDK/MCP evidence ending at its named terminal state; the Jev review itself does not authorize separate Git sync, publication, deployment, wallet signing or broadcast. Evidence: Phase-plan assertions bind Phase 26 to the local terminal state; onboarding and phase-gate regressions distinguish local validation from separate release authorization and verify failed reviews do not advance.
+- Jev confidence by review item: status=0.920, nextAction=0.850, riskLevel=0.980, criterion_sdk-freshness-contract=0.990, criterion_agent-facing-freshness-copy=0.970, criterion_sdk-catalog-scope-warning=0.930, criterion_live-mcp-catalog-scope-copy=0.920, criterion_demo-catalog-scope-warning=0.960, criterion_inventory-and-pagination-uncertainty=0.910, criterion_tab-filter-semantics-uncertainty=0.920, criterion_directory-fields-and-status-uncertainty=0.960, criterion_freshness-sla-uncertainty=0.980, criterion_missing-data-fidelity=0.930, criterion_bounded-observation-integrity=0.970, criterion_terminal-local-scope=0.960
+- Jev criterion findings: Criterion sdk-freshness-contract: met (0.990 confidence) — SDK market context distinguishes provider response timestamps from per-asset quote timestamps and states that timestamps do not establish data freshness or a freshness SLA.; Criterion agent-facing-freshness-copy: met (0.970 confidence) — English and Chinese Agent-facing cards, briefs, and the native MCP research view retain freshness caveats together with source and timestamp context.; Criterion sdk-catalog-scope-warning: met (0.930 confidence) — Live SDK search matches and directory snapshots disclose that returned provider results are not a verified complete catalog; Demo results identify their limited synthetic sample.; Criterion live-mcp-catalog-scope-copy: met (0.920 confidence) — All three Live MCP research tools disclose returned-match scope in tool metadata and actual results; the native research view renders the same warning.; Criterion demo-catalog-scope-warning: met (0.960 confidence) — Demo SDK/MCP responses and native research cards label fixtures as a limited synthetic sample, not a complete live catalog.; Criterion inventory-and-pagination-uncertainty: met (0.910 confidence) — The 545 declared versus 488 returned representation observation remains unexplained; pagination and total-count semantics are not claimed as verified.; Criterion tab-filter-semantics-uncertainty: met (0.920 confidence) — Equal identity sets observed for two sampled tab IDs are reported as an observation and do not establish that provider filtering is ignored.; Criterion directory-fields-and-status-uncertainty: met (0.960 confidence) — Missing directory timestamps/liquidity and unrecognized market statuses remain unknown rather than receiving invented values.; Criterion freshness-sla-uncertainty: met (0.980 confidence) — The sampled quote ages establish neither an acceptable maximum age nor a provider freshness SLA.; Criterion missing-data-fidelity: met (0.930 confidence) — Asset identity is preserved, and absent liquidity/timestamps or unknown market status are not converted into positive or zero values.; Criterion bounded-observation-integrity: met (0.970 confidence) — The single approved six-request serial GET sample records its safe query scope and aggregation methods, discloses limits on independent recomputation, and contains no raw provider payloads or credentials.; Criterion terminal-local-scope: met (0.960 confidence) — Phase 26's reviewed deliverable is local SDK/MCP evidence ending at its named terminal state; the Jev review itself does not authorize separate Git sync, publication, deployment, wallet signing or broadcast.
+- Action taken: `none`
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.
+
+### Jev phase-gate record — 2026-10-03T02:38:42.588Z
+- Phase: `provider-data-limitations-closure`
+- Jev provider: `native-jev`
+- Baseline: `passed` / `continue` / risk `low`
+- Jev: `passed` / `continue` / risk `low` / confidence `0.910`
+- Agreement: `true`
+- Latency: `911 ms`
+- Phase transition: `advance`
+- Transition reason: Baseline and Jev agree on a low-risk continuation.
+- Acceptance criteria and supplied evidence:
+  - sdk-freshness-contract (test:domain): SDK market context distinguishes provider response timestamps from per-asset quote timestamps and states that timestamps do not establish data freshness or a freshness SLA. Evidence: The SDK domain regression asserts exact caveat presence with and without a per-asset timestamp and checks distinct response and quote timestamps.
+  - agent-facing-freshness-copy (test:presentation, test:mcp-app-ui): English and Chinese Agent-facing cards, briefs, and the native MCP research view retain freshness caveats together with source and timestamp context. Evidence: Bilingual presentation contracts and the executed MCP App harness inspect warning copy and retain source/time evidence in rendered results.
+  - sdk-catalog-scope-warning (test:domain, test:demo-mode, test:onboarding): Live SDK search matches and directory snapshots disclose that returned provider results are not a verified complete catalog; Demo results identify their limited synthetic sample. Evidence: Live/Demo SDK runtime assertions check search and snapshot warning fields; onboarding states the provider results are not a completeness guarantee.
+  - live-mcp-catalog-scope-copy (test:mcp-app-ui, test:mcp-live-catalog-warning): All three Live MCP research tools disclose returned-match scope in tool metadata and actual results; the native research view renders the same warning. Evidence: A loopback-only synthetic provider launches the MCP server in Live mode; the test calls discovery, comparison and research, checks English/Chinese structured warnings, and renders the actual research result. The UI harness separately checks the shared native view resource.
+  - demo-catalog-scope-warning (test:demo-mode, test:mcp-app-ui): Demo SDK/MCP responses and native research cards label fixtures as a limited synthetic sample, not a complete live catalog. Evidence: Demo integration assertions inspect actual SDK/MCP warning fields and the rendered card, including the limited-sample disclosure.
+  - inventory-and-pagination-uncertainty (test:phase26-limitations): The 545 declared versus 488 returned representation observation remains unexplained; pagination and total-count semantics are not claimed as verified. Evidence: The focused regression reconciles the sanitized recorded counts with the documented unresolved cause and explicit no-completeness claim.
+  - tab-filter-semantics-uncertainty (test:phase26-limitations): Equal identity sets observed for two sampled tab IDs are reported as an observation and do not establish that provider filtering is ignored. Evidence: The regression checks the sampled identity-set equality and the explicit limitation against inferring filter semantics.
+  - directory-fields-and-status-uncertainty (test:phase26-limitations, test:domain): Missing directory timestamps/liquidity and unrecognized market statuses remain unknown rather than receiving invented values. Evidence: The observation regression checks missing-field counts/statuses; domain normalization tests preserve missing values and unknown states.
+  - freshness-sla-uncertainty (test:phase26-limitations, test:domain, test:presentation): The sampled quote ages establish neither an acceptable maximum age nor a provider freshness SLA. Evidence: The evidence regression checks the two recorded quote-age observations and unresolved SLA; SDK and bilingual presentation checks explicitly reject a freshness guarantee.
+  - missing-data-fidelity (test:asset-intent-query, test:mcp-enrichment, test:presentation, test:demo-mode): Asset identity is preserved, and absent liquidity/timestamps or unknown market status are not converted into positive or zero values. Evidence: Identity/enrichment regressions assert exact requested representations and fail-closed mismatches; presentation and Demo tests verify absent data and unknown states remain explicit.
+  - bounded-observation-integrity (test:phase26-limitations, test:core-product-phase-plan): The single approved six-request serial GET sample records its safe query scope and aggregation methods, discloses limits on independent recomputation, and contains no raw provider payloads or credentials. Evidence: Both tests check the six-request/zero-retry observation, query parameters, aggregation definitions, recomputation limitation and absence of provider payloads/credentials.
+  - terminal-local-scope (test:core-product-phase-plan, test:onboarding, test:jev-shadow): Phase 26's reviewed deliverable is local SDK/MCP evidence ending at its named terminal state; the Jev review itself does not authorize separate Git sync, publication, deployment, wallet signing or broadcast. Evidence: Phase-plan assertions bind Phase 26 to the local terminal state; onboarding and phase-gate regressions distinguish local validation from separate release authorization and verify failed reviews do not advance.
+- Jev confidence by review item: status=0.940, nextAction=0.910, riskLevel=0.980, criterion_sdk-freshness-contract=0.980, criterion_agent-facing-freshness-copy=0.970, criterion_sdk-catalog-scope-warning=0.940, criterion_live-mcp-catalog-scope-copy=0.930, criterion_demo-catalog-scope-warning=0.960, criterion_inventory-and-pagination-uncertainty=0.920, criterion_tab-filter-semantics-uncertainty=0.920, criterion_directory-fields-and-status-uncertainty=0.950, criterion_freshness-sla-uncertainty=0.980, criterion_missing-data-fidelity=0.930, criterion_bounded-observation-integrity=0.970, criterion_terminal-local-scope=0.940
+- Jev criterion findings: Criterion sdk-freshness-contract: met (0.980 confidence) — SDK market context distinguishes provider response timestamps from per-asset quote timestamps and states that timestamps do not establish data freshness or a freshness SLA.; Criterion agent-facing-freshness-copy: met (0.970 confidence) — English and Chinese Agent-facing cards, briefs, and the native MCP research view retain freshness caveats together with source and timestamp context.; Criterion sdk-catalog-scope-warning: met (0.940 confidence) — Live SDK search matches and directory snapshots disclose that returned provider results are not a verified complete catalog; Demo results identify their limited synthetic sample.; Criterion live-mcp-catalog-scope-copy: met (0.930 confidence) — All three Live MCP research tools disclose returned-match scope in tool metadata and actual results; the native research view renders the same warning.; Criterion demo-catalog-scope-warning: met (0.960 confidence) — Demo SDK/MCP responses and native research cards label fixtures as a limited synthetic sample, not a complete live catalog.; Criterion inventory-and-pagination-uncertainty: met (0.920 confidence) — The 545 declared versus 488 returned representation observation remains unexplained; pagination and total-count semantics are not claimed as verified.; Criterion tab-filter-semantics-uncertainty: met (0.920 confidence) — Equal identity sets observed for two sampled tab IDs are reported as an observation and do not establish that provider filtering is ignored.; Criterion directory-fields-and-status-uncertainty: met (0.950 confidence) — Missing directory timestamps/liquidity and unrecognized market statuses remain unknown rather than receiving invented values.; Criterion freshness-sla-uncertainty: met (0.980 confidence) — The sampled quote ages establish neither an acceptable maximum age nor a provider freshness SLA.; Criterion missing-data-fidelity: met (0.930 confidence) — Asset identity is preserved, and absent liquidity/timestamps or unknown market status are not converted into positive or zero values.; Criterion bounded-observation-integrity: met (0.970 confidence) — The single approved six-request serial GET sample records its safe query scope and aggregation methods, discloses limits on independent recomputation, and contains no raw provider payloads or credentials.; Criterion terminal-local-scope: met (0.940 confidence) — Phase 26's reviewed deliverable is local SDK/MCP evidence ending at its named terminal state; the Jev review itself does not authorize separate Git sync, publication, deployment, wallet signing or broadcast.
+- Action taken: `none`
+- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.

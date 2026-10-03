@@ -25,7 +25,7 @@ export async function appendGateReportEntry(
       : []),
     ...(record.jev?.reasons?.length ? [`- Jev criterion findings: ${record.jev.reasons.join("; ")}`] : []),
     `- Action taken: \`${record.actionTaken}\``,
-    "- Safety note: Jev does not control Codex and no external write was authorized.",
+    "- Safety note: Jev does not control Codex. This gate did not request or perform an external write; authorization for any separate action is assessed independently.",
     "",
   ].join("\n");
   await appendFile(technicalReportPath, entry, "utf8");

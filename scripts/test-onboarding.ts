@@ -27,6 +27,7 @@ assert.match(readme, /npm run web:demo/);
 assert.match(sdkUsage, /It is \*\*not published to npm\*\*/);
 assert.match(sdkUsage, /git clone https:\/\/github\.com\/lant1ng-1216\/ariadne-tokenized-stocks\.git[\s\S]*npm run build[\s\S]*npm pack/);
 assert.match(sdkUsage, /const assets = await stocks\.search\("NVDA", \{ chainId: "56" \}\);[\s\S]*stocks\.marketContext\(asset\)/);
+assert.match(sdkUsage, /`search\(\)` returns query matches[\s\S]*collectionWarnings/);
 assert.match(sdkUsage, /integrating application owns that UI[\s\S]*must not call `confirm\(\)` solely because an Agent requested it/);
 assert.match(sdkUsage, /never stores a wallet private key or signs on behalf of a user/);
 assert.match(sdkUsage, /Only an accepted `decision: approve` advances the registry[\s\S]*it does not sign or broadcast/);

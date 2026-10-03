@@ -46,6 +46,7 @@
     "test:mcp-natural-language": "node --env-file=.env --import tsx scripts/test-mcp-natural-language.ts",
     "test:mcp-enrichment": "node --import tsx scripts/test-mcp-enrichment.ts",
     "test:mcp-app-ui": "node --import tsx scripts/test-mcp-app-ui.ts",
+    "test:mcp-live-catalog-warning": "node --import tsx scripts/test-mcp-live-catalog-warning.ts",
     "test:core-hardening": "node --import tsx scripts/test-core-hardening.ts",
     "test:core-product-phase-plan": "node --import tsx scripts/test-core-product-phase-plan.ts",
     "test:phase26-limitations": "node --import tsx scripts/test-phase26-provider-limitations.ts",

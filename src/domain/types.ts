@@ -15,6 +15,8 @@ export type StockAsset = {
   issuerLogoUrl?: string;
   issuerWebsite?: string;
   matchQuality?: AssetMatchQuality;
+  /** Collection-level limits that apply to a returned search match, not to its identity fields. */
+  collectionWarnings?: string[];
 };
 
 export type RwaPlatform = {

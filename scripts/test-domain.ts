@@ -22,6 +22,7 @@ const mockClient = {
     if (path.endsWith("/aggregator/swap")) return { code: 0, success: true, data: { executionMode: "SWAP", tx: { from: "0x1", to: "0x2", value: "0", data: "0x" } } };
     if (path.endsWith("/aggregator/approve-transaction")) return { code: 0, success: true, data: [{ from: "0x1", to: "0x2", data: "0x" }] };
     if (path.endsWith("/rwa/platforms")) return { timestamp: 1_790_603_000_100, data: [{ platformId: "bstock" }] };
+    if (path.endsWith("/rwa/search")) return { data: [{ ticker: "NVDA", companyName: "Nvidia Corp", assets: [{ binanceChainId: "56", tokenContractAddress: "0xabc", platformId: "bstock", tokenSymbol: "NVDAB" }] }] };
     if (path.endsWith("/rwa/tokens")) return { timestamp: 1_790_603_000_000, data: [{ binanceChainId: "56", tokenContractAddress: "0xabc", platformId: "bstock", tokenSymbol: "NVDAB", underlyingTicker: "NVDA", underlyingName: "Nvidia Corp", tokenPrice: "100", tokenPriceUpdatedAt: 1, statusInfo: { marketStatus: "open", openState: true } }] };
     if (path.endsWith("/rwa/price")) return { timestamp: 1_790_603_000_200, data: [{ binanceChainId: "56", tokenContractAddress: "0xabc", platformId: "bstock", tokenPrice: "101", referencePrice: "100.5", tokenPriceUpdatedAt: 1234 }] };
     throw new Error(`Unexpected test request: ${path}`);
@@ -38,6 +39,8 @@ const asset = {
   underlyingName: "Nvidia Corp"
 };
 const priceService = new TokenizedStocksService(mockClient as any);
+const searchResults = await priceService.search("NVDA", { chainId: "56" });
+assert.deepEqual(searchResults[0]?.collectionWarnings, [CATALOG_SCOPE_WARNING], "SDK search results must disclose that returned matches are not a verified complete catalog");
 const priceContext = await priceService.marketContext(asset);
 assert.equal(priceContext.tokenPrice, "101", "market context should prefer the dedicated RWA price endpoint");
 assert.equal(priceContext.referencePrice, "100.5");

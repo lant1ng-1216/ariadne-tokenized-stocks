@@ -114,7 +114,7 @@ export class DemoTokenizedStocksService extends TokenizedStocksService {
       const matchesIdentity = [asset.underlyingTicker, asset.tokenSymbol, asset.underlyingName, asset.tokenName]
         .some((value) => value?.toLowerCase().includes(normalized));
       return matchesIdentity && (!options.chainId || asset.chainId === options.chainId) && (!options.platformId || asset.platformId === options.platformId);
-    });
+    }).map((asset) => ({ ...asset, collectionWarnings: [DEMO_CATALOG_SCOPE_WARNING] }));
   }
 
   override async marketContext(asset: StockAsset): Promise<MarketContext> {
