@@ -17,6 +17,7 @@ const demoAssets: StockAsset[] = [
   { assetId: "56:0x02fca66c1d1afb4e2a7884261eb00f63598a7436", chainId: "56", platformId: "bstock", contractAddress: "0x02fca66c1d1afb4e2a7884261eb00f63598a7436", tokenSymbol: "NVDAB", tokenName: "NVIDIA (bStocks)", tokenLogoUrl: "https://onchainos.bnbstatic.com/images/web3-data/public/token/logos/9dc00cf6f4c44054b6be2d2e032b76c0.png", issuerLogoUrl: issuerMetadata.bstock.logoUrl, issuerWebsite: issuerMetadata.bstock.website, underlyingTicker: "NVDA", underlyingName: "NVIDIA Corporation" }
 ];
 export const DEMO_DATA_WARNING = "Demo Mode data is synthetic, deterministic, and not live market data";
+export const DEMO_CATALOG_SCOPE_WARNING = "Demo Mode uses a limited synthetic sample and is not a complete live asset catalog";
 const DEMO_MARKET_UPDATED_AT = Date.parse("2026-09-30T04:00:00.000Z");
 const DEMO_FIXED_SNAPSHOT_WARNING = "Demo snapshot timestamp is fixed for reproducibility and may be stale";
 
@@ -103,7 +104,7 @@ export class DemoTokenizedStocksService extends TokenizedStocksService {
   }
 
   override async listSnapshot(options: { chainId?: string; platformId?: string } = {}) {
-    return { listings: await this.list(options) };
+    return { listings: await this.list(options), warnings: [DEMO_CATALOG_SCOPE_WARNING] };
   }
 
   override async search(query: string, options: { chainId?: string; platformId?: string } = {}): Promise<StockAsset[]> {

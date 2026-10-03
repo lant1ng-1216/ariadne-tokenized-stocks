@@ -5,6 +5,9 @@ export function inferOutputLanguage(input: string): OutputLanguage {
 }
 
 const chineseMessages: Record<string, string> = {
+  "Provider timestamps alone do not guarantee data freshness; no market-data freshness SLA has been verified": "仅凭上游时间戳无法保证行情数据新鲜度；尚未验证行情数据服务等级",
+  "Provider search results are returned matches, not a verified complete catalog; pagination and total-count semantics are unverified": "搜索结果仅为上游本次返回的匹配项，并非已验证的完整目录；分页和总数语义尚未验证",
+  "Demo Mode uses a limited synthetic sample and is not a complete live asset catalog": "演示模式仅包含有限的合成样本，并非完整的实时资产目录",
   "The platform did not provide a recognized marketStatus": "平台未提供可识别的市场状态",
   "Liquidity was not provided and must not be interpreted as zero": "未提供流动性数据；不得将其理解为 0",
   "Market status is unknown": "市场状态未知",

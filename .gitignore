@@ -2,6 +2,9 @@
 .env.*
 !.env.example
 records/
+!records/
+records/*
+!records/phase26-provider-observation.json
 node_modules/
 dist/
 dist-package/

@@ -130,7 +130,7 @@ export function renderComparisonTable(comparison: AssetComparison, options: { al
     "",
     ...(options.includeAggregateWarnings === false ? [] : [comparison.warnings.length ? `${zh ? "数据警告：" : "Warnings:"}\n${comparison.warnings.map((warning) => `- ${localizeEvidenceMessage(warning, language)}`).join("\n")}` : (zh ? "数据警告：无" : "Warnings: none")]),
     "",
-    zh ? "说明：筛选状态只表示发行方版本是否被所提供的筛选条件排除；未应用筛选时，所有返回版本都保留在比较中。价差排序仅按观测到的绝对价差排序。筛选匹配或排序均不代表可交易性，也不构成交易建议。" : "Interpretation: filter status only describes whether supplied filters excluded a representation; with no filters, all returned representations remain in the comparison. Price-gap rank sorts by the observed absolute gap only. Neither indicates tradability or recommends a trade.",
+    zh ? "说明：筛选状态只表示发行方版本是否被所提供的筛选条件排除；比较仅包含上游本次返回的版本，目录完整性、分页和总数语义尚未验证。价差排序仅按观测到的绝对价差排序。筛选匹配或排序均不代表可交易性，也不构成交易建议。" : "Interpretation: filter status only describes whether supplied filters excluded a representation; this comparison contains the upstream-returned matches, not a verified complete catalog, and pagination/total-count semantics are unverified. Price-gap rank sorts by the observed absolute gap only. Neither indicates tradability or recommends a trade.",
     options.allowQuoteFollowUp === false
       ? zh ? "下一步：查看证据或数据缺口；未创建任何交易。" : "Next: review the evidence or data gaps. No transaction was created."
       : zh ? "下一步：检查选定的发行方版本，或请求报价；未创建任何交易。" : "Next: inspect a chosen representation or request a quote. No transaction was created."

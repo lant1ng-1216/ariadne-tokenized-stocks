@@ -18,6 +18,7 @@ await client.connect(transport);
 try {
   const appTools = new Set(["discover_tokenized_assets", "compare_asset_representations", "research_tokenized_stock"]);
   const tools = await client.listTools();
+  assert.equal(tools.tools.filter((candidate) => appTools.has(candidate.name)).length, 3, "all three MCP research tools must publish the catalog-scope wording");
   const uiUris = new Set<string>();
   for (const tool of tools.tools.filter((candidate) => appTools.has(candidate.name))) {
     const metadata = tool._meta as { ui?: { resourceUri?: unknown }; "ui/resourceUri"?: unknown } | undefined;
@@ -43,7 +44,10 @@ try {
   assert.match(html, /background:\s*transparent/);
   assert.match(html, /data-theme="dark"/);
   assert.match(html, /@media\s*\(max-width:\s*640px\)/);
+  assert.match(html, /:focus-visible\s*\{[^}]*outline:/, "interactive disclosures and links retain a visible keyboard focus indicator");
   assert.match(html, /prefers-reduced-motion/);
+  assert.match(html, /--host-safe-area-(?:top|right|bottom|left)/);
+  assert.match(html, /grid-template-columns:\s*1fr/, "narrow evidence layouts collapse to one column");
   assert.ok(html.length < 450_000, `the bundled research view should remain bounded (${html.length} bytes)`);
   assert.doesNotMatch(html, /from\s+["']@modelcontextprotocol\/ext-apps["']/i, "the iframe resource must contain its bundled bridge client");
 
@@ -67,7 +71,14 @@ const query = "我想了解 BNB Chain 上英伟达股票代币有哪些发行方
   assert.equal(researched.resolvedQuery, "NVDA");
   assert.equal(researched.outcome.sideEffects, "none");
   assert.equal(researched.assets.length, 2);
+  for (const tool of tools.tools.filter((candidate) => appTools.has(candidate.name))) {
+    assert.match(tool.description ?? "", /returned matches, not a verified complete catalog/i, `${tool.name} must describe its result set as returned matches rather than a complete universe`);
+  }
   const ui = renderResearchView(researched);
+  assert.match(ui, /^<main class="research-shell">/);
+  assert.match(ui, /<section class="representations" aria-label="发行方版本">/);
+  assert.match(ui, /<article class="representation" aria-label="Ondo">/);
+  assert.match(ui, /<details class="evidence">\s*<summary><span>来源与数据质量<\/span>/, "evidence uses a native, labelled disclosure rather than a custom dashboard control");
 
   const bundledScript = html.match(/<script type="module">([\s\S]*?)<\/script>/)?.[1];
   assert.ok(bundledScript, "MCP Apps resource must include its executable client bundle");
@@ -199,6 +210,9 @@ const query = "我想了解 BNB Chain 上英伟达股票代币有哪些发行方
   await waitFor(() => documentElement.getAttribute("data-theme") === "dark", "host context changes must be delivered to the research view");
   assert.equal(documentElement.getAttribute("data-theme"), "dark", "host theme changes update the rendered app theme");
   assert.equal(rootStyles.get("--color-text-primary"), "#f4f4f5", "host style-token changes are applied without a reload");
+  assert.equal(rootStyles.get("--host-safe-area-top"), "3px");
+  assert.equal(rootStyles.get("--host-safe-area-right"), "4px");
+  assert.equal(rootStyles.get("--host-safe-area-bottom"), "5px");
   assert.equal(rootStyles.get("--host-safe-area-left"), "6px", "safe-area insets are respected when the host supplies them");
 
   dispatchHostMessage(toolResultNotification(false));
@@ -224,6 +238,22 @@ const query = "我想了解 BNB Chain 上英伟达股票代币有哪些发行方
 
   assert.match(ui, /class="brand-name">Ariadne</);
   assert.match(ui, /Demo 合成数据/, "the native result must visibly distinguish synthetic fixtures from live evidence in Chinese");
+  assert.match(ui, /演示模式仅包含有限的合成样本，并非完整的实时资产目录/, "the MCP result must not imply that Demo fixtures are a complete asset catalog");
+  const liveCatalogWarning = "Provider search results are returned matches, not a verified complete catalog; pagination and total-count semantics are unverified";
+  const liveCatalogUiEn = renderResearchView({
+    ...structuredClone(researched),
+    query: "Research NVDA",
+    outcome: { ...researched.outcome, warnings: [liveCatalogWarning] },
+    comparison: { ...researched.comparison, warnings: [liveCatalogWarning] }
+  });
+  const liveCatalogUiZh = renderResearchView({
+    ...structuredClone(researched),
+    query: "研究 NVDA",
+    outcome: { ...researched.outcome, warnings: [liveCatalogWarning] },
+    comparison: { ...researched.comparison, warnings: [liveCatalogWarning] }
+  });
+  assert.match(liveCatalogUiEn, /Provider search results are returned matches, not a verified complete catalog; pagination and total-count semantics are unverified/);
+  assert.match(liveCatalogUiZh, /搜索结果仅为上游本次返回的匹配项，并非已验证的完整目录；分页和总数语义尚未验证/);
   assert.match(ui, /来源与数据质量/);
   assert.match(ui, /报告为开放状态；市场状态未知/);
   assert.match(ui, /不得将其理解为 0/);

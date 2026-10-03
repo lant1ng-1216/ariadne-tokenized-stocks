@@ -97,7 +97,7 @@ const fidelityMarket = {
     responseTimestampMs: 1_790_603_000_200,
     assetUpdatedAtMs: 1_790_603_000_123
   }],
-  dataWarnings: ["Liquidity was not provided and must not be interpreted as zero", "The platform did not provide a recognized marketStatus"]
+  dataWarnings: ["Liquidity was not provided and must not be interpreted as zero", "The platform did not provide a recognized marketStatus", "Provider timestamps alone do not guarantee data freshness; no market-data freshness SLA has been verified"]
 };
 const fidelityAsset = toAgentAsset(enriched[0]!, fidelityMarket);
 const fidelityComparison = compareAgentAssets([fidelityAsset]);
@@ -112,6 +112,8 @@ assert.match(chineseFidelityCard, /报告为开放状态；市场状态未知/);
 assert.match(englishFidelityCard, /Open state reported; status unknown/);
 assert.match(chineseFidelityCard, /未提供流动性数据；不得将其理解为 0/);
 assert.match(englishFidelityCard, /Liquidity was not provided and must not be interpreted as zero/);
+assert.match(chineseFidelityCard, /仅凭上游时间戳无法保证行情数据新鲜度；尚未验证行情数据服务等级/);
+assert.match(englishFidelityCard, /Provider timestamps alone do not guarantee data freshness; no market-data freshness SLA has been verified/);
 assert.doesNotMatch(chineseFidelityCard, /流动性(?:数据)?[：:]\s*0(?:\.0+)?/);
 assert.doesNotMatch(englishFidelityCard, /liquidity(?: data)?\s*[:=]\s*0(?:\.0+)?/i);
 
@@ -142,6 +144,7 @@ for (const [surface, ui, statusLabel, warning] of [
   assert.ok(ui.includes("123.45") && ui.includes("234.56"), `${surface} native view retains the separate exact observed/reference prices`);
   assert.ok(ui.includes(statusLabel), `${surface} native view preserves unknown market status`);
   assert.ok(ui.includes(warning), `${surface} native view discloses missing liquidity without converting it to zero`);
+  assert.ok(ui.includes(surface === "Chinese" ? "仅凭上游时间戳无法保证行情数据新鲜度；尚未验证行情数据服务等级" : "Provider timestamps alone do not guarantee data freshness; no market-data freshness SLA has been verified"), `${surface} native view says provider timestamps do not establish a freshness guarantee`);
   assert.ok(ui.includes("/fixture/rwa/price"), `${surface} native view retains the supplied source endpoint`);
 }
 

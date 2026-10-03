@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "phase": "provider-data-limitations-closure",
+  "observedAt": "2026-10-03T00:27:00.832Z",
+  "requestPolicy": {
+    "method": "GET",
+    "serial": true,
+    "requestCount": 6,
+    "maxRetries": 0,
+    "timeoutMs": 8000
+  },
+  "requests": [
+    { "index": 1, "endpoint": "/api/v1/dex/market/rwa/platforms", "purpose": "platform metadata", "httpStatus": 200 },
+    { "index": 2, "endpoint": "/api/v1/dex/market/rwa/tokens", "purpose": "BSC directory snapshot", "httpStatus": 200 },
+    { "index": 3, "endpoint": "/api/v1/dex/market/rwa/tokens", "purpose": "directory tabId=1 identity set", "httpStatus": 200 },
+    { "index": 4, "endpoint": "/api/v1/dex/market/rwa/tokens", "purpose": "directory tabId=13 identity set", "httpStatus": 200 },
+    { "index": 5, "endpoint": "/api/v1/dex/market/rwa/search", "purpose": "NVDA representation lookup", "httpStatus": 200 },
+    { "index": 6, "endpoint": "/api/v1/dex/market/rwa/price", "purpose": "NVDA timestamped price snapshot", "httpStatus": 200 }
+  ],
+  "observations": {
+    "platformMetadataDeclaredBscRecords": 545,
+    "directoryUniqueRepresentationsReturned": 488,
+    "declaredMinusReturnedDifference": 57,
+    "representationCountsByPlatform": { "ondo": 442, "bstock": 46 },
+    "comparedDirectoryTabs": [1, 13],
+    "comparedTabIdentitySetsEqual": true,
+    "directoryRowsWithPerTokenUpdateTimestamp": 0,
+    "directoryRowsWithLiquidity": 0,
+    "recognizedMarketStatusRows": 442,
+    "recognizedMarketStatusCounts": { "closed": 411, "offhours": 31 },
+    "rowsWithoutRecognizedMarketStatus": 46,
+    "sampledNvdaRepresentations": 2,
+    "sampledNvdaRowsWithPositiveTokenAndReferencePrices": 2,
+    "sampledNvdaRowsWithProviderTimestamp": 2,
+    "sampledNvdaQuoteAgeMsAtObservation": [196, 4426]
+  },
+  "limitations": [
+    "The 57-record difference is unexplained; provider pagination and total-count semantics are unverified.",
+    "Equal identity sets for two tabId values do not prove that the filter is ignored or establish filter semantics.",
+    "Directory rows did not include per-token quote-update timestamps or liquidity; 46 rows lacked a recognized market status.",
+    "The two sampled quote ages do not establish a freshness service-level agreement or acceptable maximum age.",
+    "This is a single bounded observation, not a complete catalog or a recurring measurement."
+  ],
+  "rawProviderPayloadIncluded": false,
+  "credentialsIncluded": false
+}

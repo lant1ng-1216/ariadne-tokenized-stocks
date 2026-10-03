@@ -108,24 +108,18 @@ The MCP `broadcast_confirmed_transaction` tool and SDK `GuardedEvmExecutionServi
 
 ## Quickstart
 
-For a credential-free first experience, see [`docs/QUICKSTART.md`](docs/QUICKSTART.md) and run:
+For the full prerequisites and setup steps, see [`docs/QUICKSTART.md`](docs/QUICKSTART.md). It separates the credential-free MCP Demo from Live Mode and links the [standalone SDK guide](docs/SDK_USAGE.md). With the repository installed, the quickest Agent path is:
 
 ```bash
-npm install
-npm run mcp:demo
+npm ci
+npm run mcp:config:demo
 ```
 
-Demo Mode is deterministic and read-only. It does not create executable plans, sign or broadcast.
+Demo Mode is deterministic and read-only. It does not create executable plans, sign or broadcast. Generate the matching client configuration with `npm run mcp:config:demo`; the generated JSON uses the current absolute repository path. Do not paste the Live Mode configuration into a Demo setup.
 
-```bash
-npm install
-npm run typecheck
-npm run test:domain
-npm run test:simulation
-npm run test:mcp
-```
+For offline local checks, run `npm run typecheck`, `npm run test:domain` and `npm run test:demo-mode`. Live API checks require your own credentials and are documented separately.
 
-The no-funds simulation path does not broadcast a transaction. Copy [`docs/mcp-config.example.json`](docs/mcp-config.example.json) into the MCP client configuration and set its working directory to the absolute repository path. For the lowest-friction first run, launch `npm run mcp:demo` and ask for a natural-language tokenized-stock research brief; the Agent can select `research_tokenized_stock` without the user naming a tool.
+The no-funds simulation path does not broadcast a transaction. If the Agent host supports automatic tool selection, it may select `research_tokenized_stock` from a natural-language request; otherwise invoke that tool explicitly. Tool selection behavior depends on the host and is not guaranteed by Ariadne.
 
 For a direct browser experience that does not depend on Codex or Claude Code summarization, run:
 

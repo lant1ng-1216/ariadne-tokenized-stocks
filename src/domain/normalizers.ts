@@ -83,6 +83,7 @@ export function normalizeMarketContext(asset: StockAsset, input: any): MarketCon
   const tokenPrice = positiveDecimal(input.tokenPrice);
   const referencePrice = positiveDecimal(input.referencePrice);
   const warnings: string[] = [];
+  warnings.push("Provider timestamps alone do not guarantee data freshness; no market-data freshness SLA has been verified");
   if (status === "unknown") warnings.push("The platform did not provide a recognized marketStatus");
   if (input.liquidity == null) warnings.push("Liquidity was not provided and must not be interpreted as zero");
   if (!tokenPrice) warnings.push(input.tokenPrice == null ? "tokenPrice is missing" : "tokenPrice is invalid or non-positive");

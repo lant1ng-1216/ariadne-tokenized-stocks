@@ -3,7 +3,7 @@ import { normalizeMarketContext, normalizeQuote, normalizeSimulation } from "../
 import { evaluateSafety } from "../src/domain/safety.js";
 import { attachSimulation, assertExecutable, confirmPlan, isPlanExpired } from "../src/domain/action-plan.js";
 import { ExecutionService } from "../src/services/executor.js";
-import { TokenizedStocksService } from "../src/services/tokenized-stocks.js";
+import { CATALOG_SCOPE_WARNING, TokenizedStocksService } from "../src/services/tokenized-stocks.js";
 import { parseTokenAmount } from "../src/domain/amount.js";
 
 assert.equal(parseTokenAmount("1.25", 6), 1_250_000n);
@@ -42,6 +42,17 @@ const priceContext = await priceService.marketContext(asset);
 assert.equal(priceContext.tokenPrice, "101", "market context should prefer the dedicated RWA price endpoint");
 assert.equal(priceContext.referencePrice, "100.5");
 assert.equal(priceContext.tokenPriceUpdatedAt, 1234, "market context should retain the provider's per-token update timestamp");
+const freshnessCaveat = "Provider timestamps alone do not guarantee data freshness; no market-data freshness SLA has been verified";
+assert.deepEqual(priceContext.dataWarnings.filter((warning) => warning === freshnessCaveat), [freshnessCaveat], "SDK market context must expose exactly one explicit freshness caveat");
+const priceProvenance = priceContext.provenance ?? [];
+assert.equal(priceProvenance[0]?.responseTimestampMs, 1_790_603_000_200, "the provider response timestamp remains separately attributable");
+assert.notEqual(priceContext.tokenPriceUpdatedAt, priceProvenance[0]?.responseTimestampMs, "an asset quote timestamp must not be conflated with its response timestamp");
+const contextWithoutAssetTimestamp = normalizeMarketContext(asset, { tokenPrice: "101", referencePrice: "100.5" });
+assert.equal(contextWithoutAssetTimestamp.tokenPriceUpdatedAt, undefined, "missing per-asset update time remains absent");
+assert.ok(contextWithoutAssetTimestamp.dataWarnings.includes(freshnessCaveat), "the freshness caveat remains present when the provider omits an asset timestamp");
+const contextWithAssetTimestamp = normalizeMarketContext(asset, { tokenPrice: "101", referencePrice: "100.5", tokenPriceUpdatedAt: 1234 });
+assert.equal(contextWithAssetTimestamp.tokenPriceUpdatedAt, 1234, "a provider quote timestamp is retained as observed data");
+assert.ok(contextWithAssetTimestamp.dataWarnings.includes(freshnessCaveat), "the same caveat remains present even when the provider supplies a timestamp");
 assert.deepEqual(priceContext.provenance, [
   {
     provider: "Binance Web3",
@@ -62,6 +73,7 @@ assert.deepEqual(requests.find((request) => request.path.endsWith("/rwa/price"))
   tokenContractAddresses: "0xabc"
 });
 const catalogSnapshot = await priceService.listSnapshot({ chainId: "56" });
+assert.deepEqual(catalogSnapshot.warnings, [CATALOG_SCOPE_WARNING], "SDK directory snapshots must return the explicit incomplete-catalog warning");
 assert.equal(catalogSnapshot.sourceResponseTimestampMs, 1_790_603_000_000, "catalog response timestamp should be retained in milliseconds");
 assert.equal(catalogSnapshot.platformMetadataResponseTimestampMs, 1_790_603_000_100, "platform metadata response timestamp should remain distinct from the token-list response");
 assert.equal(catalogSnapshot.listings[0]?.market.tokenPriceUpdatedAt, 1, "catalog response time must not replace the row's separate quote-update timestamp");

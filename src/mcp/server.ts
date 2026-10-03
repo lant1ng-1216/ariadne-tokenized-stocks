@@ -64,6 +64,9 @@ async function enrichAgentAsset(asset: Parameters<typeof toAgentAsset>[0], reque
 const server = new McpServer({ name: "ariadne-tokenized-stocks", version: "0.1.0" });
 const RESEARCH_UI_URI = "ui://ariadne/research-view.html";
 const researchUiHtml = buildResearchAppHtml();
+const catalogCoverageWarning = () => demoMode
+  ? "Demo Mode uses a limited synthetic sample and is not a complete live asset catalog"
+  : "Provider search results are returned matches, not a verified complete catalog; pagination and total-count semantics are unverified";
 
 registerAppResource(server, "Ariadne asset research view", RESEARCH_UI_URI, {
   description: "Read-only visual comparison of tokenized-stock representations returned by Ariadne research tools."
@@ -73,7 +76,7 @@ registerAppResource(server, "Ariadne asset research view", RESEARCH_UI_URI, {
 
 registerAppTool(server, "discover_tokenized_assets", {
   title: "Discover tokenized-stock representations",
-  description: "Discover tokenized-stock representations for a ticker, company name or natural-language asset request. Extract the intended asset if possible; ambiguous requests require clarification. Read-only.",
+  description: "Discover tokenized-stock representations for a ticker, company name or natural-language asset request. Extract the intended asset if possible; ambiguous requests require clarification. Results are returned matches, not a verified complete catalog. Read-only.",
   _meta: { ui: { resourceUri: RESEARCH_UI_URI } },
   inputSchema: {
     query: z.string().min(1),
@@ -87,7 +90,7 @@ registerAppTool(server, "discover_tokenized_assets", {
     const { assets, resolvedQuery } = await searchAssetIntent(stocks, query, { chainId });
     const filtered = platforms?.length ? assets.filter((asset) => platforms.includes(asset.platformId)) : assets;
     const enriched = await enrichAgentAssets(stocks, filtered, includeMarketContext !== false);
-    const warnings = enriched.flatMap((asset) => asset.dataQuality.warnings).filter((warning, index, all) => all.indexOf(warning) === index);
+    const warnings = [...new Set([catalogCoverageWarning(), ...enriched.flatMap((asset) => asset.dataQuality.warnings)])];
     return textResult(outcome({
       summary: language === "zh-CN"
         ? enriched.length ? `为 ${resolvedQuery} 找到 ${enriched.length} 个代币化股票发行方版本` : `没有找到与“${query}”匹配的代币化股票版本`
@@ -110,7 +113,7 @@ registerAppTool(server, "discover_tokenized_assets", {
 
 registerAppTool(server, "compare_asset_representations", {
   title: "Compare issuer representations",
-  description: "Compare issuer-aware tokenized-stock representations using optional user preferences. The Agent can use this instead of manually calling low-level search and market tools.",
+  description: "Compare issuer-aware tokenized-stock representations using optional user preferences. Results are returned matches, not a verified complete catalog. The Agent can use this instead of manually calling low-level search and market tools.",
   _meta: { ui: { resourceUri: RESEARCH_UI_URI } },
   inputSchema: {
     query: z.string().min(1),
@@ -131,6 +134,7 @@ registerAppTool(server, "compare_asset_representations", {
     const { assets } = await searchAssetIntent(stocks, query, { chainId });
     const enriched = await enrichAgentAssets(stocks, assets);
     const comparison = compareAgentAssets(enriched, (preference ?? {}) as AssetPreference);
+    comparison.warnings = [...new Set([catalogCoverageWarning(), ...comparison.warnings])];
     const eligibleCount = comparison.rows.filter((row) => row.excludedReasons.length === 0).length;
     const summary = language === "zh-CN" ? eligibleCount ? `${eligibleCount} / ${comparison.rows.length} 个发行方版本符合指定条件` : "没有发行方版本符合指定条件" : comparison.summary;
     const nextAction = language === "zh-CN"
@@ -145,7 +149,7 @@ registerAppTool(server, "compare_asset_representations", {
 
 registerAppTool(server, "research_tokenized_stock", {
   title: "Research a tokenized stock",
-  description: "Run an Agent-native tokenized-stock research workflow in one call: discover issuer representations, enrich market context, compare evidence and return a human-readable brief with the next safe action. The Agent can use this instead of manually chaining search, market and comparison tools. Read-only; never signs or broadcasts.",
+  description: "Run an Agent-native tokenized-stock research workflow in one call: discover issuer representations, enrich market context, compare evidence and return a human-readable brief with the next safe action. Results are returned matches, not a verified complete catalog. The Agent can use this instead of manually chaining search, market and comparison tools. Read-only; never signs or broadcasts.",
   _meta: { ui: { resourceUri: RESEARCH_UI_URI } },
   inputSchema: {
     query: z.string().min(1),
@@ -175,6 +179,7 @@ registerAppTool(server, "research_tokenized_stock", {
     const marketContextMs = elapsedMs(marketContextStartedAt);
     const comparisonStartedAt = performance.now();
     const comparison = compareAgentAssets(enriched, (preference ?? {}) as AssetPreference);
+    comparison.warnings = [...new Set([catalogCoverageWarning(), ...comparison.warnings])];
     const comparisonMs = elapsedMs(comparisonStartedAt);
     const eligible = comparison.rows.filter((row) => !row.excludedReasons.length);
     const warnings = [...new Set([

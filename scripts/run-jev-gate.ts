@@ -14,7 +14,7 @@ const allowedChecks = new Set([
   "test:mcp-human-confirmation",
   "test:mcp-confirmation-host-fixture",
   "test:input-balance", "test:gas-safety", "test:execution-dry-run", "test:guarded-sdk-executor",
-  "test:agent-model", "test:asset-intent-query", "test:core-hardening", "test:core-product-phase-plan", "test:presentation",
+  "test:agent-model", "test:asset-intent-query", "test:core-hardening", "test:core-product-phase-plan", "test:phase26-limitations", "test:presentation",
   "test:web-workspace", "test:web-catalog-client", "test:web-market-presentation", "test:web-market-freshness", "test:asset-directory", "test:web-demo",
   "test:demo-mode", "test:mcp-natural-language", "test:mcp-enrichment", "test:mcp-app-ui", "test:onboarding", "test:distribution",
   "test:mcp-config", "test:sdk-example", "test:cleanroom", "test:jev-shadow", "test:retry-policy",

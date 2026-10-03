@@ -89,8 +89,12 @@ export type AssetSearchOptions = {
   platformId?: string;
 };
 
+export const CATALOG_SCOPE_WARNING = "Provider directory results are returned records, not a verified complete catalog; pagination and total-count semantics are unverified";
+
 export type TokenizedStockCatalogSnapshot = {
   listings: TokenizedStockListing[];
+  /** The provider has not established that returned rows represent the complete catalog. */
+  warnings: string[];
   /** Provider catalog-response time in Unix milliseconds; not a per-asset quote timestamp. */
   sourceResponseTimestampMs?: number;
   /** Platform metadata response time in Unix milliseconds; separate from the token-list snapshot. */
@@ -241,6 +245,7 @@ export class TokenizedStocksService {
     });
     return {
       listings,
+      warnings: [CATALOG_SCOPE_WARNING],
       ...(typeof tokens.timestamp === "number" && Number.isFinite(tokens.timestamp) && tokens.timestamp > 0
         ? { sourceResponseTimestampMs: tokens.timestamp }
         : {}),

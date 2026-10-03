@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { renderResearchView } from "../src/mcp/ui/research-view.js";
+import { DEMO_CATALOG_SCOPE_WARNING, DemoTokenizedStocksService } from "../src/services/demo-tokenized-stocks.js";
+
+const demoCatalogSnapshot = await new DemoTokenizedStocksService({} as any).listSnapshot({ chainId: "56" });
+assert.deepEqual(demoCatalogSnapshot.warnings, [DEMO_CATALOG_SCOPE_WARNING], "SDK Demo snapshots must return the explicit limited-synthetic-sample warning");
 
 const transport = new StdioClientTransport({
   command: "node",
@@ -31,6 +35,7 @@ assert.equal(payload.assets.length, 2);
 assert.deepEqual(result.structuredContent, payload, "discovery text and structured content must be identical");
 assert.ok(payload.assets.every((asset: Record<string, any>) => asset.metadata.source === "synthetic"));
 assert.equal(payload.assets[0].market.dataWarnings[0], "Demo Mode data is synthetic, deterministic, and not live market data");
+assert.ok(payload.outcome.warnings.includes("Demo Mode uses a limited synthetic sample and is not a complete live asset catalog"), "Demo MCP must disclose that its fixtures are not a complete live catalog");
 assert.ok(payload.assets.every((asset: Record<string, any>) => asset.market.dataWarnings.includes("Demo snapshot timestamp is fixed for reproducibility and may be stale")));
 assert.ok(payload.assets.every((asset: Record<string, any>) => asset.market.marketStatus === "unknown" && asset.market.liquidity === undefined));
 assert.equal(payload.assets[0].market.tokenPriceUpdatedAt, payload.assets[1].market.tokenPriceUpdatedAt, "both issuer views use one stable fixture timestamp");
@@ -41,6 +46,7 @@ assert.match(renderedDemoView, /Synthetic demo data/);
 assert.match(renderedDemoView, /fixed for reproducibility and may be stale/);
 assert.match(renderedDemoView, /market status is unknown/i);
 assert.match(renderedDemoView, /Liquidity was not provided and must not be interpreted as zero/);
+assert.match(renderedDemoView, /Demo Mode uses a limited synthetic sample and is not a complete live asset catalog/, "the native Demo result must disclose that its sample is not a complete live catalog");
 
 const fixtureCounts: Record<string, number> = { NVDA: 2, AAPL: 1, TSLA: 2, MSFT: 2, AMZN: 1, META: 1, COIN: 1 };
 for (const [ticker, expectedCount] of Object.entries(fixtureCounts)) {
