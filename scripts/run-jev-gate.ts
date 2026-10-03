@@ -1,8 +1,8 @@
 import { spawn } from "node:child_process";
 import { resolve } from "node:path";
 import { writeShadowDecisionRecord } from "../src/jev/record.js";
-import { appendGateReportEntry } from "../src/jev/report-sync.js";
-import { advancePhaseState } from "../src/jev/phase-state.js";
+import { appendGateReportEntry, syncLatestGateSummary } from "../src/jev/report-sync.js";
+import { advancePhaseState, assertApprovedPhaseSuccessor } from "../src/jev/phase-state.js";
 import { runShadowGate } from "../src/jev/shadow-gate.js";
 import { assertSafeReviewText, validateAcceptanceCriteria } from "../src/jev/evidence-validation.js";
 import type { GateCriterion } from "../src/jev/types.js";
@@ -14,7 +14,7 @@ const allowedChecks = new Set([
   "test:mcp-human-confirmation",
   "test:mcp-confirmation-host-fixture",
   "test:input-balance", "test:gas-safety", "test:execution-dry-run", "test:guarded-sdk-executor",
-  "test:agent-model", "test:asset-intent-query", "test:core-hardening", "test:core-product-phase-plan", "test:phase26-limitations", "test:presentation",
+  "test:agent-model", "test:asset-intent-query", "test:core-hardening", "test:core-product-phase-plan", "test:phase26-limitations", "test:phase27-contract", "test:phase28-fidelity", "test:phase29-acceptance-evidence", "test:presentation",
   "test:web-workspace", "test:web-catalog-client", "test:web-market-presentation", "test:web-market-freshness", "test:asset-directory", "test:web-demo",
   "test:demo-mode", "test:mcp-natural-language", "test:mcp-enrichment", "test:mcp-app-ui", "test:mcp-live-catalog-warning", "test:onboarding", "test:distribution",
   "test:mcp-config", "test:sdk-example", "test:cleanroom", "test:jev-shadow", "test:retry-policy",
@@ -53,6 +53,7 @@ for (const check of options.checks) {
 }
 const checkNames = new Set(options.checks);
 validateAcceptanceCriteria(options.criteria, checkNames);
+assertApprovedPhaseSuccessor(options.phase, options.next);
 
 const checks: Array<{ name: string; passed: boolean; evidence: string }> = [];
 for (const name of [...new Set(options.checks)]) {
@@ -80,6 +81,13 @@ await appendGateReportEntry(
   resolve("docs/TECHNICAL_RESEARCH_REPORT.md"),
   resolve("docs/PRODUCT_EXPERIENCE_REPORT.md"),
 );
+await syncLatestGateSummary(record, phaseState, [
+  resolve("docs/CORE_PRODUCT_PHASE_PLAN.md"),
+  resolve("docs/DEVELOPER_EXPERIENCE_LOG.md"),
+  resolve("docs/TECHNICAL_RESEARCH_REPORT.md"),
+  resolve("docs/PRODUCT_EXPERIENCE_REPORT.md"),
+  resolve("docs/UPGRADE_DEFERRED_ITEMS.md"),
+]);
 console.log(JSON.stringify({
   phase: options.phase,
   checks,

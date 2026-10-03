@@ -1,7 +1,7 @@
 import type { ActionPlan, SimulationResult } from "./types.js";
 import { evaluateSafety } from "./safety.js";
 
-const requiredPreflightChecks = ["asset_identity", "quote_available", "price_impact", "authorization_visibility", "input_balance"];
+const requiredPreflightChecks = ["asset_identity", "market_status", "quote_available", "price_impact", "authorization_visibility", "input_balance"];
 const requiredExecutionChecks = [...requiredPreflightChecks, "simulation"];
 
 function hasPassedChecks(plan: ActionPlan, names: string[]): boolean {

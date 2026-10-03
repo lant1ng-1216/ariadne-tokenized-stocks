@@ -1,17 +1,55 @@
 import type { AssetComparison, AgentTokenizedAsset, ResearchNextStep, ResearchTiming } from "../domain/agent-types.js";
+import { hasMarketStateConflict, normalizeProviderTimestamp } from "../domain/normalizers.js";
 import { localizeEvidenceMessage, type OutputLanguage } from "./language.js";
 
 const value = (input: string | number | boolean | undefined, fallback = "Not available") => input === undefined || input === "" ? fallback : String(input);
 const compactAddress = (input: string | undefined) => input && input.length > 14 ? `${input.slice(0, 8)}…${input.slice(-6)}` : value(input);
 const statusLabel = (asset: AgentTokenizedAsset, language: OutputLanguage) => {
+  if (asset.market && hasMarketStateConflict(asset.market.marketStatus, asset.market.openState)) return language === "zh-CN" ? "非开放（上游状态字段矛盾）" : "Not open (provider status fields conflict)";
   if (asset.market?.marketStatus === "closed") return language === "zh-CN" ? "已休市" : "Closed";
   if (asset.market?.marketStatus === "offhours") return language === "zh-CN" ? "非正常交易时段" : "Off-hours";
   if (asset.market?.marketStatus === "open") return language === "zh-CN" ? "开放" : "Open";
-  if (asset.market?.openState === true) return language === "zh-CN" ? "报告为开放状态；市场状态未知" : "Open state reported; status unknown";
+  if (asset.market?.openState === true) return language === "zh-CN" ? "市场状态未知（上游报告开放标记，但未确认）" : "Market status unknown (provider open flag is unconfirmed)";
   return language === "zh-CN" ? "未知" : "Unknown";
 };
+const assetTypeLabel = (assetType: number | undefined, language: OutputLanguage) => {
+  if (assetType === undefined || !Number.isSafeInteger(assetType)) return undefined;
+  const label = assetType === 1 ? (language === "zh-CN" ? "股票" : "Stock")
+    : assetType === 2 ? "Pre-IPO"
+      : assetType === 3 ? "ETF"
+        : language === "zh-CN" ? "未知类型" : "Unknown type";
+  return label + " (" + assetType + ")";
+};
+const sourceTimestampLabel = (timestamp: number, language: OutputLanguage) => {
+  const normalized = normalizeProviderTimestamp(timestamp);
+  if (normalized === undefined) return language === "zh-CN" ? "未提供有效来源时间戳" : "No valid source timestamp supplied";
+  return new Date(normalized).toISOString();
+};
+const untrustedMarkdownValue = (input: string | number) => String(input)
+  .replace(/[\r\n\u2028\u2029]+/g, " ")
+  .replace(/[\\`*_{}\[\]()#+.!|<>~]/g, "\\$&");
+const sourceStatusDetails = (market: AgentTokenizedAsset["market"], language: OutputLanguage) => {
+  if (!market) return undefined;
+  const zh = language === "zh-CN";
+  const separator = zh ? "：" : ": ";
+  const details = [
+    ...(market.providerMarketStatus !== undefined ? [(zh ? "上游状态" : "Provider status") + separator + untrustedMarkdownValue(market.providerMarketStatus)] : []),
+    ...(typeof market.openState === "boolean" ? [(zh ? "上游开放标记" : "Provider open-state flag") + separator + String(market.openState)] : []),
+    ...(market.reasonCode !== undefined ? [(zh ? "原因代码" : "Reason code") + separator + untrustedMarkdownValue(market.reasonCode)] : []),
+    ...(market.reasonMsg !== undefined ? [(zh ? "上游说明" : "Provider note") + separator + untrustedMarkdownValue(market.reasonMsg)] : []),
+    ...(market.volume24H !== undefined ? [(zh ? "24 小时成交量" : "24h volume") + separator + untrustedMarkdownValue(market.volume24H)] : []),
+    ...(market.liquidity !== undefined ? [(zh ? "上游流动性字段" : "Provider liquidity field") + separator + untrustedMarkdownValue(market.liquidity)] : []),
+    ...(typeof market.holders === "number" ? [(zh ? "持有者数量字段" : "Provider holder-count field") + separator + String(market.holders)] : []),
+    ...(market.nextOpenTime !== undefined ? [(zh ? "下次开放" : "Next open") + separator + sourceTimestampLabel(market.nextOpenTime, language)] : []),
+    ...(market.nextCloseTime !== undefined ? [(zh ? "下次收盘" : "Next close") + separator + sourceTimestampLabel(market.nextCloseTime, language)] : [])
+  ];
+  return details.length ? details.join(" · ") : undefined;
+};
 const completenessLabel = (asset: AgentTokenizedAsset, language: OutputLanguage) => asset.dataQuality.completeness === "complete" ? language === "zh-CN" ? "完整" : "Complete" : asset.dataQuality.completeness === "partial" ? language === "zh-CN" ? "部分" : "Partial" : language === "zh-CN" ? "有限" : "Limited";
-const updatedLabel = (timestamp: number | undefined, language: OutputLanguage) => timestamp ? new Date(timestamp).toISOString() : language === "zh-CN" ? "未提供" : "Not available";
+const updatedLabel = (timestamp: number | undefined, language: OutputLanguage) => {
+  const normalized = normalizeProviderTimestamp(timestamp);
+  return normalized === undefined ? language === "zh-CN" ? "未提供有效来源时间戳" : "No valid source timestamp supplied" : new Date(normalized).toISOString();
+};
 const provenanceLabel = (market: AgentTokenizedAsset["market"], language: OutputLanguage) => market?.provenance?.length
   ? market.provenance.map((source) => `${source.provider} ${source.endpoint} [fields: ${source.fields.join(", ")}]${source.responseTimestampMs ? ` (response ${updatedLabel(source.responseTimestampMs, language)})` : ""}`).join("; ")
   : language === "zh-CN" ? "未提供" : "Not supplied";
@@ -77,12 +115,14 @@ export function renderAssetCard(asset: AgentTokenizedAsset, options: { allowQuot
     zh ? "> 证据卡片——不构成投资建议" : "> Evidence card — not an investment recommendation",
     "",
     zh ? "**资产身份**" : "**Identity**",
+    ...(assetTypeLabel(asset.assetType, language) ? [zh ? `- 资产类型：**${assetTypeLabel(asset.assetType, language)}**` : `- Asset type: **${assetTypeLabel(asset.assetType, language)}**`] : []),
     zh ? `- 代币：**${value(asset.tokenSymbol)}** · 平台：**${value(asset.platformId)}** · 链：**${value(asset.chainId)}**` : `- Token: **${value(asset.tokenSymbol)}** · Platform: **${value(asset.platformId)}** · Chain: **${value(asset.chainId)}**`,
     zh ? `- 合约：\`${compactAddress(asset.contractAddress)}\`` : `- Contract: \`${compactAddress(asset.contractAddress)}\``,
     zh ? `- 覆盖情况：**${coverageLabel(asset, language)}**` : `- Coverage: **${coverageLabel(asset, language)}**`,
     ...(asset.metadata.source === "synthetic" ? [zh ? "- 数据模式：**Demo 合成数据；不是实时行情**" : "- Data mode: **Synthetic Demo Mode fixture; not live market data**"] : []),
     "",
     zh ? "**行情快照**" : "**Market snapshot**",
+    ...(sourceStatusDetails(market, language) ? [zh ? `- 上游市场详情：${sourceStatusDetails(market, language)}` : `- Provider market details: ${sourceStatusDetails(market, language)}`] : []),
     zh ? `- 代币观测价格：**${value(market?.tokenPrice)}** · 标的参考价格：**${value(market?.referencePrice)}**` : `- Observed price: **${value(market?.tokenPrice)}** · Reference price: **${value(market?.referencePrice)}**`,
     zh ? `- 价差：**${value(market?.priceGapPercent, value(market?.priceGap))}** · 市场状态：**${statusLabel(asset, language)}**` : `- Price gap: **${value(market?.priceGapPercent, value(market?.priceGap))}** · Status: **${statusLabel(asset, language)}**`,
     zh ? `- 最后更新时间：**${updatedLabel(market?.tokenPriceUpdatedAt, language)}**` : `- Last update: **${updatedLabel(market?.tokenPriceUpdatedAt, language)}**`,
@@ -112,6 +152,8 @@ export function renderComparisonTable(comparison: AssetComparison, options: { al
       zh ? `- 代币：**${value(row.asset.tokenSymbol)}** · 合约：\`${row.asset.contractAddress}\`` : `- Token: **${value(row.asset.tokenSymbol)}** · Contract: \`${row.asset.contractAddress}\``,
       zh ? `- 代币观测价格：**${value(market?.tokenPrice)}** · 标的参考价格：**${value(market?.referencePrice)}**` : `- Observed price: **${value(market?.tokenPrice)}** · Reference price: **${value(market?.referencePrice)}**`,
       zh ? `- 价差：**${value(market?.priceGapPercent, value(market?.priceGap))}** · 市场状态：**${statusLabel(row.asset, language)}**` : `- Price gap: **${value(market?.priceGapPercent, value(market?.priceGap))}** · Market status: **${statusLabel(row.asset, language)}**`,
+      ...(assetTypeLabel(row.asset.assetType, language) ? [zh ? `- 资产类型：**${assetTypeLabel(row.asset.assetType, language)}**` : `- Asset type: **${assetTypeLabel(row.asset.assetType, language)}**`] : []),
+      ...(sourceStatusDetails(market, language) ? [zh ? `- 上游市场详情：${sourceStatusDetails(market, language)}` : `- Provider market details: ${sourceStatusDetails(market, language)}`] : []),
       zh ? `- 数据来源：**${provenanceLabel(market, language)}**` : `- Data source: **${provenanceLabel(market, language)}**`,
       zh ? `- 证据覆盖：**${coverageLabel(row.asset, language)}** · 完整度：**${completenessLabel(row.asset, language)}**` : `- Evidence coverage: **${coverageLabel(row.asset, language)}** · Completeness: **${completenessLabel(row.asset, language)}**`,
       row.asset.dataQuality.warnings.length ? `${zh ? "- 数据警告：" : "- Data warnings: "}${unique(row.asset.dataQuality.warnings).map((warning) => localizeEvidenceMessage(warning, language)).join("; ")}` : (zh ? "- 数据警告：无" : "- Data warnings: none")

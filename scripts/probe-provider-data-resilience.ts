@@ -1,6 +1,7 @@
 import { BinanceWeb3Client, type BinanceResponse } from "../src/binance-web3-client.js";
 import { BinanceWeb3Error } from "../src/errors.js";
 import { compareRepresentationIdentities, representationIdentityKey, summarizeTokenPriceProbe } from "../src/services/asset-coverage-audit.js";
+import { normalizeProviderTimestamp } from "../src/domain/normalizers.js";
 
 const apiKey = process.env.BINANCE_WEB3_API_KEY;
 const apiSecret = process.env.BINANCE_WEB3_API_SECRET;
@@ -88,7 +89,7 @@ function summarizeListings(rows: RawListing[]) {
   }, {});
   return {
     rows: rows.length,
-    rowsWithPerTokenUpdateTimestamp: rows.filter((row) => typeof row.tokenPriceUpdatedAt === "number" && Number.isFinite(row.tokenPriceUpdatedAt) && row.tokenPriceUpdatedAt > 0).length,
+    rowsWithPerTokenUpdateTimestamp: rows.filter((row) => normalizeProviderTimestamp(row.tokenPriceUpdatedAt) !== undefined).length,
     rowsWithStatusInfo: rows.filter((row) => row.statusInfo !== undefined && row.statusInfo !== null).length,
     statusFieldPresence: {
       statusInfoMarketStatus: rows.filter((row) => typeof row.statusInfo?.marketStatus === "string").length,
@@ -106,10 +107,10 @@ try {
   const platformResponse = await read<RawPlatform[]>("/api/v1/dex/market/rwa/platforms", {});
   const platforms = platformResponse?.data ?? [];
   const declaredBscTokens = platforms.reduce((total, platform) => total + (platform.chainDistribution?.find((item) => item.binanceChainId === chainId)?.tokenCount ?? 0), 0);
-  partialEvidence.platformCatalog = { available: Boolean(platformResponse), rows: platformResponse ? platforms.length : null, declaredBscTokenCount: platformResponse ? declaredBscTokens : null, responseTimestampMs: platformResponse?.timestamp ?? null };
+  partialEvidence.platformCatalog = { available: Boolean(platformResponse), rows: platformResponse ? platforms.length : null, declaredBscTokenCount: platformResponse ? declaredBscTokens : null, responseTimestampMs: normalizeProviderTimestamp(platformResponse?.timestamp) ?? null };
   const tokenResponse = await read<RawListing[]>("/api/v1/dex/market/rwa/tokens", { binanceChainId: chainId });
   const tokens = tokenResponse?.data ?? [];
-  partialEvidence.tokenCatalog = tokenResponse ? { available: true, responseTimestampMs: tokenResponse.timestamp ?? null, ...summarizeListings(tokens) } : { available: false };
+  partialEvidence.tokenCatalog = tokenResponse ? { available: true, responseTimestampMs: normalizeProviderTimestamp(tokenResponse.timestamp) ?? null, ...summarizeListings(tokens) } : { available: false };
   const tabOneResponse = await read<RawListing[]>("/api/v1/dex/market/rwa/tokens", { binanceChainId: chainId, tabId: "1" });
   partialEvidence.tabId1ListingData = tabOneResponse ? summarizeListings(tabOneResponse.data ?? []) : { available: false };
   const tabThirteenResponse = await read<RawListing[]>("/api/v1/dex/market/rwa/tokens", { binanceChainId: chainId, tabId: "13" });
@@ -131,9 +132,10 @@ try {
   const tabOneEvidence = tokenResponse && tabOneResponse ? compareRepresentationIdentities(catalogIdentities, identities(tabOneResponse.data ?? [])) : undefined;
   const tabThirteenEvidence = tokenResponse && tabThirteenResponse ? compareRepresentationIdentities(catalogIdentities, identities(tabThirteenResponse.data ?? [])) : undefined;
   const observedAt = Date.now();
-  const timestampOffsets = (priceResponse?.data ?? []).flatMap((row) => typeof row.tokenPriceUpdatedAt === "number" && Number.isFinite(row.tokenPriceUpdatedAt) && row.tokenPriceUpdatedAt > 0
-    ? [observedAt - row.tokenPriceUpdatedAt]
-    : []).sort((a, b) => a - b);
+  const timestampOffsets = (priceResponse?.data ?? []).flatMap((row) => {
+    const updatedAt = normalizeProviderTimestamp(row.tokenPriceUpdatedAt);
+    return updatedAt === undefined ? [] : [observedAt - updatedAt];
+  }).sort((a, b) => a - b);
   const ages = timestampOffsets.filter((offset) => offset >= 0);
   const futureTimestampOffsets = timestampOffsets.filter((offset) => offset < 0).map((offset) => Math.abs(offset));
   const marketStatusCounts = tokens.reduce<Record<string, number>>((counts, row) => {
@@ -166,10 +168,12 @@ try {
       byPlatform: tokenResponse ? Object.fromEntries([...new Set(tokens.map((row) => row.platformId))].sort().map((platformId) => [platformId, tokens.filter((row) => row.platformId === platformId).length])) : null,
       declaredPlatformBscTokenCount: platformResponse ? declaredBscTokens : null,
       countDifference: platformResponse && tokenResponse ? declaredBscTokens - tokens.length : null,
-      tokenResponseTimestampMs: tokenResponse?.timestamp ?? null,
-      platformResponseTimestampMs: platformResponse?.timestamp ?? null,
-      responseTimestampSkewMs: typeof tokenResponse?.timestamp === "number" && typeof platformResponse?.timestamp === "number" ? tokenResponse.timestamp - platformResponse.timestamp : null,
-      rowsWithPerTokenUpdateTimestamp: tokenResponse ? tokens.filter((row) => typeof row.tokenPriceUpdatedAt === "number" && Number.isFinite(row.tokenPriceUpdatedAt) && row.tokenPriceUpdatedAt > 0).length : null,
+      tokenResponseTimestampMs: normalizeProviderTimestamp(tokenResponse?.timestamp) ?? null,
+      platformResponseTimestampMs: normalizeProviderTimestamp(platformResponse?.timestamp) ?? null,
+      responseTimestampSkewMs: normalizeProviderTimestamp(tokenResponse?.timestamp) !== undefined && normalizeProviderTimestamp(platformResponse?.timestamp) !== undefined
+        ? normalizeProviderTimestamp(tokenResponse?.timestamp)! - normalizeProviderTimestamp(platformResponse?.timestamp)!
+        : null,
+      rowsWithPerTokenUpdateTimestamp: tokenResponse ? tokens.filter((row) => normalizeProviderTimestamp(row.tokenPriceUpdatedAt) !== undefined).length : null,
       marketStatusFieldPresence: {
         statusInfo: tokenResponse ? tokens.filter((row) => row.statusInfo !== undefined && row.statusInfo !== null).length : null,
         statusInfoMarketStatus: tokenResponse ? tokens.filter((row) => typeof row.statusInfo?.marketStatus === "string").length : null,
@@ -195,7 +199,7 @@ try {
     nvdaDedicatedPriceEndpoint: {
       available: Boolean(searchResponse && nvda.length > 0 && priceResponse),
       ...(nvdaPriceEvidence ?? {}),
-      responseTimestampMs: priceResponse?.timestamp ?? null,
+      responseTimestampMs: normalizeProviderTimestamp(priceResponse?.timestamp) ?? null,
       quoteAgeMs: ages,
       futureTimestampOffsetsMs: futureTimestampOffsets,
       freshnessSlaKnown: false,

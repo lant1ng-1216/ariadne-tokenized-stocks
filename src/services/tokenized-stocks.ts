@@ -2,6 +2,7 @@ import { BinanceWeb3Client } from "../binance-web3-client.js";
 import {
   makeAssetId,
   normalizeMarketContext,
+  normalizeProviderTimestamp,
   normalizeStockAsset,
   positiveDecimal
 } from "../domain/normalizers.js";
@@ -41,6 +42,7 @@ type RwaTokenResponse = {
   platformId: string;
   tokenSymbol: string;
   tokenName?: string;
+  assetType?: number;
   tokenLogoUrl?: string;
   underlyingTicker: string;
   underlyingName: string;
@@ -54,6 +56,9 @@ type RwaTokenResponse = {
     openState?: boolean;
     marketStatus?: string;
     nextOpenTime?: number;
+    reasonCode?: string | number;
+    reasonMsg?: string;
+    nextCloseTime?: number;
   };
   volume24H?: string;
   marketCap?: string;
@@ -136,6 +141,7 @@ export class TokenizedStocksService {
           tokenContractAddress: asset.tokenContractAddress,
           platformId: asset.platformId,
           tokenSymbol: asset.tokenSymbol,
+          assetType: asset.assetType,
           underlyingTicker: match.ticker,
           underlyingName: match.companyName
         });
@@ -175,9 +181,7 @@ export class TokenizedStocksService {
       website: platform.website,
       logoUrl: platform.logoUrl
     }));
-    const sourceResponseTimestampMs = typeof response.timestamp === "number" && Number.isFinite(response.timestamp) && response.timestamp > 0
-      ? response.timestamp
-      : undefined;
+    const sourceResponseTimestampMs = normalizeProviderTimestamp(response.timestamp);
     this.platformCache = {
       expiresAt: Date.now() + 5 * 60_000,
       data,
@@ -203,6 +207,7 @@ export class TokenizedStocksService {
     ]);
     const platforms = platformSnapshot.platforms;
     const platformById = new Map(platforms.map((platform) => [platform.platformId, platform]));
+    const sourceResponseTimestampMs = normalizeProviderTimestamp(tokens.timestamp);
     const listings = (tokens.data ?? []).map((token) => {
       const platform = platformById.get(token.platformId);
       const asset = normalizeStockAsset({
@@ -211,7 +216,8 @@ export class TokenizedStocksService {
         platformId: token.platformId,
         tokenSymbol: token.tokenSymbol,
         underlyingTicker: token.underlyingTicker,
-        underlyingName: token.underlyingName
+        underlyingName: token.underlyingName,
+        assetType: token.assetType
       });
       const enrichedAsset: StockAsset = {
         ...asset,
@@ -231,12 +237,12 @@ export class TokenizedStocksService {
           provenance: [{
             provider: "Binance Web3" as const,
             endpoint: "/api/v1/dex/market/rwa/tokens",
-            fields: ["tokenPrice", "referencePrice", "marketStatus", "openState", "nextOpenTime", "volume24H"],
-            ...(typeof tokens.timestamp === "number" && Number.isFinite(tokens.timestamp) && tokens.timestamp > 0
-              ? { responseTimestampMs: tokens.timestamp }
+            fields: ["tokenPrice", "referencePrice", "assetType", "marketStatus", "openState", "reasonCode", "reasonMsg", "nextOpenTime", "nextCloseTime", "volume24H"],
+            ...(sourceResponseTimestampMs !== undefined
+              ? { responseTimestampMs: sourceResponseTimestampMs }
               : {}),
-            ...(typeof token.tokenPriceUpdatedAt === "number" && Number.isFinite(token.tokenPriceUpdatedAt) && token.tokenPriceUpdatedAt > 0
-              ? { assetUpdatedAtMs: token.tokenPriceUpdatedAt }
+            ...(market.tokenPriceUpdatedAt !== undefined
+              ? { assetUpdatedAtMs: market.tokenPriceUpdatedAt }
               : {})
           }]
         },
@@ -247,8 +253,8 @@ export class TokenizedStocksService {
     return {
       listings,
       warnings: [CATALOG_SCOPE_WARNING],
-      ...(typeof tokens.timestamp === "number" && Number.isFinite(tokens.timestamp) && tokens.timestamp > 0
-        ? { sourceResponseTimestampMs: tokens.timestamp }
+      ...(sourceResponseTimestampMs !== undefined
+        ? { sourceResponseTimestampMs }
         : {}),
       ...(platformSnapshot.sourceResponseTimestampMs !== undefined
         ? { platformMetadataResponseTimestampMs: platformSnapshot.sourceResponseTimestampMs }
@@ -309,8 +315,8 @@ export class TokenizedStocksService {
       const row = rows[0];
       if (!row) return { ...base, state: "missing" };
       const price = positiveDecimal(row.tokenPrice);
-      const timestamp = row.tokenPriceUpdatedAt;
-      if (!price || typeof timestamp !== "number" || !Number.isFinite(timestamp) || timestamp <= 0) {
+      const timestamp = normalizeProviderTimestamp(row.tokenPriceUpdatedAt);
+      if (!price || timestamp === undefined) {
         return { ...base, state: "invalid" };
       }
       const referencePrice = positiveDecimal(row.referencePrice);
@@ -355,9 +361,8 @@ export class TokenizedStocksService {
         for (const snapshot of priceResponse.data ?? []) {
           const key = makeAssetId(snapshot.binanceChainId, snapshot.tokenContractAddress);
           pricesById.set(key, snapshot);
-          if (typeof priceResponse.timestamp === "number" && Number.isFinite(priceResponse.timestamp) && priceResponse.timestamp > 0) {
-            priceResponseTimesById.set(key, priceResponse.timestamp);
-          }
+          const priceResponseTimestamp = normalizeProviderTimestamp(priceResponse.timestamp);
+          if (priceResponseTimestamp !== undefined) priceResponseTimesById.set(key, priceResponseTimestamp);
         }
       }
 
@@ -369,13 +374,13 @@ export class TokenizedStocksService {
         }
         const priceSnapshot = pricesById.get(assetKey);
         if (!priceSnapshot || priceSnapshot.platformId !== asset.platformId ||
-          typeof priceSnapshot.tokenPriceUpdatedAt !== "number" ||
-          !Number.isFinite(priceSnapshot.tokenPriceUpdatedAt) || priceSnapshot.tokenPriceUpdatedAt <= 0) {
+          normalizeProviderTimestamp(priceSnapshot.tokenPriceUpdatedAt) === undefined) {
           throw new Error(`A timestamped RWA price snapshot was not returned for ${assetKey}`);
         }
         const platform = platforms.find((item) => item.platformId === match.platformId);
         const enrichedAsset: StockAsset = {
           ...asset,
+          ...(asset.assetType === undefined && match.assetType !== undefined ? { assetType: match.assetType } : {}),
           tokenName: match.tokenName,
           tokenLogoUrl: match.tokenLogoUrl,
           issuerLogoUrl: platform?.logoUrl,
@@ -390,14 +395,14 @@ export class TokenizedStocksService {
               endpoint: "/api/v1/dex/market/rwa/price",
               fields: ["tokenPrice", "referencePrice", "tokenPriceUpdatedAt"],
               ...(priceResponseTimesById.has(assetKey) ? { responseTimestampMs: priceResponseTimesById.get(assetKey) } : {}),
-              assetUpdatedAtMs: priceSnapshot.tokenPriceUpdatedAt
+              ...(market.tokenPriceUpdatedAt !== undefined ? { assetUpdatedAtMs: market.tokenPriceUpdatedAt } : {})
             },
             {
               provider: "Binance Web3" as const,
               endpoint: "/api/v1/dex/market/rwa/tokens",
-              fields: ["marketStatus", "openState", "nextOpenTime", "volume24H"],
-              ...(typeof response.timestamp === "number" && Number.isFinite(response.timestamp) && response.timestamp > 0
-                ? { responseTimestampMs: response.timestamp }
+              fields: ["assetType", "marketStatus", "openState", "reasonCode", "reasonMsg", "nextOpenTime", "nextCloseTime", "volume24H"],
+              ...(normalizeProviderTimestamp(response.timestamp) !== undefined
+                ? { responseTimestampMs: normalizeProviderTimestamp(response.timestamp) }
                 : {})
             }
           ]

@@ -5,6 +5,7 @@ import { attachSimulation, assertExecutable, confirmPlan, isPlanExpired } from "
 import { ExecutionService } from "../src/services/executor.js";
 import { CATALOG_SCOPE_WARNING, TokenizedStocksService } from "../src/services/tokenized-stocks.js";
 import { parseTokenAmount } from "../src/domain/amount.js";
+import { summarizeTokenPriceProbe } from "../src/services/asset-coverage-audit.js";
 
 assert.equal(parseTokenAmount("1.25", 6), 1_250_000n);
 assert.equal(parseTokenAmount("0.000001", 6), 1n);
@@ -67,7 +68,7 @@ assert.deepEqual(priceContext.provenance, [
   {
     provider: "Binance Web3",
     endpoint: "/api/v1/dex/market/rwa/tokens",
-    fields: ["marketStatus", "openState", "nextOpenTime", "volume24H"],
+    fields: ["assetType", "marketStatus", "openState", "reasonCode", "reasonMsg", "nextOpenTime", "nextCloseTime", "volume24H"],
     responseTimestampMs: 1_790_603_000_000
   }
 ], "field sources and endpoint response times must remain distinct from the per-asset quote update time");
@@ -174,7 +175,7 @@ assert.equal(priceRequests.length, 3, "101 same-chain addresses split into 100 +
 assert.deepEqual(priceRequests.filter((request) => request.params?.binanceChainId === "56").map((request) => request.params?.tokenContractAddresses.split(",").length).sort((a, b) => (a ?? 0) - (b ?? 0)), [1, 100]);
 assert.ok(priceRequests.every((request) => (request.params?.tokenContractAddresses.split(",").length ?? 101) <= 100));
 
-for (const invalidTimestamp of [Number.NaN, Number.POSITIVE_INFINITY, 0, -1]) {
+for (const invalidTimestamp of [Number.NaN, Number.POSITIVE_INFINITY, 0, -1, 1.5, 8_640_000_000_000_001]) {
   const invalidTimestampService = new TokenizedStocksService({
     async get(path: string) {
       if (path.endsWith("/rwa/platforms")) return { data: [{ platformId: "bstock" }] };
@@ -185,10 +186,54 @@ for (const invalidTimestamp of [Number.NaN, Number.POSITIVE_INFINITY, 0, -1]) {
   } as any);
   await assert.rejects(invalidTimestampService.marketContext(asset), /timestamped RWA price snapshot was not returned/);
 }
+const invalidCatalogTimesService = new TokenizedStocksService({
+  async get(path: string) {
+    if (path.endsWith("/rwa/platforms")) return { timestamp: 1.5, data: [{ platformId: "bstock" }] };
+    if (path.endsWith("/rwa/tokens")) return { timestamp: 8_640_000_000_000_001, data: [{
+      binanceChainId: "56", tokenContractAddress: "0xabc", platformId: "bstock", tokenSymbol: "NVDAB",
+      underlyingTicker: "NVDA", underlyingName: "Nvidia Corp", tokenPrice: "100", tokenPriceUpdatedAt: -1,
+      statusInfo: { marketStatus: "open", openState: true }
+    }] };
+    throw new Error(`Unexpected invalid-catalog-timestamp request: ${path}`);
+  }
+} as any);
+const invalidCatalogTimes = await invalidCatalogTimesService.listSnapshot({ chainId: "56" });
+assert.equal(invalidCatalogTimes.sourceResponseTimestampMs, undefined, "invalid catalog response time is omitted");
+assert.equal(invalidCatalogTimes.platformMetadataResponseTimestampMs, undefined, "invalid platform response time is omitted");
+assert.equal(invalidCatalogTimes.listings[0]?.market.tokenPriceUpdatedAt, undefined, "invalid catalog quote time is omitted");
+assert.equal(invalidCatalogTimes.listings[0]?.market.provenance?.[0]?.responseTimestampMs, undefined);
+assert.equal(invalidCatalogTimes.listings[0]?.market.provenance?.[0]?.assetUpdatedAtMs, undefined);
+const invalidPriceSnapshotService = new TokenizedStocksService({
+  async get() { return { data: [{ binanceChainId: "56", tokenContractAddress: "0xabc", platformId: "bstock", tokenPrice: "100", tokenPriceUpdatedAt: 1.5 }] }; }
+} as any);
+const invalidStandalonePrice = await invalidPriceSnapshotService.tokenPriceSnapshots([{ chainId: "56", platformId: "bstock", contractAddress: "0xabc" }]);
+assert.equal(invalidStandalonePrice[0]?.state, "invalid", "a standalone read-only price snapshot cannot mark a malformed timestamp available");
+assert.equal(invalidStandalonePrice[0]?.tokenPrice, undefined);
+const coverageIdentity = [{ chainId: "56", platformId: "bstock", contractAddress: "0xabc" }];
+for (const invalidTimestamp of [0, -1, 1.5, 8_640_000_000_000_001, Number.POSITIVE_INFINITY]) {
+  const coverage = summarizeTokenPriceProbe(coverageIdentity, [{
+    binanceChainId: "56", platformId: "bstock", tokenContractAddress: "0xabc", tokenPrice: "100", tokenPriceUpdatedAt: invalidTimestamp
+  }]);
+  assert.equal(coverage.matchedRepresentationsWithValidUpdateTimestamp, 0, "the provider coverage audit does not count malformed timestamps as valid");
+}
 const decimalPlan = await new TokenizedStocksService(mockClient as any, async () => 2_000_000n, async () => 2_000_000n).createActionPlan({ type: "buy", walletAddress: "0x1", fromTokenAddress: "0x2", toAsset: asset, amount: "1.25", amountDecimals: 6 });
 assert.equal(decimalPlan.status, "awaiting_confirmation");
 assert.equal(decimalPlan.safetyReport?.checks.find((check) => check.name === "input_balance")?.passed, true);
 assert.equal(decimalPlan.authorizationCheck?.required, true);
+const requestsBeforeUnknownStatus = requests.length;
+const unknownStatusPlan = await new TokenizedStocksService({
+  async get(path: string, params?: Record<string, string>) {
+    const response = await mockClient.get(path, params);
+    const data = (response as any).data;
+    if (path.endsWith("/rwa/tokens")) return { ...response, data: Array.isArray(data) ? data.map((item: any) => ({ ...item, statusInfo: { marketStatus: "future-status", openState: true } })) : data };
+    return response;
+  }
+} as any, async () => 2_000_000n, async () => 2_000_000n).createActionPlan({ type: "buy", walletAddress: "0x1", fromTokenAddress: "0x2", toAsset: asset, amount: "1.25", amountDecimals: 6 });
+assert.equal(unknownStatusPlan.status, "failed", "SDK preparation must fail closed for an unrecognized provider market status");
+assert.equal(unknownStatusPlan.unsignedActions, undefined, "unknown market status cannot produce an unsigned transaction action");
+assert.equal(unknownStatusPlan.safetyReport?.checks.find((check) => check.name === "market_status")?.passed, false);
+assert.match(unknownStatusPlan.safetyReport?.blockingReasons.join(" ") ?? "", /market status is unknown/i);
+assert.ok(!requests.slice(requestsBeforeUnknownStatus).some((request) => request.path.endsWith("/aggregator/swap")), "a blocked unknown-status plan never builds a swap action");
 const insufficientBalancePlan = await new TokenizedStocksService(mockClient as any, async () => 2_000_000n, async () => 1_249_999n).createActionPlan({ type: "buy", walletAddress: "0x1", fromTokenAddress: "0x2", toAsset: asset, amount: "1.25", amountDecimals: 6 });
 assert.equal(insufficientBalancePlan.status, "failed");
 assert.equal(insufficientBalancePlan.unsignedActions, undefined);
@@ -289,6 +334,8 @@ const closedMarket = normalizeMarketContext(asset, {
 const closedSafety = evaluateSafety({ plan, market: closedMarket, quote, simulation });
 assert.equal(closedSafety.passed, false);
 assert.match(closedSafety.blockingReasons.join(" "), /closed|halted/);
+const invalidTimestampSafety = evaluateSafety({ plan, market: { ...market, tokenPriceUpdatedAt: 1.5 }, quote, simulation });
+assert.equal(invalidTimestampSafety.checks.find((check) => check.name === "market_data_freshness")?.passed, false);
 const invalidSlippage = evaluateSafety({ plan: { ...plan, intent: { ...plan.intent, maxSlippageBps: 10_001 } }, market, quote, simulation });
 assert.equal(invalidSlippage.passed, false);
 assert.equal(attachSimulation(plan, simulation).status, "failed", "simulation cannot erase missing preflight checks");
@@ -324,4 +371,4 @@ const failingExecutor = new ExecutionService(
 const signedOnce = await failingExecutor.signConfirmed(executable);
 await assert.rejects(() => failingExecutor.broadcastSignedActions(signedOnce, executable), /status must be queried/);
 assert.equal(broadcastCalls, 1);
-console.log("domain tests passed");
+console.log(JSON.stringify({ sdkUnknownMarketStatusFailsClosed: true, unknownStatusDoesNotBuildAction: true, invalidCatalogAndPriceSnapshotTimestampsWithheld: true, malformedAuditTimesNotCountedAsValid: true, invalidSafetyTimestampNotReportedFresh: true, passed: true }, null, 2));

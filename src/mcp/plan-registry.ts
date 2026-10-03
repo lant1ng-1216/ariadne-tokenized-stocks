@@ -6,7 +6,7 @@ import { jsonDataSnapshot } from "../domain/json-snapshot.js";
 
 type PlanStage = "awaiting_confirmation" | "simulated" | "confirmed";
 type PlanRecord = { stage: PlanStage; plan: ActionPlan; broadcastAttempted: boolean };
-const requiredPreflightChecks = ["asset_identity", "quote_available", "price_impact", "authorization_visibility", "input_balance"];
+const requiredPreflightChecks = ["asset_identity", "market_status", "quote_available", "price_impact", "authorization_visibility", "input_balance"];
 
 function snapshot(plan: ActionPlan): ActionPlan {
   // Use a hook-free plain-data clone so a stateful toJSON/getter cannot alter
@@ -57,8 +57,8 @@ export class PlanRegistry {
       throw new Error("Plan identity, quote, amount or authorization changed during a stage transition");
     }
     const requiredChecks = to === "simulated"
-      ? ["asset_identity", "quote_available", "price_impact", "authorization_visibility", "input_balance", "simulation"]
-      : ["asset_identity", "quote_available", "price_impact", "authorization_visibility", "input_balance", "simulation"];
+      ? ["asset_identity", "market_status", "quote_available", "price_impact", "authorization_visibility", "input_balance", "simulation"]
+      : ["asset_identity", "market_status", "quote_available", "price_impact", "authorization_visibility", "input_balance", "simulation"];
     const checksPassed = requiredChecks.every((name) => transition.safetyReport?.checks.some((check) => check.name === name && check.passed));
     if (!transition.safetyReport?.passed || !checksPassed ||
       (to === "simulated" && (transition.simulation as { success?: boolean } | undefined)?.success !== true) ||

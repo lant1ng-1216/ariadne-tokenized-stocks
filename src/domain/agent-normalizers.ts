@@ -1,6 +1,6 @@
 import type { AssetComparison, AssetComparisonRow, AgentTokenizedAsset, AssetMetadata, AssetPreference, DataQuality, Issuer, MarketContextFailureCategory } from "./agent-types.js";
 import type { MarketContext, StockAsset } from "./types.js";
-import { positiveDecimal } from "./normalizers.js";
+import { normalizeProviderTimestamp, positiveDecimal } from "./normalizers.js";
 
 const knownIssuers: Record<string, string> = {
   ondo: "Ondo",
@@ -51,7 +51,7 @@ export function dataQualityFor(
     if (!positiveDecimal(market.referencePrice)) missingFields.push("referencePrice");
     if (market.liquidity == null) missingFields.push("liquidity");
     if (market.marketStatus === "unknown") missingFields.push("marketStatus");
-    if (market.tokenPrice && !Number.isFinite(market.tokenPriceUpdatedAt)) missingFields.push("tokenPriceUpdatedAt");
+    if (market.tokenPrice && normalizeProviderTimestamp(market.tokenPriceUpdatedAt) === undefined) missingFields.push("tokenPriceUpdatedAt");
   }
   if (!metadata?.underlyingLogoUrl) missingFields.push("underlyingLogoUrl");
   if (!metadata?.issuerLogoUrl) missingFields.push("issuerLogoUrl");
@@ -59,7 +59,7 @@ export function dataQualityFor(
   if (market && market.tokenPrice != null && !positiveDecimal(market.tokenPrice)) warnings.push("Token price is invalid or non-positive");
   if (market && market.referencePrice != null && !positiveDecimal(market.referencePrice)) warnings.push("Reference price is invalid or non-positive");
   if (market?.marketStatus === "unknown") warnings.push("Market status is unknown");
-  if (market?.tokenPrice && !Number.isFinite(market.tokenPriceUpdatedAt)) warnings.push("Per-asset price update time is unavailable");
+  if (market?.tokenPrice && normalizeProviderTimestamp(market.tokenPriceUpdatedAt) === undefined) warnings.push("Per-asset price update time is unavailable");
   if (!market) warnings.push(marketContextRequested
     ? "Market context was requested but is unavailable"
     : "Market context was not requested; prices, status and market warnings are unavailable");

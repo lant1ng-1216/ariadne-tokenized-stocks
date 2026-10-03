@@ -255,7 +255,7 @@ const query = "我想了解 BNB Chain 上英伟达股票代币有哪些发行方
   assert.match(liveCatalogUiEn, /Provider search results are returned matches, not a verified complete catalog; pagination and total-count semantics are unverified/);
   assert.match(liveCatalogUiZh, /搜索结果仅为上游本次返回的匹配项，并非已验证的完整目录；分页和总数语义尚未验证/);
   assert.match(ui, /来源与数据质量/);
-  assert.match(ui, /报告为开放状态；市场状态未知/);
+  assert.match(ui, /市场状态未知（上游报告开放标记，但未确认）/);
   assert.match(ui, /不得将其理解为 0/);
   assert.match(ui, /No source timestamp supplied|UTC/);
   assert.match(ui, /仅供研究 · 不涉及钱包或交易操作/);

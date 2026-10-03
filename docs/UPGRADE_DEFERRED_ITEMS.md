@@ -1,5 +1,14 @@
 # Ariadne Upgrade — Deferred and Unfinished Items
 
+<!-- JEV-LATEST-GATE-SUMMARY:START -->
+#### Latest Jev gate snapshot (automatically synchronized)
+- Canonical record: `2026-10-03T10:50:42.287Z`; phase `sdk-mcp-final-acceptance`; Jev confidence `0.880` (required floor: `0.850`).
+- Result: `advance`; selected checks `25/25` passed; criteria `12/12` met; deferred assessment `non_blocking` (5 items; exact text is retained in both gate appendices).
+- Criterion scores: sdk-consumer-package=1.000 (met); provider-field-fidelity=0.990 (met); mcp-output-native-ui-parity=0.970 (met); natural-language-catalog-resolution=0.990 (met); fail-closed-execution-safety=0.960 (met); standalone-sdk-docs-example-contract=0.990 (met); agent-mcp-config-snippets=1.000 (met); provider-unknowns-remain-explicit=0.880 (met); phase-sequence-and-terminal-ledger=0.930 (met); latest-report-appendix-integrity=0.930 (met); single-current-summary-source=0.970 (met); terminal-local-scope-only=0.900 (met).
+- Criterion scores below `0.850`: none.
+- Phase ledger: `currentPhase=delivery-complete`, `nextPhase=delivery-complete`, `lastTransition=advance`, `lastDecisionAt=2026-10-03T10:50:42.287Z`; reason: Baseline and Jev agree on a low-risk continuation.
+<!-- JEV-LATEST-GATE-SUMMARY:END -->
+
 Updated: 2026-10-03
 
 This register deliberately separates unfinished work from completed capabilities. No item below is represented as complete in the product or technical reports.
@@ -43,6 +52,7 @@ Phase 23 passed all 24 selected local checks and Jev marked all five criteria `m
 
 ## Known quality limitations
 
+- Current continuation status (2026-10-03): Phase 28 source-confirmed fidelity was approved at Jev confidence **0.890**; the initial Phase 29 terminal local SDK/MCP acceptance was approved at **0.850** after 25/25 checks and 12/12 criteria passed. The automatically synchronized snapshot above is the current decision source for the post-audit candidate, with full chronological evidence in both report appendices. The limitations below remain unresolved unless explicitly closed with new evidence. Local acceptance does not mean public release or website completion.
 - The current high-level MCP tools are structured intent entry points; natural-language interpretation remains the responsibility of the calling Agent.
 - A read-only MCP Apps research view is implemented, and the user confirmed it appeared in the current Codex conversation. It is a research UI only: no wallet or trading controls are included. The Phase 15 form-elicitation confirmation is tested against modern and legacy MCP clients; the production MCP server and hosted Demo use SDK v2 for the 2026-07-28 multi-round-trip `input_required` response, while a v1 alias remains for the browser MCP Apps bridge to meet its bundle-size limit. On 2026-10-02, the refreshed connected synthetic server completed a host-level elicitation round-trip: the exact synthetic plan was declined and the next status read remained `simulated`; the response reported no broadcast or side effects. Jev then approved Phase 18 at confidence 0.860 after ten checks and four `met` criteria. This proves the connected decline path, not a screenshot-based visual-design assessment. No live-wallet test is allowed.
 - Logo fields are modeled and rendered when available, but a verified live metadata provider is not yet integrated.

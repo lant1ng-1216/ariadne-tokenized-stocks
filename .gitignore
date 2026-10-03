@@ -5,6 +5,7 @@ records/
 !records/
 records/*
 !records/phase26-provider-observation.json
+!records/phase27-binance-rwa-contract.json
 node_modules/
 dist/
 dist-package/

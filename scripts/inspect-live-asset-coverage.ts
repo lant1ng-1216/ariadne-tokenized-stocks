@@ -1,7 +1,8 @@
 import { BinanceWeb3Client } from "../src/binance-web3-client.js";
 import { TokenizedStocksService } from "../src/services/tokenized-stocks.js";
-import { compareRepresentationIdentities, representationIdentityKey, summarizeTokenPriceProbe } from "../src/services/asset-coverage-audit.js";
+import { compareRepresentationIdentities, representationIdentityKey, summarizeQuoteTimestampAges, summarizeTokenPriceProbe } from "../src/services/asset-coverage-audit.js";
 import { buildAssetDirectoryView } from "../src/web/asset-directory.js";
+import { normalizeProviderTimestamp } from "../src/domain/normalizers.js";
 
 const apiKey = process.env.BINANCE_WEB3_API_KEY;
 const apiSecret = process.env.BINANCE_WEB3_API_SECRET;
@@ -79,20 +80,10 @@ const fieldCoverage = {
   issuerLogoUrlNonEmpty: listings.filter((item) => Boolean(item.issuerLogoUrl?.trim())).length,
   tokenPriceNonEmpty: listings.filter((item) => Boolean(item.market.tokenPrice?.trim())).length,
   referencePriceNonEmpty: listings.filter((item) => Boolean(item.market.referencePrice?.trim())).length,
-  perRepresentationUpdateTimestampPresent: listings.filter((item) => typeof item.market.tokenPriceUpdatedAt === "number" && Number.isFinite(item.market.tokenPriceUpdatedAt) && item.market.tokenPriceUpdatedAt > 0).length,
+  perRepresentationUpdateTimestampPresent: listings.filter((item) => normalizeProviderTimestamp(item.market.tokenPriceUpdatedAt) !== undefined).length,
   knownMarketStatus: listings.filter((item) => ["open", "closed", "offhours"].includes(item.market.marketStatus ?? "")).length
 };
-const quoteAgesMs = listings.flatMap((item) => {
-  const updatedAt = item.market.tokenPriceUpdatedAt;
-  return typeof updatedAt === "number" && Number.isFinite(updatedAt) && updatedAt > 0
-    ? [observedAtMs - updatedAt]
-    : [];
-}).sort((a, b) => a - b);
-const medianQuoteAgeMs = quoteAgesMs.length
-  ? quoteAgesMs.length % 2
-    ? quoteAgesMs[Math.floor(quoteAgesMs.length / 2)]
-    : (quoteAgesMs[quoteAgesMs.length / 2 - 1]! + quoteAgesMs[quoteAgesMs.length / 2]!) / 2
-  : null;
+const quoteTimestampAge = summarizeQuoteTimestampAges(listings.map((item) => item.market.tokenPriceUpdatedAt), observedAtMs);
 const nvda = await service.search("NVDA", { chainId });
 const nvdaListings = listings.filter((item) => item.underlyingTicker.toUpperCase() === "NVDA");
 const dedicatedPriceSnapshot = nvdaListings.length
@@ -210,18 +201,19 @@ console.log(JSON.stringify({
   },
   observedFieldCoverage: fieldCoverage,
   observedQuoteTimestampAgeMs: {
-    observedRows: quoteAgesMs.length,
-    missingRows: listings.length - quoteAgesMs.length,
-    minimum: quoteAgesMs[0] ?? null,
-    median: medianQuoteAgeMs,
-    maximum: quoteAgesMs.at(-1) ?? null,
-    futureTimestampRows: quoteAgesMs.filter((age) => age < 0).length,
+    observedRows: quoteTimestampAge.validTimestampRows,
+    ageSampleRows: quoteTimestampAge.ageSampleRows,
+    missingRows: quoteTimestampAge.missingOrInvalidTimestampRows,
+    minimum: quoteTimestampAge.minimumAgeMs,
+    median: quoteTimestampAge.medianAgeMs,
+    maximum: quoteTimestampAge.maximumAgeMs,
+    futureTimestampRows: quoteTimestampAge.futureTimestampRows,
     sampledAtMs: observedAtMs,
     interpretation: "Observed age only; this probe does not define an acceptable freshness SLA."
   },
   dedicatedPriceEndpointProbe: dedicatedPriceProbe ? {
     ...dedicatedPriceProbe,
-    serverResponseTimestampPresent: Boolean(dedicatedPriceSnapshot?.timestamp),
+    serverResponseTimestampPresent: normalizeProviderTimestamp(dedicatedPriceSnapshot?.timestamp) !== undefined,
     endpoint: "/api/v1/dex/market/rwa/price"
   } : { queryRepresentations: 0, returnedRepresentations: 0 },
   provenance: directory.provenance,

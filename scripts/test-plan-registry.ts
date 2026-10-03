@@ -5,7 +5,7 @@ import { PlanRegistry } from "../src/mcp/plan-registry.js";
 import { jsonDataFingerprint } from "../src/domain/json-snapshot.js";
 
 const spender = "0x3333333333333333333333333333333333333333";
-const checks: SafetyCheck[] = ["asset_identity", "quote_available", "price_impact", "authorization_visibility", "input_balance"].map((name) => ({ name, passed: true, severity: "blocking", message: name === "authorization_visibility" ? `ERC-20 allowance is sufficient, spender=${spender}` : "test preflight" }));
+const checks: SafetyCheck[] = ["asset_identity", "market_status", "quote_available", "price_impact", "authorization_visibility", "input_balance"].map((name) => ({ name, passed: true, severity: "blocking", message: name === "authorization_visibility" ? `ERC-20 allowance is sufficient, spender=${spender}` : "test preflight" }));
 const prepared: ActionPlan = {
   planId: "plan-registry-test",
   status: "awaiting_confirmation",
@@ -21,6 +21,16 @@ const prepared: ActionPlan = {
 };
 
 const registry = new PlanRegistry();
+assert.throws(() => new PlanRegistry().registerPrepared({
+  ...prepared,
+  planId: "missing-market-status-check",
+  safetyReport: { ...prepared.safetyReport!, checks: checks.filter((check) => check.name !== "market_status") }
+}), /safety-checked prepared plan/, "the registry refuses plans without the required market-status decision");
+assert.throws(() => new PlanRegistry().registerPrepared({
+  ...prepared,
+  planId: "failed-market-status-check",
+  safetyReport: { ...prepared.safetyReport!, checks: checks.map((check) => check.name === "market_status" ? { ...check, passed: false } : check) }
+}), /safety-checked prepared plan/, "the registry refuses a present but failed market-status decision");
 registry.registerPrepared(prepared);
 assert.deepEqual(registry.requireExact(structuredClone(prepared), "awaiting_confirmation"), prepared);
 assert.throws(() => registry.registerPrepared(prepared), /already been registered/);
@@ -37,6 +47,20 @@ for (const changed of [
 
 const simulated = attachSimulation(prepared, { success: true, balanceChanges: [], allowanceChanges: [], warnings: [] });
 assert.equal(simulated.status, "simulated");
+const failedMarketStatusPlan = { ...prepared, planId: "failed-market-status-transition" };
+const failedMarketStatusRegistry = new PlanRegistry();
+failedMarketStatusRegistry.registerPrepared(failedMarketStatusPlan);
+const failedMarketStatusSimulation = {
+  ...failedMarketStatusPlan,
+  status: "simulated" as const,
+  simulation: { success: true, balanceChanges: [], allowanceChanges: [], warnings: [] },
+  safetyReport: {
+    passed: false,
+    checks: checks.map((check) => check.name === "market_status" ? { ...check, passed: false } : check),
+    blockingReasons: ["Market status is unknown; executable plans are blocked"]
+  }
+};
+assert.throws(() => failedMarketStatusRegistry.advance(failedMarketStatusPlan, "awaiting_confirmation", failedMarketStatusSimulation, "simulated"), /successful safety checks/);
 assert.throws(() => registry.advance(prepared, "awaiting_confirmation", { ...simulated, intent: { ...simulated.intent, amount: "2" } }, "simulated"), /amount or authorization changed/);
 assert.throws(() => registry.advance(prepared, "awaiting_confirmation", { ...simulated, safetyReport: { passed: true, checks: [], blockingReasons: [] } }, "simulated"), /successful safety checks/);
 assert.throws(() => registry.advance(prepared, "awaiting_confirmation", { ...simulated, status: "confirmed", requiresUserConfirmation: false }, "confirmed"), /Invalid plan stage transition/);
@@ -47,6 +71,22 @@ const confirmed = confirmPlan(simulated);
 registry.advance(simulated, "simulated", confirmed, "confirmed");
 assert.throws(() => registry.advance(confirmed, "confirmed", simulated, "simulated"), /Invalid plan stage transition/);
 assert.throws(() => registry.requireExact(simulated, "simulated"), /required stage/);
+const failedConfirmationRegistry = new PlanRegistry();
+const confirmationPrepared = { ...prepared, planId: "failed-market-status-confirmation" };
+failedConfirmationRegistry.registerPrepared(confirmationPrepared);
+const validConfirmationSimulation = attachSimulation(confirmationPrepared, { success: true, balanceChanges: [], allowanceChanges: [], warnings: [] });
+failedConfirmationRegistry.advance(confirmationPrepared, "awaiting_confirmation", validConfirmationSimulation, "simulated");
+const failedMarketStatusConfirmation = {
+  ...validConfirmationSimulation,
+  status: "confirmed" as const,
+  requiresUserConfirmation: false,
+  safetyReport: {
+    passed: false,
+    checks: checks.map((check) => check.name === "market_status" ? { ...check, passed: false } : check).concat({ name: "simulation", passed: true, severity: "blocking", message: "test simulation" }),
+    blockingReasons: ["Market status is unknown; executable plans are blocked"]
+  }
+};
+assert.throws(() => failedConfirmationRegistry.advance(validConfirmationSimulation, "simulated", failedMarketStatusConfirmation, "confirmed"), /successful safety checks/);
 registry.reserveBroadcast(confirmed);
 assert.throws(() => registry.reserveBroadcast(confirmed), /already attempted/);
 assert.throws(() => registry.registerPrepared({ ...prepared, planId: "expired", expiresAt: 1 }), /non-expired/);
@@ -99,4 +139,4 @@ try {
   else delete (Array.prototype as { toJSON?: unknown }).toJSON;
 }
 
-console.log(JSON.stringify({ registered: true, mutationsRejected: 7, stagedTransitions: true, expiredAfterRegistrationRejected, replayRejected: true, proxiesRejectedBeforeTraps: true, accessorsRejectedBeforeEvaluation: true, inheritedHooksNotInvoked: true, passed: true }, null, 2));
+console.log(JSON.stringify({ registered: true, mutationsRejected: 7, stagedTransitions: true, marketStatusCheckMustBePresent: true, failedMarketStatusCheckRejectedAtRegistration: true, failedMarketStatusCheckRejectedAtSimulationTransition: true, failedMarketStatusCheckRejectedAtConfirmationTransition: true, expiredAfterRegistrationRejected, replayRejected: true, proxiesRejectedBeforeTraps: true, accessorsRejectedBeforeEvaluation: true, inheritedHooksNotInvoked: true, passed: true }, null, 2));

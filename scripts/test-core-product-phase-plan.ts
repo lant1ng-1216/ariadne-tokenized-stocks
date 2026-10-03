@@ -10,8 +10,30 @@ const technicalReportLatestGate = technicalReport.slice(technicalReport.lastInde
 const productReportLatestGate = productExperience.slice(productExperience.lastIndexOf("### Jev phase-gate record"));
 const packageJson = await readFile("package.json", "utf8");
 const gateRunner = await readFile("scripts/run-jev-gate.ts", "utf8");
+const reportSync = await readFile("src/jev/report-sync.ts", "utf8");
 const phase26LimitationsRegression = await readFile("scripts/test-phase26-provider-limitations.ts", "utf8");
+const jevShadowRegression = await readFile("scripts/test-jev-shadow.ts", "utf8");
 const phase26LiveCatalogRegression = await readFile("scripts/test-mcp-live-catalog-warning.ts", "utf8");
+const phase27ContractRegression = await readFile("scripts/test-phase27-api-contract.ts", "utf8");
+const phase28FidelityRegression = await readFile("scripts/test-phase28-data-fidelity.ts", "utf8");
+const phase29AcceptanceEvidenceRegression = await readFile("scripts/test-phase29-acceptance-evidence.ts", "utf8");
+const domainRegression = await readFile("scripts/test-domain.ts", "utf8");
+const planRegistryRegression = await readFile("scripts/test-plan-registry.ts", "utf8");
+const phase27Contract = JSON.parse(await readFile("records/phase27-binance-rwa-contract.json", "utf8")) as {
+  phase: string;
+  source: { official: boolean; url: string };
+  comparisonWithPhase26Observation: { declaredBscTokenCount: number; returnedUniqueBscRepresentations: number; difference: number; noRepeatProviderRequest: boolean };
+};
+const phase28Fidelity = JSON.parse(await readFile("records/phase28-source-confirmed-fidelity.json", "utf8")) as {
+  phase: string;
+  providerRequests: number;
+  externalWrites: number;
+  walletOrTransactionActions: number;
+  syntheticFixtureOnly: boolean;
+  safetyAndUnknownValueCases: Record<string, string>;
+  checks: string[];
+  limitations: string[];
+};
 const cleanroomScript = await readFile("scripts/test-cleanroom-consumer.mjs", "utf8");
 const confirmationTest = await readFile("scripts/test-mcp-human-confirmation.ts", "utf8");
 const mcpServer = await readFile("src/mcp/server.ts", "utf8");
@@ -45,10 +67,12 @@ const phase26Observation = JSON.parse(await readFile("records/phase26-provider-o
 };
 const gateRows = (await readFile("records/jev-shadow.jsonl", "utf8")).trim().split("\n");
 const gateRecords = gateRows.map((row) => JSON.parse(row) as {
+  recordedAt?: string;
   phaseTransition?: string;
   transitionReason?: string;
   evidence?: {
     phase?: string;
+    nextPhase?: string;
     checks?: Array<{ name: string; passed: boolean }>;
     externalWriteRequested?: boolean;
     highRiskActionRequested?: boolean;
@@ -59,6 +83,7 @@ const gateRecords = gateRows.map((row) => JSON.parse(row) as {
   };
 });
 const latestGate = gateRecords.at(-1) ?? {};
+const latestGateSummary = plan.split("<!-- JEV-LATEST-GATE-SUMMARY:START -->")[1]?.split("<!-- JEV-LATEST-GATE-SUMMARY:END -->")[0] ?? "";
 const gateForPhase = (id: string) => [...gateRecords].reverse().find((record) => record.evidence?.phase === id);
 const assertContains = (source: string, pattern: RegExp, description: string) => assert.ok(pattern.test(source), description);
 const phase10 = plan.split("\n").find((line) => line.startsWith("| 10 | `asset-detail-market-context` |"));
@@ -69,6 +94,18 @@ const phase14 = plan.split("\n").find((line) => line.startsWith("| 14 | `mcp-res
 const phase15 = plan.split("\n").find((line) => line.startsWith("| 15 | `mcp-post-simulation-user-confirmation` |"));
 const phase16Checklist = plan.split("\n").find((line) => /^- \[[ x]\] Phase 16 — core-product quality audit/.test(line));
 const phase17Checklist = plan.split("\n").find((line) => /^- \[[ x]\] Phase 17 — MCP Agent-native research UI/.test(line));
+const phase27Checklist = plan.split("\n").find((line) => /^- \[[ x]\] Phase 27 — official Binance RWA contract audit/.test(line));
+const phase27Section = plan.split("## Phase 27 — official-provider-contract-audit")[1]?.split("\n## Phase 28 — source-confirmed-data-fidelity")[0] ?? "";
+const phase27Gate = gateForPhase("official-provider-contract-audit");
+const phase27Complete = phase27Gate?.phaseTransition === "advance";
+const phase28Checklist = plan.split("\n").find((line) => /^- \[[ x]\] Phase 28 — source-confirmed data fidelity/.test(line));
+const phase28Section = plan.split("## Phase 28 — source-confirmed-data-fidelity")[1]?.split("\n## Phase 29 — sdk-mcp-final-acceptance")[0] ?? "";
+const phase28Gate = gateForPhase("source-confirmed-data-fidelity");
+const phase28Complete = phase28Gate?.phaseTransition === "advance";
+const phase29Checklist = plan.split("\n").find((line) => /^- \[[ x]\] Phase 29 — SDK\/MCP final acceptance/.test(line));
+const phase29Section = plan.split("## Phase 29 — sdk-mcp-final-acceptance")[1]?.split("\n## ")[0] ?? "";
+const phase29Gate = gateForPhase("sdk-mcp-final-acceptance");
+const phase29Complete = phase29Gate?.phaseTransition === "advance";
 const forwardPhases = [
   { number: 18, id: "mcp-confirmation-host-interop" },
   { number: 19, id: "sdk-cleanroom-revalidation" },
@@ -79,6 +116,9 @@ const forwardPhases = [
   { number: 24, id: "developer-path-onboarding" },
   { number: 25, id: "mcp-native-ui-host-review" },
   { number: 26, id: "provider-data-limitations-closure" },
+  { number: 27, id: "official-provider-contract-audit" },
+  { number: 28, id: "source-confirmed-data-fidelity" },
+  { number: 29, id: "sdk-mcp-final-acceptance" },
 ];
 const forwardPhaseIds = forwardPhases.map(({ id }) => id);
 const forwardPhaseIndex = forwardPhaseIds.indexOf(phaseState.currentPhase ?? "");
@@ -98,6 +138,7 @@ for (const { number, id } of forwardPhases) {
 }
 assert.match(plan, /The user approved Phase 18–23 as one bounded continuation[\s\S]*continue to the next phase automatically/);
 assert.match(plan, /Continuation authorization \(2026-10-03\)[\s\S]*Phases 24–26 in order[\s\S]*`a781e4f` was pushed to `origin\/main` before Phase 24 began/);
+assert.match(plan, /Continuation authorization \(2026-10-03\)[\s\S]*Phases 27–29[\s\S]*does not authorize another provider probe, Git push/);
 assert.match(plan, /Observed connected-host outcome \(2026-10-01\)[\s\S]*no form or choice appeared/i);
 assert.match(plan, /No user wallet, approval of the synthetic plan, signing, broadcast, or host-configuration mutation/);
 assert.match(plan, /Observed connected-host outcome \(2026-10-02\)[\s\S]*`confirmationStatus: declined`[\s\S]*`planStatus: simulated`[\s\S]*No screenshot was captured/i);
@@ -109,6 +150,8 @@ assert.match(plan, /At the time of this observation, Jev review was still requir
 assert.match(packageJson, /"mcp:confirmation-test": "node --import tsx scripts\/confirmation-test-server\.ts"/);
 assert.match(packageJson, /"test:mcp-confirmation-host-fixture": "node --import tsx scripts\/test-mcp-confirmation-host-fixture\.ts"/);
 assert.match(packageJson, /"test:phase26-limitations": "node --import tsx scripts\/test-phase26-provider-limitations\.ts"/);
+assert.match(packageJson, /"test:phase27-contract": "node --import tsx scripts\/test-phase27-api-contract\.ts"/);
+assert.match(packageJson, /"test:phase28-fidelity": "node --import tsx scripts\/test-phase28-data-fidelity\.ts"/);
 assert.match(packageJson, /"test:mcp-live-catalog-warning": "node --import tsx scripts\/test-mcp-live-catalog-warning\.ts"/);
 assertContains(cleanroomScript, /mkdtemp\(join\(tmpdir\(\), "ariadne-consumer-"\)\)[\s\S]*join\(tempRoot, "npm-cache"\)[\s\S]*180_000/, "Phase 19 clean-room installation must use a fresh per-run cache and a bounded install timeout");
 assertContains(cleanroomScript, /fetch-retries=0[\s\S]*fetch-timeout=30000[\s\S]*const inconclusive = timedOut \|\| networkLimited[\s\S]*status: inconclusive \? "inconclusive"[\s\S]*finally \{[\s\S]*rm\(tempRoot/, "Phase 19 must classify timeouts/network failures as inconclusive and clean only its temporary consumer directory");
@@ -117,6 +160,36 @@ assertContains(confirmationTest, /malformedChoiceRejected: true[\s\S]*tamperedSt
 assertContains(confirmationTest, /Input amount: 1\.25 \(decimals: 6\)[\s\S]*Wallet: 0x1111111111111111111111111111111111111111[\s\S]*Representation: TESTB; issuer\/platform: synthetic-test-only[\s\S]*Transaction target: 0x3333333333333333333333333333333333333333[\s\S]*Provider-reported expected output \(raw token units\): 1250000[\s\S]*Plan expiry \(UTC\)/, "Phase 18 regression must validate decision-critical confirmation details are actually in the elicitation form");
 assert.match(gateRunner, /"test:mcp-confirmation-host-fixture"/);
 assert.match(gateRunner, /"test:phase26-limitations"/);
+assert.match(gateRunner, /"test:phase27-contract"/);
+assert.match(gateRunner, /"test:phase28-fidelity"/);
+assert.match(gateRunner, /"test:phase27-contract"/);
+assert.match(gateRunner, /assertApprovedPhaseSuccessor\(options\.phase, options\.next\)/);
+assertContains(jevShadowRegression, /assert\.throws\(\(\) => assertApprovedPhaseSuccessor\("official-provider-contract-audit", "sdk-mcp-final-acceptance"\)[\s\S]*phases27To29UseEnforcedSuccessorsAndRejectSkips/, "The Jev regression must allow only P27→P28→P29 and reject phase skips");
+assertContains(phase27ContractRegression, /countUnitsSeparated[\s\S]*paginationNotOverclaimed[\s\S]*assetTypePreservedAcrossSearchListAndDomain[\s\S]*detailedMarketStateAndReasonPreservedAcrossResponseAndDomain[\s\S]*syntheticFixtureConfirmsSdkAgentTextStructuredAndNativeUiParity[\s\S]*providerPauseRemainsFailClosedAndRawStatusVisible[\s\S]*localOnlyAuditChecksAndNoProviderRequest/, "Phase 27 source audit regression must retain documented contract evidence and verify its Phase 28 repair path without live calls");
+assertContains(phase28FidelityRegression, /searchAndDirectoryAssetTypeParity[\s\S]*unknownAssetTypePreserved[\s\S]*allDocumentedAssetTypesAndUnknownLabeledAcrossCards[\s\S]*marketContextAssetTypeFallbackAndProvenanceParity[\s\S]*marketContextAllFieldsPreservedAcrossAgentAndNativeUi[\s\S]*detailedProviderStatusAndReasonParity[\s\S]*englishChineseAgentTextAndComparison[\s\S]*structuredContentAndNativeUiParity[\s\S]*hostileProviderTextEscapedInUi[\s\S]*hostileMarkdownProviderTextIsolated[\s\S]*invalidProviderTimestampsWithheld[\s\S]*pauseStillBlocksSafety[\s\S]*unknownStatusRemainsUnknownAndBlocksExecution/, "Phase 28 focused regression must cover SDK/domain to Agent/native UI fidelity, documented/unknown types, hostile text, timestamps and fail-closed execution");
+assertContains(phase28FidelityRegression, /quoteAndMarketTimestampsRequirePositiveSafeMilliseconds/, "Phase 28 must cover positive safe millisecond timestamp validation");
+assertContains(phase28FidelityRegression, /contradictoryMarketFlagsFailClosedAndRenderConservatively[\s\S]*completeMarketContextValuesAndDistinctSourceTimesVerified/, "Phase 28 must reconcile contradictory market flags and verify exact market values/source timestamps end to end");
+assertContains(domainRegression, /sdkUnknownMarketStatusFailsClosed[\s\S]*unknownStatusDoesNotBuildAction[\s\S]*invalidCatalogAndPriceSnapshotTimestampsWithheld[\s\S]*malformedAuditTimesNotCountedAsValid[\s\S]*invalidSafetyTimestampNotReportedFresh/, "SDK action-plan preparation blocks unknown market status, and every core market timestamp path fails closed");
+assertContains(planRegistryRegression, /failedMarketStatusCheckRejectedAtRegistration[\s\S]*failedMarketStatusCheckRejectedAtSimulationTransition[\s\S]*failedMarketStatusCheckRejectedAtConfirmationTransition/, "MCP plan registry must reject absent or failed market-status checks at registration, simulation and confirmation");
+assertContains(jevShadowRegression, /phase28ApprovalAdvancesOnlyToPhase29[\s\S]*phase28BelowThresholdCriterionKeepsCurrentPhase[\s\S]*phase28FailedCheckKeepsCurrentPhase/, "Phase 28 must prove exact-successor advancement and hold on a low-confidence review or failed check");
+assert.equal(phase28Fidelity.phase, "source-confirmed-data-fidelity");
+assert.equal(phase28Fidelity.providerRequests, 0);
+assert.equal(phase28Fidelity.externalWrites, 0);
+assert.equal(phase28Fidelity.walletOrTransactionActions, 0);
+assert.equal(phase28Fidelity.syntheticFixtureOnly, true);
+assert.match(phase28Fidelity.safetyAndUnknownValueCases.providerPause ?? "", /normalized marketStatus remains closed.*blocks execution/);
+assert.match(phase28Fidelity.safetyAndUnknownValueCases.unknownProviderMarketStatus ?? "", /remains unknown/);
+assert.ok(phase28Fidelity.checks.includes("test:phase28-fidelity"));
+assert.ok(phase28Fidelity.checks.includes("test:plan-registry"));
+assert.ok(phase28Fidelity.checks.includes("test:mcp-live-catalog-warning"));
+assert.ok(phase28Fidelity.limitations.some((limitation) => /545-versus-488.*unexplained/.test(limitation)));
+assertContains(await readFile("scripts/test-mcp-live-catalog-warning.ts", "utf8"), /realMcpPipelinePreservesPhase28Fields[\s\S]*bilingualMcpTextAndStructuredContentAgree[\s\S]*allSupportedMarketFieldsAndSourceTimestampSemanticsReachActualMcpAndUi[\s\S]*contradictoryProviderMarketFlagsRenderConservatively/, "Phase 28 must exercise exact supported fields, timestamp meanings and conservative state rendering through the actual loopback MCP pipeline");
+assert.equal(phase27Contract.phase, "official-provider-contract-audit");
+assert.equal(phase27Contract.source.official, true);
+assert.match(phase27Contract.source.url, /^https:\/\/web3\.binance\.com\//);
+assert.equal(phase27Contract.comparisonWithPhase26Observation.declaredBscTokenCount - phase27Contract.comparisonWithPhase26Observation.returnedUniqueBscRepresentations, phase27Contract.comparisonWithPhase26Observation.difference);
+assert.equal(phase27Contract.comparisonWithPhase26Observation.difference, 57);
+assert.equal(phase27Contract.comparisonWithPhase26Observation.noRepeatProviderRequest, true);
 assertContains(phase26LimitationsRegression, /inventoryCountAndPaginationUnresolved/ , "Phase 26 must directly assert inventory and pagination uncertainty");
 assertContains(phase26LimitationsRegression, /filterSemanticsUnresolved/, "Phase 26 must directly assert tab-filter uncertainty");
 assertContains(phase26LimitationsRegression, /missingDirectoryFieldsExplicit/, "Phase 26 must directly assert directory field omissions");
@@ -165,7 +238,7 @@ const phase25Section = plan.split("## Phase 25 — mcp-native-ui-host-review")[1
 const phase26Checklist = plan.split("\n").find((line) => /^- \[[ x]\] Phase 26 — provider-data limitation closure/.test(line));
 const phase26Active = phaseState.currentPhase === "provider-data-limitations-closure";
 const phase26Gate = gateForPhase("provider-data-limitations-closure");
-const phase26Section = plan.split("## Phase 26 — provider-data-limitations-closure")[1]?.split("\n## Gate command pattern")[0] ?? "";
+const phase26Section = plan.split("## Phase 26 — provider-data-limitations-closure")[1]?.split("\n## Phase 27 — official-provider-contract-audit")[0] ?? "";
 const phase26Status = phase26Section.split("\n\n").find((paragraph) => paragraph.includes("**Status:**")) ?? "";
 const phase26FollowupPending = /Jev re-review is pending/.test(phase26Status);
 const phase26Complete = phase26Gate?.phaseTransition === "advance" && !phase26FollowupPending;
@@ -271,6 +344,20 @@ assert.equal(phase26Observation.credentialsIncluded, false);
 assert.match(phase26Section, /Ariadne-owned repair[\s\S]*provider timestamps alone do not guarantee freshness[\s\S]*returned matches rather than a verified complete catalog/);
 assert.match(phase26Section, /six requests to the already approved endpoints, no retries and no new provider/);
 assert.match(phase26Section, /test:domain[\s\S]*test:asset-intent-query[\s\S]*test:mcp-enrichment[\s\S]*test:presentation[\s\S]*test:demo-mode[\s\S]*test:mcp-app-ui[\s\S]*test:core-product-phase-plan[\s\S]*test:phase26-limitations/);
+assert.ok(phase27Checklist, "Phase 27 must remain explicitly visible in the checklist");
+assert.match(phase27Checklist!, phase27Complete ? /Complete; Jev approved at \*\*0\.850\*\*/ : /underway/);
+assert.match(phase27Section, /Status:\*\* Complete; Jev approved at confidence \*\*0\.850\*\*[\s\S]*no live provider requests were made/);
+assert.match(phase27Section, /545-vs-488 difference remains unexplained[\s\S]*not attributed to pagination/);
+assert.match(phase27Section, /test:phase27-contract[\s\S]*test:phase26-limitations/);
+assert.ok(phase28Checklist, "Phase 28 must remain explicitly visible in the checklist");
+assert.ok(phase28Section.includes("first review returned **0.350**") && phase28Section.includes("next review returned **0.690**") && phase28Section.includes("phase-sequence confidence was only **0.730**"), "Phase 28 must preserve both historical pauses and their concrete score diagnosis");
+assert.match(phase28Section, phase28Complete
+  ? /Status:\*\* Complete; Jev approved at confidence \*\*0\.\d{3}\*\*/
+  : /Status:\*\* Targeted rework underway; the phase remains active until all criteria clear the unchanged \*\*0\.850\*\* confidence floor/);
+assert.match(phase28Section, /test:phase28-fidelity[\s\S]*test:phase27-contract[\s\S]*test:phase26-limitations/);
+assert.match(plan, /Phase 29 — sdk-mcp-final-acceptance/);
+assert.match(plan, /Phase 28 — source-confirmed-data-fidelity/);
+assert.match(plan, /Phase 29 — sdk-mcp-final-acceptance/);
 assert.match(mcpServer, /Provider search results are returned matches, not a verified complete catalog; pagination and total-count semantics are unverified/);
 assert.match(mcpServer, /Demo Mode uses a limited synthetic sample and is not a complete live asset catalog/);
 assert.match(mcpServer, /Results are returned matches, not a verified complete catalog/);
@@ -290,13 +377,14 @@ assert.match(developerLog, /second gate again passed 24\/24 checks, but Jev paus
 assert.match(developerLog, /third full Phase 23 gate then passed all 24 selected checks and Jev advanced automatically to terminal `delivery-complete` at confidence \*\*0\.900\*\*[\s\S]*terminal local scope \*\*0\.920\*\*/);
 assert.match(technicalReport, /Phase 23 is complete as terminal local SDK\/MCP acceptance[\s\S]*Jev paused at \*\*0\.670\*\* and \*\*0\.590\*\*[\s\S]*third full run passed all 24 checks[\s\S]*overall confidence \*\*0\.900\*\*[\s\S]*bounded terminal scope \*\*0\.920\*\*/);
 assert.match(productExperience, /Phase 23, the last approved local SDK\/MCP acceptance phase, is complete[\s\S]*reviews paused at \*\*0\.670\*\* and \*\*0\.590\*\*[\s\S]*third full gate passed all 24 checks and Jev approved at \*\*0\.900\*\*/);
-for (const [reportName, report] of [["technical report", technicalReportLatestGate], ["product experience report", productReportLatestGate]] as const) {
-  const latestPhase26Confidence = latestGate.jev?.confidence?.toFixed(3);
-  const latestPhase26Transition = latestGate.phaseTransition;
-  assert.ok(latestPhase26Confidence && latestPhase26Transition, "latest Jev gate must expose its score and transition");
-  const latestPhase26Pattern = new RegExp("Phase: `provider-data-limitations-closure`[\\s\\S]*confidence `" + latestPhase26Confidence + "`[\\s\\S]*Phase transition: `" + latestPhase26Transition + "`");
-  assert.match(report, latestPhase26Pattern, `${reportName} must record the latest Phase 26 Jev decision and transition`);
-  assert.match(report, /sdk-freshness-contract[\s\S]*agent-facing-freshness-copy[\s\S]*sdk-catalog-scope-warning[\s\S]*live-mcp-catalog-scope-copy[\s\S]*demo-catalog-scope-warning[\s\S]*inventory-and-pagination-uncertainty[\s\S]*tab-filter-semantics-uncertainty[\s\S]*directory-fields-and-status-uncertainty[\s\S]*freshness-sla-uncertainty[\s\S]*missing-data-fidelity[\s\S]*bounded-observation-integrity[\s\S]*terminal-local-scope/, `${reportName} must include every Phase 26 criterion`);
+for (const [reportName, latestReport, completeReport] of [["technical report", technicalReportLatestGate, technicalReport], ["product experience report", productReportLatestGate, productExperience]] as const) {
+  const latestConfidence = latestGate.jev?.confidence?.toFixed(3);
+  const latestTransition = latestGate.phaseTransition;
+  const latestPhase = latestGate.evidence?.phase;
+  assert.ok(latestConfidence && latestTransition && latestPhase, "latest Jev gate must expose its phase, score and transition");
+  const latestPattern = new RegExp("Phase: `" + latestPhase + "`[\\s\\S]*confidence `" + latestConfidence + "`[\\s\\S]*Phase transition: `" + latestTransition + "`");
+  assert.match(latestReport, latestPattern, `${reportName} must record the latest Jev decision and transition`);
+  assert.match(completeReport, /sdk-freshness-contract[\s\S]*agent-facing-freshness-copy[\s\S]*sdk-catalog-scope-warning[\s\S]*live-mcp-catalog-scope-copy[\s\S]*demo-catalog-scope-warning[\s\S]*inventory-and-pagination-uncertainty[\s\S]*tab-filter-semantics-uncertainty[\s\S]*directory-fields-and-status-uncertainty[\s\S]*freshness-sla-uncertainty[\s\S]*missing-data-fidelity[\s\S]*bounded-observation-integrity[\s\S]*terminal-local-scope/, `${reportName} must preserve every historical Phase 26 criterion`);
 }
 assert.match(deferredItems, /Phase 22 added tested Chinese\/English phrasing[\s\S]*\*\*0\.930\*\*/);
 assert.match(deferredItems, /Final local SDK\/MCP acceptance[\s\S]*confidence 0\.900[\s\S]*24 selected local checks/);
@@ -371,9 +459,13 @@ if (phase26FollowupPending) {
   assert.match(phase26Section, /records\/phase26-provider-observation\.json/);
 }
 if (phase26Complete) {
-  assert.equal(phaseState.currentPhase, "delivery-complete", "Phase 26 approval returns the ledger to terminal local delivery");
-  assert.equal(phaseState.nextPhase, "delivery-complete", "the approved Phase 24–26 continuation is terminal");
-  assert.equal(phaseState.lastTransition, "advance");
+  const phase26ForwardIndex = forwardPhaseIds.indexOf("provider-data-limitations-closure");
+  assert.ok(phaseState.currentPhase === "delivery-complete" || (inForwardContinuation && forwardPhaseIndex > phase26ForwardIndex), "Phase 26's historical terminal approval must remain valid when an explicitly approved later continuation is active");
+  assert.equal(phase26Gate?.evidence?.nextPhase, "delivery-complete", "Phase 26 itself ended at its named terminal local-delivery state");
+  if (phaseState.currentPhase === "delivery-complete") {
+    assert.equal(phaseState.nextPhase, "delivery-complete");
+    assert.equal(phaseState.lastTransition, "advance");
+  }
   const selectedCheckCount = phase26Gate?.evidence?.checks?.length ?? 0;
   assert.match(phase26Checklist!, new RegExp(`Complete; Jev approved at confidence \\*\\*0\\.\\d{3}\\*\\* after ${selectedCheckCount}/${selectedCheckCount} selected checks passed`));
   assert.match(phase26Section, new RegExp(`Final Jev approval and terminal local delivery[\\s\\S]*[Aa]ll ${selectedCheckCount} selected checks[\\s\\S]*all 12 criteria`));
@@ -395,6 +487,92 @@ if (phase26Complete) {
   ];
   assert.deepEqual(Object.keys(phase26Gate?.jev?.criterionReviews ?? {}).sort(), [...requiredCriteria].sort(), "Phase 26 approval must review every material criterion exactly once");
   assert.ok(requiredCriteria.every((id) => phase26Gate?.jev?.criterionReviews?.[id]?.verdict === "met"), "every Phase 26 criterion must be met");
+}
+assert.match(phase27Checklist!, phase27Complete
+  ? /Complete; Jev approved at \*\*0\.850\*\*/
+  : /underway/);
+if (phase27Complete) {
+  const selectedChecks = phase27Gate?.evidence?.checks ?? [];
+  assert.equal(selectedChecks.length, 5, "Phase 27 approval must retain all five official-contract and reconciliation checks");
+  assert.ok(selectedChecks.every((check) => check.passed), "every Phase 27 deterministic check must pass before advancement");
+  assert.equal(phase27Gate?.jev?.confidence, 0.85, "Phase 27's recorded pass must show the unchanged 0.850 floor");
+  assert.equal(Object.keys(phase27Gate?.jev?.criterionReviews ?? {}).length, 10);
+  assert.ok(Object.values(phase27Gate?.jev?.criterionReviews ?? {}).every((review) => review.verdict === "met"), "every Phase 27 criterion must be met");
+  assert.match(phase27Section, /Final Jev review[\s\S]*all five selected checks passed[\s\S]*advanced at \*\*0\.850\*\*/);
+}
+assert.match(phase28Checklist!, phase28Complete
+  ? /Complete; Jev approved at confidence \*\*0\.\d{3}\*\*/
+  : /targeted rework underway after the first Jev review[\s\S]*remains active until all criteria clear the unchanged confidence floor/);
+if (phase28Complete) {
+  const selectedChecks = phase28Gate?.evidence?.checks ?? [];
+  assert.ok(selectedChecks.length >= 10, "Phase 28 approval must retain its cross-surface regressions");
+  assert.ok(selectedChecks.every((check) => check.passed), "every Phase 28 deterministic check must pass before advancement");
+  assert.ok((phase28Gate?.jev?.confidence ?? 0) >= 0.85, "Phase 28 must retain the unchanged confidence floor");
+  assert.ok(Object.values(phase28Gate?.jev?.criterionReviews ?? {}).every((review) => review.verdict === "met"), "every Phase 28 criterion must be met");
+  assert.match(phase28Section, /Status:\*\* Complete; Jev approved at confidence \*\*0\.\d{3}\*\*/);
+} else {
+  assert.match(phase28Section, /Status:\*\* Targeted rework underway; the phase remains active until all criteria clear the unchanged \*\*0\.850\*\* confidence floor/);
+}
+assert.ok(phase29Checklist, "Phase 29 must remain visible in the approved checklist");
+assert.match(phase29Checklist!, /Initial terminal local acceptance was Jev-approved on 2026-10-03[\s\S]*automatically synchronized snapshot near the top is the current status/);
+assert.match(phase29Section, /Status:\*\* The initial terminal local acceptance was approved at confidence \*\*0\.850\*\*[\s\S]*automatically synchronized snapshot near the top is the current decision source/);
+assert.ok(latestGateSummary.includes(latestGate.recordedAt ?? ""), "the phase-plan snapshot must name the latest canonical gate record");
+assert.ok(latestGateSummary.includes("Result: \`" + latestGate.phaseTransition + "\`"), "the phase-plan snapshot must match the latest gate verdict");
+assert.ok(latestGateSummary.includes("currentPhase=" + phaseState.currentPhase), "the phase-plan snapshot must match the current phase ledger");
+assert.ok(latestGateSummary.includes("nextPhase=" + phaseState.nextPhase), "the phase-plan snapshot must match the named phase successor");
+assert.match(phase29Section, /First Jev review \(2026-10-03\)[\s\S]*23 selected checks passed[\s\S]*0\.800[\s\S]*0\.820/);
+assert.match(phase29Section, /Second Jev review and targeted diagnosis[\s\S]*25 selected checks passed[\s\S]*phase sequence\/terminal ledger \*\*0\.630\*\*/);
+assert.match(phase29Section, /Third Jev review and targeted repair[\s\S]*overall confidence was \*\*0\.560\*\*[\s\S]*status confidence \*\*0\.560\*\*/);
+assert.ok(phase29Section.includes("Fifth Jev review and process-boundary diagnosis"));
+assert.ok(phase29Section.includes("Canonical record: `2026-10-03T05:26:46.877Z`"));
+assert.ok(phase29Section.includes("Sixth Jev review and targeted terminal-ledger diagnosis"));
+assert.ok(phase29Section.includes("Canonical record: `2026-10-03T05:42:34.487Z`"));
+assert.ok(phase29Section.includes("same Jev review judge every criterion at its own 0.850 floor"));
+assert.ok(phase29Section.includes("Seventh Jev review and report-ledger diagnosis"));
+assert.ok(phase29Section.includes("Canonical record: `2026-10-03T05:51:16.807Z`"));
+assert.ok(phase29Section.includes("Eighth Jev review and automatic-summary synchronization"));
+assert.ok(phase29Section.includes("Canonical record: `2026-10-03T05:59:28.856Z`"));
+assert.ok(phase29Section.includes("had no code to synchronize the latest decision into all five top-level current summaries"));
+assert.ok(phase29Section.includes("Tenth Jev review and reconciliation-criterion diagnosis"));
+assert.ok(phase29Section.includes("Canonical record: `2026-10-03T06:19:24.670Z`"));
+assert.ok(phase29Section.includes("Eleventh Jev review and Phase 29 terminal approval"));
+assert.ok(phase29Section.includes("Canonical record: `2026-10-03T06:26:38.003Z`"));
+assertContains(reportSync, /Selected checks:[\s\S]*check\.passed \? "passed" : "failed"[\s\S]*Deferred assessment:[\s\S]*Deferred items:/, "Every appended gate report must include each selected check outcome and exact deferred items");
+assertContains(reportSync, /renderLatestGateSummary[\s\S]*Latest Jev gate snapshot[\s\S]*Criterion scores below[\s\S]*syncLatestGateSummary/, "The gate must synchronize one exact latest decision snapshot into the five current-summary documents after every review");
+assertContains(gateRunner, /await appendGateReportEntry\([\s\S]*await syncLatestGateSummary\(record, phaseState, \[[\s\S]*CORE_PRODUCT_PHASE_PLAN\.md[\s\S]*DEVELOPER_EXPERIENCE_LOG\.md[\s\S]*TECHNICAL_RESEARCH_REPORT\.md[\s\S]*PRODUCT_EXPERIENCE_REPORT\.md[\s\S]*UPGRADE_DEFERRED_ITEMS\.md/, "The gate runner must synchronize all five current summaries after persisting each Jev decision");
+assert.match(phase29Section, /Terminal local-acceptance matrix[\s\S]*Standalone SDK[\s\S]*Existing-Agent MCP[\s\S]*Native research UI[\s\S]*Provider data[\s\S]*Execution safety[\s\S]*Public release and website/);
+assert.match(phase29Section, /test:agent-model[\s\S]*test:asset-intent-query[\s\S]*test:phase28-fidelity[\s\S]*test:onboarding[\s\S]*test:mcp-config[\s\S]*test:sdk-example[\s\S]*test:distribution[\s\S]*pack:check[\s\S]*test:cleanroom[\s\S]*test:phase29-acceptance-evidence[\s\S]*test:jev-shadow/);
+assert.match(phase29Section, /loopback-only synthetic provider[\s\S]*does not claim that every third-party Agent automatically selects a tool/);
+assert.ok(phase29AcceptanceEvidenceRegression.includes("phase29Seventh.evidence.checks.map"));
+assert.ok(phase29AcceptanceEvidenceRegression.includes("phase29Eighth.evidence.checks.map"));
+assert.ok(phase29AcceptanceEvidenceRegression.includes("both report appendices must reproduce every canonical selected check and result"));
+assert.ok(phase29AcceptanceEvidenceRegression.includes("latestPriorGateAndPhaseStateExactlyReconciled"));
+assert.ok(phase29AcceptanceEvidenceRegression.includes("exact machine-synchronized latest gate snapshot"));
+for (const expected of [
+  "phase29ApprovalAdvancesOnlyToDeliveryComplete",
+  "phase29BelowThresholdCriterionKeepsCurrentPhase",
+  "phase29FailedCheckKeepsCurrentPhase",
+  "phase29HeldStateMetadataAndExactSuccessorVerified",
+  "phase29WrongSuccessorRejected",
+]) {
+  assert.ok(jevShadowRegression.includes(expected), `Phase 29 state-machine regression is missing ${expected}`);
+}
+assertContains(phase26LiveCatalogRegression, /searchKeywords[\s\S]*No matching RWA assets found for keyword:[\s\S]*catalogFallbackResolvesChineseAndEnglishQueriesToNvda/, "Phase 29 natural-language evidence must exercise no-match fallback, exact query capture and ticker resolution through the production MCP subprocess");
+assert.match(phase29Section, /Stop boundary:\*\* local acceptance only; do not infer permission to push, publish, deploy, edit the website, use a wallet, broadcast a transaction or settle funds/);
+if (phase29Complete) {
+  const selectedChecks = phase29Gate?.evidence?.checks ?? [];
+  assert.ok(selectedChecks.length >= 15, "Phase 29 approval must retain its cross-surface and consumer-path checks");
+  assert.ok(selectedChecks.every((check) => check.passed), "every Phase 29 deterministic check must pass before terminal advancement");
+  assert.ok((phase29Gate?.jev?.confidence ?? 0) >= 0.85, "Phase 29 must retain the unchanged confidence floor");
+  assert.ok(Object.values(phase29Gate?.jev?.criterionReviews ?? {}).every((review) => review.verdict === "met"), "every Phase 29 criterion must be met");
+  assert.ok(Object.values(phase29Gate?.jev?.criterionReviews ?? {}).every((review) => (review.confidence ?? 0) >= 0.85), "every Phase 29 criterion must independently meet the unchanged confidence floor");
+} else {
+  assert.equal(phaseState.currentPhase, "sdk-mcp-final-acceptance", "Phase 29 remains the current phase until its own Jev review advances");
+  assert.equal(phaseState.nextPhase, "delivery-complete", "Phase 29 remains held at its only allowed terminal successor");
+  assert.equal(phase29Gate?.evidence?.checks?.length, 25, "the current Phase 29 review must preserve its exact selected check set");
+  const failedChecks = phase29Gate?.evidence?.checks?.filter((check) => !check.passed) ?? [];
+  assert.ok((phase29Gate?.jev?.confidence ?? 1) < 0.85 || failedChecks.length > 0, "a held review must have either a failed selected check or below-threshold confidence");
+  assert.equal(Object.keys(phase29Gate?.jev?.criterionReviews ?? {}).length, 12, "the latest Phase 29 review covers all twelve criteria");
 }
 assert.match(phase11, phase11Active
   ? /Active \(approved continuation from Phase 10\)/

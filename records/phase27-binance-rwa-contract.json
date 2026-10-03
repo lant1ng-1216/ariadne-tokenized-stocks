@@ -1,0 +1,125 @@
+{
+  "phase": "official-provider-contract-audit",
+  "reviewedAt": "2026-10-03",
+  "source": {
+    "title": "Binance Web3 API — RWA Data",
+    "url": "https://web3.binance.com/en/dev-docs/catalog/web3-wallet/api/rest-api/rwa-data",
+    "publisher": "Binance Web3 API",
+    "official": true,
+    "renderedDocumentationSections": [
+      {
+        "section": "Get RWA Token Issuance Platforms",
+        "pageLines": "80-252",
+        "fieldsVerified": ["tickerCount", "chainDistribution.tokenCount", "timestamp"]
+      },
+      {
+        "section": "Get RWA Token Price",
+        "pageLines": "259-428",
+        "fieldsVerified": ["binanceChainId", "tokenContractAddresses", "tokenPriceUpdatedAt", "timestamp"]
+      },
+      {
+        "section": "Search RWA Token",
+        "pageLines": "435-632",
+        "fieldsVerified": ["keyword", "platformId", "assets[].assetType", "timestamp"]
+      },
+      {
+        "section": "Get RWA Token List",
+        "pageLines": "855-1232",
+        "fieldsVerified": ["binanceChainId", "platformId", "tabId", "assetType", "statusInfo", "reasonCode", "reasonMsg", "nextOpenTime", "nextCloseTime", "timestamp"],
+        "renderedListDoesNotDescribe": ["page", "pageSize", "offset", "cursor", "limit", "total count", "continuation token", "per-item tokenPriceUpdatedAt", "liquidity"]
+      }
+    ],
+    "downloadableSchema": "The page's schema download link was attempted but timed out; this record reflects the rendered official endpoint documentation, not a fetched OpenAPI document."
+  },
+  "endpoints": {
+    "platforms": {
+      "path": "/api/v1/dex/market/rwa/platforms",
+      "tickerCount": "Number of underlying assets corresponding to RWA tokens.",
+      "chainDistributionTokenCount": "Number of RWA tokens on the chain; the same underlying asset deployed on different chains is counted separately.",
+      "responseTimestamp": "Server response time in Unix milliseconds."
+    },
+    "tokens": {
+      "path": "/api/v1/dex/market/rwa/tokens",
+      "filters": {
+        "binanceChainId": "Optional; omitted returns data from all chains.",
+        "platformId": "Optional; omitted returns all platforms.",
+        "tabId": "Optional sector filter; omitted returns all sectors; documented enum values are 1 through 13."
+      },
+      "documentedResponseShape": "A data array of RWA tokenized assets plus an envelope-level server timestamp.",
+      "paginationContract": "The rendered endpoint documentation lists no page, pageSize, offset, cursor, limit, total-count, or continuation-token field. The downloadable schema was not retrieved, so absence from the rendered page is not proof that no undocumented runtime behavior exists.",
+      "assetType": "1=Stock, 2=Pre-IPO, 3=ETF.",
+      "marketStatus": ["premarket", "regular", "postmarket", "overnight", "closed", "pause"],
+      "marketStatusReasonFields": ["openState", "reasonCode", "reasonMsg", "nextOpenTime", "nextCloseTime"],
+      "quoteFields": ["tokenPrice", "referencePrice", "volume24H", "marketCap", "peRatioTTM"],
+      "notDocumentedOnTokenListItem": ["tokenPriceUpdatedAt", "liquidity"]
+    },
+    "search": {
+      "path": "/api/v1/dex/market/rwa/search",
+      "requiredQuery": "keyword (ticker, company name, or contract address)",
+      "optionalFilter": "platformId",
+      "results": "Matched ticker rows containing tokenized assets across platforms and chains.",
+      "chainFilter": "No chainId query parameter is listed in the rendered search endpoint documentation."
+    },
+    "price": {
+      "path": "/api/v1/dex/market/rwa/price",
+      "identity": "binanceChainId plus comma-separated tokenContractAddresses; up to 100 addresses per request.",
+      "perAssetTimestamp": "tokenPriceUpdatedAt is distinct from the envelope-level server timestamp."
+    }
+  },
+  "comparisonWithPhase26Observation": {
+    "declaredBscTokenCount": 545,
+    "declaredBscTokenCountBasis": "Sum platform chainDistribution.tokenCount entries where binanceChainId is 56; this is not platform tickerCount.",
+    "returnedUniqueBscRepresentations": 488,
+    "returnedUniqueBscRepresentationsBasis": "Count distinct normalized BSC identities (chainId plus lowercase token contract address) in the Phase 26 token-list rows.",
+    "difference": 57,
+    "sourceRecord": "records/phase26-provider-observation.json; aggregate methods and values are retained, while raw rows and addresses are omitted, so independent recomputation requires a separately authorized observation.",
+    "interpretation": "The two counts are conceptually comparable representation/token counts, not underlying-ticker counts. The official rendered documentation does not define pagination or a total-count contract for the token-list endpoint. Therefore pagination cannot be asserted as the cause; the observed difference remains unexplained and upstream completeness remains unverified.",
+    "noRepeatProviderRequest": true
+  },
+  "implementationGapsConfirmedBySourceReview": [
+    "The token-list response contract distinguishes Stock, Pre-IPO, and ETF, while Ariadne's current listing model does not preserve assetType.",
+    "The token-list contract documents reasonCode, reasonMsg, and nextCloseTime, while Ariadne's current response/domain models do not preserve those details.",
+    "The existing normalized market-status mapping handles the six documented marketStatus values, but collapses distinct states into open, closed, or offhours."
+  ],
+  "sourceCodeCrosswalk": [
+    {
+      "documentedField": "search.assets[].assetType and token-list assetType (1=Stock, 2=Pre-IPO, 3=ETF)",
+      "sourceLocation": "src/services/tokenized-stocks.ts: RwaSearchResponse, RwaTokenResponse, TokenizedStocksService.search(), TokenizedStocksService.listSnapshot()",
+      "domainLocation": "src/domain/types.ts: StockAsset, TokenizedStockListing",
+      "observedHandling": "RwaSearchResponse declares assetType, but search() does not pass it to normalizeStockAsset; RwaTokenResponse and both downstream domain types do not declare assetType. The normalized search/list output therefore does not retain it.",
+      "phase28Repair": "Add a typed asset category and carry the documented values through list/search, SDK output and MCP/native research presentation without inventing unknown values."
+    },
+    {
+      "documentedField": "statusInfo.marketStatus, openState, nextOpenTime, reasonCode, reasonMsg, nextCloseTime",
+      "sourceLocation": "src/services/tokenized-stocks.ts: RwaTokenResponse and listSnapshot()",
+      "domainLocation": "src/domain/types.ts: MarketContext; src/domain/normalizers.ts: normalizeMarketStatus(), normalizeMarketContext()",
+      "observedHandling": "The response type and MarketContext retain openState and nextOpenTime only. reasonCode, reasonMsg and nextCloseTime are absent. normalizeMarketStatus() maps documented statuses to four broad internal values (open/closed/offhours/unknown), so the original detailed state is not available to consumers.",
+      "phase28Repair": "Preserve the documented raw status and optional reason/next-close context alongside the conservative normalized status; unknown enum values remain unknown and must not loosen transaction checks."
+    },
+    {
+      "documentedField": "Token-list envelope timestamp; price endpoint tokenPriceUpdatedAt per representation",
+      "sourceLocation": "src/services/tokenized-stocks.ts: RwaTokenResponse, RwaTokenPriceResponse, listSnapshot(), tokenPriceSnapshots()",
+      "domainLocation": "src/domain/types.ts: MarketDataProvenance and MarketContext",
+      "observedHandling": "The list endpoint envelope time and price endpoint per-asset time are represented separately. The rendered token-list contract does not promise tokenPriceUpdatedAt on each list item; Ariadne's optional list-item read is therefore not proof of a documented list guarantee. No missing timestamp is synthesized.",
+      "phase28Repair": "Keep endpoint provenance/timestamp semantics separate and do not promote the optional list-item field into a freshness guarantee."
+    }
+  ],
+  "phase27ExecutionBoundary": {
+    "providerEndpointRequests": 0,
+    "rawProviderPayloadsReadOrStored": false,
+    "providerCredentialsUsed": false,
+    "providerCredentialsIncludedInJevEvidence": false,
+    "jevReviewerAuthenticationUsed": true,
+    "jevReviewerAuthenticationIncludedInEvidence": false,
+    "externalWrites": 0,
+    "selectedChecks": [
+      "typecheck (tsc --noEmit)",
+      "test:phase27-contract (local JSON/Markdown/TypeScript source assertions plus an in-memory synthetic provider fixture)",
+      "test:phase26-limitations (local sanitized-record and documentation assertions)",
+      "test:core-product-phase-plan (local roadmap and evidence assertions)",
+      "test:jev-shadow (local Jev gate and approved-successor transition assertions)"
+    ],
+    "basis": "Phase 27 work consisted of reading the rendered official documentation, local repository files, and running the listed local checks. The Jev evaluator used its separately configured reviewer authentication; no provider credential or authentication value was included in the evidence. This is a task execution record, not a claim derived from a new API response."
+  },
+  "boundedConclusion": "This is a documentation-to-code contract review only. No Binance endpoint was called, no catalog completeness was proved, and no provider behavior was inferred beyond the published field descriptions."
+}

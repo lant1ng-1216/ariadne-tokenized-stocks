@@ -1,3 +1,5 @@
+import { normalizeProviderTimestamp } from "../domain/normalizers.js";
+
 export type RepresentationIdentity = {
   chainId: string;
   platformId: string;
@@ -12,6 +14,40 @@ export type TokenPriceProbeRecord = {
   referencePrice?: string;
   tokenPriceUpdatedAt?: number;
 };
+
+export type QuoteTimestampAgeSummary = {
+  validTimestampRows: number;
+  missingOrInvalidTimestampRows: number;
+  ageSampleRows: number;
+  minimumAgeMs: number | null;
+  medianAgeMs: number | null;
+  maximumAgeMs: number | null;
+  futureTimestampRows: number;
+};
+
+/** Exclude future-dated samples from age statistics while reporting them separately. */
+export function summarizeQuoteTimestampAges(values: unknown[], observedAtMs: number): QuoteTimestampAgeSummary {
+  const offsets = values.flatMap((value) => {
+    const timestamp = normalizeProviderTimestamp(value);
+    return timestamp === undefined ? [] : [observedAtMs - timestamp];
+  });
+  const ages = offsets.filter((offset) => offset >= 0).sort((left, right) => left - right);
+  const medianAgeMs = ages.length
+    ? ages.length % 2
+      ? ages[Math.floor(ages.length / 2)]!
+      : (ages[ages.length / 2 - 1]! + ages[ages.length / 2]!) / 2
+    : null;
+
+  return {
+    validTimestampRows: offsets.length,
+    missingOrInvalidTimestampRows: values.length - offsets.length,
+    ageSampleRows: ages.length,
+    minimumAgeMs: ages[0] ?? null,
+    medianAgeMs,
+    maximumAgeMs: ages.at(-1) ?? null,
+    futureTimestampRows: offsets.filter((offset) => offset < 0).length
+  };
+}
 
 export function representationIdentityKey(item: RepresentationIdentity): string {
   const address = item.contractAddress.trim();
@@ -64,8 +100,7 @@ export function summarizeTokenPriceProbe(
     rowsByIdentity.set(key, [...(rowsByIdentity.get(key) ?? []), item]);
   }
   const hasPrice = (item: TokenPriceProbeRecord) => isPositiveNumber(item.tokenPrice);
-  const hasTimestamp = (item: TokenPriceProbeRecord) =>
-    typeof item.tokenPriceUpdatedAt === "number" && Number.isFinite(item.tokenPriceUpdatedAt) && item.tokenPriceUpdatedAt > 0;
+  const hasTimestamp = (item: TokenPriceProbeRecord) => normalizeProviderTimestamp(item.tokenPriceUpdatedAt) !== undefined;
 
   return {
     ...identityCoverage,

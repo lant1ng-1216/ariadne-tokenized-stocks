@@ -1,4 +1,5 @@
 import type { ActionPlan, MarketContext, QuoteResult, SafetyReport, SimulationResult } from "./types.js";
+import { hasMarketStateConflict, normalizeProviderTimestamp } from "./normalizers.js";
 
 export function evaluateSafety(input: {
   plan: ActionPlan;
@@ -31,18 +32,22 @@ export function evaluateSafety(input: {
   if (input.market) {
     checks.push({
       name: "market_data_freshness",
-      passed: Boolean(input.market.tokenPriceUpdatedAt),
+      passed: normalizeProviderTimestamp(input.market.tokenPriceUpdatedAt) !== undefined,
       severity: "warning",
-      message: input.market.tokenPriceUpdatedAt ? "Price includes an update timestamp" : "Price is missing an update timestamp"
+      message: normalizeProviderTimestamp(input.market.tokenPriceUpdatedAt) !== undefined ? "Price includes a valid update timestamp" : "Price is missing a valid update timestamp"
     });
+    const marketStateConflict = hasMarketStateConflict(input.market.marketStatus, input.market.openState);
     const marketClosed = input.market.marketStatus === "closed" || input.market.openState === false;
+    const marketUnknown = input.market.marketStatus === "unknown";
     checks.push({
       name: "market_status",
-      passed: !marketClosed && input.market.marketStatus !== "unknown",
-      severity: marketClosed ? "blocking" : "warning",
-      message: marketClosed
+      passed: !marketClosed && !marketUnknown && !marketStateConflict,
+      severity: marketClosed || marketUnknown || marketStateConflict ? "blocking" : "warning",
+      message: marketStateConflict
+        ? "Provider marketStatus and openState conflict; executable plans are blocked"
+        : marketClosed
         ? "Market is closed or halted; executable plans are blocked"
-        : input.market.marketStatus === "unknown" ? "Platform did not provide a recognized market status" : `Market status: ${input.market.marketStatus}`
+        : marketUnknown ? "Market status is unknown; executable plans are blocked" : `Market status: ${input.market.marketStatus}`
     });
   }
   if (input.quote) {

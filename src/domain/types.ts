@@ -10,6 +10,8 @@ export type StockAsset = {
   tokenSymbol: string;
   underlyingTicker: string;
   underlyingName: string;
+  /** Provider's documented code: 1=Stock, 2=Pre-IPO, 3=ETF; other integer values remain visible as unknown codes. */
+  assetType?: number;
   tokenName?: string;
   tokenLogoUrl?: string;
   issuerLogoUrl?: string;
@@ -57,8 +59,13 @@ export type MarketContext = {
   priceGapPercent?: string;
   tokenPriceUpdatedAt?: number;
   marketStatus: MarketStatus;
+  /** Exact provider enum, kept separate from the conservative normalized marketStatus used by safety logic. */
+  providerMarketStatus?: string;
   openState?: boolean;
   nextOpenTime?: number;
+  reasonCode?: string | number;
+  reasonMsg?: string;
+  nextCloseTime?: number;
   liquidity?: string;
   volume24H?: string;
   holders?: number;

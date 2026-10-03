@@ -4,7 +4,7 @@ import { buildJevQuestions, criterionQuestionId, makeDecisionFromChoices, select
 import { isLowRiskContinuation, runShadowGate } from "../src/jev/shadow-gate.js";
 import { assertSafeReviewText, confidenceThreshold, MIN_JEV_CONFIDENCE, validateAcceptanceCriteria } from "../src/jev/evidence-validation.js";
 import { writeShadowDecisionRecord } from "../src/jev/record.js";
-import { advancePhaseState } from "../src/jev/phase-state.js";
+import { advancePhaseState, assertApprovedPhaseSuccessor } from "../src/jev/phase-state.js";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -293,6 +293,9 @@ const approvedContinuation = [
   ["provider-data-resilience", "agent-output-language-quality"],
   ["agent-output-language-quality", "core-local-acceptance"],
   ["core-local-acceptance", "delivery-complete"],
+  ["official-provider-contract-audit", "source-confirmed-data-fidelity"],
+  ["source-confirmed-data-fidelity", "sdk-mcp-final-acceptance"],
+  ["sdk-mcp-final-acceptance", "delivery-complete"],
 ] as const;
 for (const [phase, nextPhase] of approvedContinuation) {
   const evidence = {
@@ -319,6 +322,12 @@ for (const [phase, nextPhase] of approvedContinuation) {
   const nextState = await advancePhaseState(phaseStatePath, decision);
   assert.equal(nextState.currentPhase, nextPhase, `${phase} advances to its named successor`);
 }
+assert.doesNotThrow(() => assertApprovedPhaseSuccessor("official-provider-contract-audit", "source-confirmed-data-fidelity"));
+assert.doesNotThrow(() => assertApprovedPhaseSuccessor("source-confirmed-data-fidelity", "sdk-mcp-final-acceptance"));
+assert.doesNotThrow(() => assertApprovedPhaseSuccessor("sdk-mcp-final-acceptance", "delivery-complete"));
+assert.throws(() => assertApprovedPhaseSuccessor("official-provider-contract-audit", "sdk-mcp-final-acceptance"), /may advance only to its approved successor/);
+assert.throws(() => assertApprovedPhaseSuccessor("source-confirmed-data-fidelity", "delivery-complete"), /may advance only to its approved successor/);
+assert.throws(() => assertApprovedPhaseSuccessor("sdk-mcp-final-acceptance", "website-release"), /may advance only to its approved successor/);
 
 const failedFirstForwardEvidence = {
   ...safe,
@@ -347,6 +356,148 @@ assert.equal(failedFirstForwardState.nextPhase, "sdk-cleanroom-revalidation", "a
 
 const tempDir = await mkdtemp(join(tmpdir(), "ariadne-jev-shadow-"));
 const recordPath = join(tempDir, "shadow.jsonl");
+const phase27StatePath = join(tempDir, "phase27-state.json");
+const phase27LowConfidenceEvidence = {
+  ...safe,
+  phase: "official-provider-contract-audit",
+  nextPhase: "source-confirmed-data-fidelity",
+  acceptanceCriteria: [{
+    id: "phase27-review-confidence",
+    requirement: "Every Phase 27 acceptance criterion is met and the overall Jev confidence is at least 0.85 before transition.",
+    checkNames: ["test:jev-shadow"],
+    evidenceSummary: "This deterministic regression returns met criteria but Jev confidence 0.84, immediately below the enforced 0.85 floor.",
+  }],
+};
+const phase27LowConfidenceDecision = await runShadowGate(phase27LowConfidenceEvidence, async () => ({
+  ...evaluateBaseline(phase27LowConfidenceEvidence),
+  source: "jev",
+  confidence: 0.84,
+  questionConfidence: { status: 0.99, nextAction: 0.99, riskLevel: 0.99 },
+  criterionReviews: { "phase27-review-confidence": { verdict: "met" as const, confidence: 0.99 } },
+}));
+assert.equal(phase27LowConfidenceDecision.phaseTransition, "pause", "a Phase 27 result below the confidence floor cannot advance despite met criteria");
+assert.match(phase27LowConfidenceDecision.transitionReason, /minimum threshold \(0\.85\)/);
+await writeFile(phase27StatePath, `${JSON.stringify({ currentPhase: "official-provider-contract-audit" }, null, 2)}\n`, "utf8");
+const heldPhase27State = await advancePhaseState(phase27StatePath, phase27LowConfidenceDecision);
+assert.equal(heldPhase27State.currentPhase, "official-provider-contract-audit", "a low-confidence Phase 27 gate keeps Phase 27 active");
+assert.equal(heldPhase27State.nextPhase, "source-confirmed-data-fidelity", "a pause records but does not enter the approved successor");
+
+const phase28StatePath = join(tempDir, "phase28-state.json");
+const phase28ApprovedEvidence = {
+  ...safe,
+  phase: "source-confirmed-data-fidelity",
+  nextPhase: "sdk-mcp-final-acceptance",
+  objective: "Advance the user's approved Phase 28 to Phase 29 sequence only after all local checks and review criteria pass.",
+  checks: ["test:phase28-fidelity", "test:core-product-phase-plan", "test:jev-shadow"].map((name) => ({ name, passed: true, evidence: "synthetic Phase 28 transition regression passed" })),
+  acceptanceCriteria: [{
+    id: "phase28-ledger-hold-and-exact-successor",
+    requirement: "A failed deterministic check or any Jev criterion below 0.85 keeps Phase 28 active; only a complete passing review can advance the phase ledger to the exact Phase 29 successor.",
+    checkNames: ["test:phase28-fidelity", "test:core-product-phase-plan", "test:jev-shadow"],
+    evidenceSummary: "The core-plan regression reconciles the latest real Jev decision with records/phase-state.json; state-machine cases prove that a below-threshold real gate remains held, only the exact Phase 29 successor is accepted, and the ledger advances only after all selected checks and criteria pass.",
+  }],
+  deferredItems: ["The provider catalog-count difference and quote freshness remain unresolved outside Phase 28 scope."],
+};
+const phase28ApprovedDecision = await runShadowGate(phase28ApprovedEvidence, async () => ({
+  ...evaluateBaseline(phase28ApprovedEvidence),
+  source: "jev",
+  confidence: 0.99,
+  questionConfidence: { status: 0.99, nextAction: 0.99, riskLevel: 0.99, criterion_phase28_ledger_hold_and_exact_successor: 0.99 },
+  criterionReviews: { "phase28-ledger-hold-and-exact-successor": { verdict: "met" as const, confidence: 0.99 } },
+  deferredAssessment: "non_blocking" as const,
+}));
+assert.equal(phase28ApprovedDecision.phaseTransition, "advance", "approved Phase 28 advances only after complete passing evidence");
+await writeFile(phase28StatePath, `${JSON.stringify({ currentPhase: "source-confirmed-data-fidelity" }, null, 2)}\n`, "utf8");
+const phase28AdvancedState = await advancePhaseState(phase28StatePath, phase28ApprovedDecision);
+assert.equal(phase28AdvancedState.currentPhase, "sdk-mcp-final-acceptance", "approved Phase 28 records exactly its named Phase 29 successor");
+
+const phase28LowCriterionDecision = await runShadowGate(phase28ApprovedEvidence, async () => ({
+  ...evaluateBaseline(phase28ApprovedEvidence),
+  source: "jev",
+  confidence: 0.99,
+  questionConfidence: { status: 0.99, nextAction: 0.99, riskLevel: 0.99, criterion_phase28_ledger_hold_and_exact_successor: 0.84 },
+  criterionReviews: { "phase28-ledger-hold-and-exact-successor": { verdict: "met" as const, confidence: 0.84 } },
+  deferredAssessment: "non_blocking" as const,
+}));
+assert.equal(phase28LowCriterionDecision.phaseTransition, "pause", "a Phase 28 criterion below 0.85 holds the phase even if overall confidence is high");
+await writeFile(phase28StatePath, `${JSON.stringify({ currentPhase: "source-confirmed-data-fidelity" }, null, 2)}\n`, "utf8");
+const phase28HeldState = await advancePhaseState(phase28StatePath, phase28LowCriterionDecision);
+assert.equal(phase28HeldState.currentPhase, "source-confirmed-data-fidelity", "a low-confidence Phase 28 criterion cannot advance the phase ledger");
+assert.equal(phase28HeldState.nextPhase, "sdk-mcp-final-acceptance", "a pause records Phase 29 as successor without entering it");
+const phase28FailedCheckEvidence = {
+  ...phase28ApprovedEvidence,
+  checks: [{ name: "test:phase28-fidelity", passed: false, evidence: "synthetic failing Phase 28 acceptance check" }]
+};
+const phase28FailedCheckDecision = await runShadowGate(phase28FailedCheckEvidence, async () => ({
+  ...evaluateBaseline({ ...phase28FailedCheckEvidence, checks: [{ ...phase28FailedCheckEvidence.checks[0], passed: true }] }),
+  source: "jev",
+  confidence: 0.99,
+  questionConfidence: { status: 0.99, nextAction: 0.99, riskLevel: 0.99, criterion_phase28_ledger_hold_and_exact_successor: 0.99 },
+  criterionReviews: { "phase28-ledger-hold-and-exact-successor": { verdict: "met" as const, confidence: 0.99 } },
+  deferredAssessment: "non_blocking" as const,
+}));
+assert.equal(phase28FailedCheckDecision.phaseTransition, "pause", "a failed deterministic Phase 28 check keeps the phase held even if the mocked reviewer approves");
+await writeFile(phase28StatePath, `${JSON.stringify({ currentPhase: "source-confirmed-data-fidelity" }, null, 2)}\n`, "utf8");
+const phase28FailedCheckState = await advancePhaseState(phase28StatePath, phase28FailedCheckDecision);
+assert.equal(phase28FailedCheckState.currentPhase, "source-confirmed-data-fidelity", "a failed Phase 28 check cannot advance the phase ledger");
+assert.throws(() => assertApprovedPhaseSuccessor("source-confirmed-data-fidelity", "delivery-complete"), /may advance only to its approved successor/);
+
+const phase29StatePath = join(tempDir, "phase29-state.json");
+const phase29ApprovedEvidence = {
+  ...safe,
+  phase: "sdk-mcp-final-acceptance",
+  nextPhase: "delivery-complete",
+  objective: "Complete the approved terminal local SDK/MCP acceptance only after every selected check and review criterion passes.",
+  checks: ["test:phase29-acceptance-evidence", "test:core-product-phase-plan", "test:jev-shadow"].map((name) => ({ name, passed: true, evidence: "synthetic Phase 29 terminal transition regression passed" })),
+  acceptanceCriteria: [{
+    id: "phase29-terminal-local-state",
+    requirement: "Phase 29 advances only to delivery-complete when all selected checks pass, every linked criterion is met at or above 0.85, and overall Jev confidence is at least 0.85; otherwise Phase 29 stays active.",
+    checkNames: ["test:phase29-acceptance-evidence", "test:core-product-phase-plan", "test:jev-shadow"],
+    evidenceSummary: "The report reconciliation and phase-plan checks inspect the actual ledger and latest gate; these state-machine cases exercise the exact Phase 29 successor, low-confidence hold, and failed-check hold.",
+  }],
+  deferredItems: ["Public release, website work, provider re-probe, wallet signing, broadcast and settlement remain outside terminal local acceptance."],
+};
+const phase29MockReview = (evidence: typeof phase29ApprovedEvidence, confidence = 0.99, criterionConfidence = 0.99) => runShadowGate(evidence, async () => ({
+  ...evaluateBaseline(evidence),
+  source: "jev",
+  confidence,
+  questionConfidence: { status: 0.99, nextAction: 0.99, riskLevel: 0.99, criterion_phase29_terminal_local_state: criterionConfidence },
+  criterionReviews: { "phase29-terminal-local-state": { verdict: "met" as const, confidence: criterionConfidence } },
+  deferredAssessment: "non_blocking" as const,
+}));
+const phase29ApprovedDecision = await phase29MockReview(phase29ApprovedEvidence);
+assert.equal(phase29ApprovedDecision.phaseTransition, "advance", "Phase 29 advances only after its terminal acceptance evidence passes");
+await writeFile(phase29StatePath, `${JSON.stringify({ currentPhase: "sdk-mcp-final-acceptance" }, null, 2)}\n`, "utf8");
+const phase29AdvancedState = await advancePhaseState(phase29StatePath, phase29ApprovedDecision);
+assert.equal(phase29AdvancedState.currentPhase, "delivery-complete", "approved Phase 29 reaches only its named local terminal state");
+assert.equal(phase29AdvancedState.nextPhase, "delivery-complete");
+assert.equal(phase29AdvancedState.lastTransition, "advance");
+assert.equal(phase29AdvancedState.lastDecisionAt, phase29ApprovedDecision.recordedAt);
+
+const phase29LowConfidenceDecision = await phase29MockReview(phase29ApprovedEvidence, 0.99, 0.84);
+assert.equal(phase29LowConfidenceDecision.phaseTransition, "pause", "a below-threshold Phase 29 criterion holds despite high overall confidence");
+await writeFile(phase29StatePath, `${JSON.stringify({ currentPhase: "sdk-mcp-final-acceptance" }, null, 2)}\n`, "utf8");
+const phase29LowConfidenceState = await advancePhaseState(phase29StatePath, phase29LowConfidenceDecision);
+assert.equal(phase29LowConfidenceState.currentPhase, "sdk-mcp-final-acceptance");
+assert.equal(phase29LowConfidenceState.nextPhase, "delivery-complete");
+assert.equal(phase29LowConfidenceState.lastTransition, "pause");
+assert.equal(phase29LowConfidenceState.lastDecisionAt, phase29LowConfidenceDecision.recordedAt);
+assert.equal(phase29LowConfidenceState.lastReason, phase29LowConfidenceDecision.transitionReason);
+
+const phase29FailedCheckEvidence = {
+  ...phase29ApprovedEvidence,
+  checks: phase29ApprovedEvidence.checks.map((check) => check.name === "test:phase29-acceptance-evidence" ? { ...check, passed: false, evidence: "synthetic failing Phase 29 acceptance check" } : check),
+};
+const phase29FailedCheckDecision = await phase29MockReview(phase29FailedCheckEvidence);
+assert.equal(phase29FailedCheckDecision.phaseTransition, "pause", "a failed Phase 29 selected check holds even if Jev returns a passing review");
+await writeFile(phase29StatePath, `${JSON.stringify({ currentPhase: "sdk-mcp-final-acceptance" }, null, 2)}\n`, "utf8");
+const phase29FailedCheckState = await advancePhaseState(phase29StatePath, phase29FailedCheckDecision);
+assert.equal(phase29FailedCheckState.currentPhase, "sdk-mcp-final-acceptance");
+assert.equal(phase29FailedCheckState.nextPhase, "delivery-complete");
+assert.equal(phase29FailedCheckState.lastTransition, "pause");
+assert.equal(phase29FailedCheckState.lastDecisionAt, phase29FailedCheckDecision.recordedAt);
+assert.equal(phase29FailedCheckState.lastReason, phase29FailedCheckDecision.transitionReason);
+assert.throws(() => assertApprovedPhaseSuccessor("sdk-mcp-final-acceptance", "website-release"), /may advance only to its approved successor/);
+
 await writeShadowDecisionRecord(recordPath, record);
 const persisted = JSON.parse((await readFile(recordPath, "utf8")).trim()) as typeof record;
 assert.equal(persisted.actionTaken, "none");
@@ -362,6 +513,16 @@ console.log(JSON.stringify({
   criterionLinkedReview: true,
   terminalPhaseAdvancesOnlyAfterApproval: true,
   approvedPhases18To23AdvanceInSequence: true,
+  phases27To29UseEnforcedSuccessorsAndRejectSkips: true,
+  phase27LowConfidenceKeepsCurrentPhase: heldPhase27State.currentPhase === "official-provider-contract-audit",
+  phase28ApprovalAdvancesOnlyToPhase29: phase28AdvancedState.currentPhase === "sdk-mcp-final-acceptance",
+  phase28BelowThresholdCriterionKeepsCurrentPhase: phase28HeldState.currentPhase === "source-confirmed-data-fidelity",
+  phase28FailedCheckKeepsCurrentPhase: phase28FailedCheckState.currentPhase === "source-confirmed-data-fidelity",
+  phase29ApprovalAdvancesOnlyToDeliveryComplete: phase29AdvancedState.currentPhase === "delivery-complete" && phase29AdvancedState.nextPhase === "delivery-complete",
+  phase29BelowThresholdCriterionKeepsCurrentPhase: phase29LowConfidenceState.currentPhase === "sdk-mcp-final-acceptance",
+  phase29FailedCheckKeepsCurrentPhase: phase29FailedCheckState.currentPhase === "sdk-mcp-final-acceptance",
+  phase29HeldStateMetadataAndExactSuccessorVerified: phase29LowConfidenceState.lastTransition === "pause" && phase29FailedCheckState.lastTransition === "pause" && phase29AdvancedState.lastTransition === "advance",
+  phase29WrongSuccessorRejected: true,
   failedPhase18CheckRemainsActive: failedFirstForwardState.currentPhase === "mcp-confirmation-host-interop",
   agentNativeUiPhaseAdvancesOnlyAfterApproval: agentNativeUiTerminalState.currentPhase === "delivery-complete",
   failedPhaseGateRemainsActive: true,

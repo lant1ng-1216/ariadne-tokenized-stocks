@@ -108,8 +108,8 @@ assert.ok(fidelityAsset.dataQuality.missingFields.includes("liquidity"));
 assert.ok(fidelityAsset.dataQuality.missingFields.includes("marketStatus"));
 assert.match(chineseFidelityCard, /代币观测价格：\*\*123\.45\*\* · 标的参考价格：\*\*234\.56\*\*/);
 assert.match(englishFidelityCard, /Observed price: \*\*123\.45\*\* · Reference price: \*\*234\.56\*\*/);
-assert.match(chineseFidelityCard, /报告为开放状态；市场状态未知/);
-assert.match(englishFidelityCard, /Open state reported; status unknown/);
+assert.match(chineseFidelityCard, /市场状态未知（上游报告开放标记，但未确认）/);
+assert.match(englishFidelityCard, /Market status unknown \(provider open flag is unconfirmed\)/);
 assert.match(chineseFidelityCard, /未提供流动性数据；不得将其理解为 0/);
 assert.match(englishFidelityCard, /Liquidity was not provided and must not be interpreted as zero/);
 assert.match(chineseFidelityCard, /仅凭上游时间戳无法保证行情数据新鲜度；尚未验证行情数据服务等级/);
@@ -138,8 +138,8 @@ const fidelityViewInput = (query: string) => ({
 const fidelityUiZh = renderResearchView(fidelityViewInput("研究 NVDA；行情未知，不要交易"));
 const fidelityUiEn = renderResearchView(fidelityViewInput("Research NVDA; status is unknown, no trading"));
 for (const [surface, ui, statusLabel, warning] of [
-  ["Chinese", fidelityUiZh, "报告为开放状态；市场状态未知", "未提供流动性数据；不得将其理解为 0"],
-  ["English", fidelityUiEn, "open state reported; status unknown", "Liquidity was not provided and must not be interpreted as zero"]
+  ["Chinese", fidelityUiZh, "市场状态未知（上游报告开放标记，但未确认）", "未提供流动性数据；不得将其理解为 0"],
+  ["English", fidelityUiEn, "market status unknown (provider open flag is unconfirmed)", "Liquidity was not provided and must not be interpreted as zero"]
 ] as const) {
   assert.ok(ui.includes("123.45") && ui.includes("234.56"), `${surface} native view retains the separate exact observed/reference prices`);
   assert.ok(ui.includes(statusLabel), `${surface} native view preserves unknown market status`);

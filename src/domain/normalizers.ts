@@ -11,6 +11,7 @@ export function normalizeStockAsset(input: {
   tokenSymbol?: string;
   underlyingTicker?: string;
   underlyingName?: string;
+  assetType?: number;
 }): StockAsset {
   return {
     assetId: makeAssetId(input.binanceChainId, input.tokenContractAddress),
@@ -19,7 +20,8 @@ export function normalizeStockAsset(input: {
     contractAddress: input.tokenContractAddress,
     tokenSymbol: input.tokenSymbol ?? "",
     underlyingTicker: input.underlyingTicker ?? "",
-    underlyingName: input.underlyingName ?? ""
+    underlyingName: input.underlyingName ?? "",
+    ...(typeof input.assetType === "number" && Number.isSafeInteger(input.assetType) ? { assetType: input.assetType } : {})
   };
 }
 
@@ -28,6 +30,17 @@ export function normalizeMarketStatus(value: unknown): MarketStatus {
   if (value === "closed" || value === "paused" || value === "pause" || value === "halted") return "closed";
   if (value === "offhours" || value === "preopen" || value === "afterhours" || value === "premarket" || value === "postmarket" || value === "overnight") return "offhours";
   return "unknown";
+}
+
+export function normalizeProviderTimestamp(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isSafeInteger(value) && value > 0 && value <= 8_640_000_000_000_000
+    ? value
+    : undefined;
+}
+
+export function hasMarketStateConflict(status: MarketStatus, openState?: boolean): boolean {
+  return (status === "open" && openState === false) ||
+    (status === "closed" && openState === true);
 }
 
 export function positiveDecimal(value: unknown): string | undefined {
@@ -80,11 +93,19 @@ function decimalGapPercent(tokenPrice?: string, referencePrice?: string): string
 
 export function normalizeMarketContext(asset: StockAsset, input: any): MarketContext {
   const status = normalizeMarketStatus(input.statusInfo?.marketStatus);
+  const openState = typeof input.statusInfo?.openState === "boolean" ? input.statusInfo.openState : undefined;
   const tokenPrice = positiveDecimal(input.tokenPrice);
   const referencePrice = positiveDecimal(input.referencePrice);
+  const tokenPriceUpdatedAt = normalizeProviderTimestamp(input.tokenPriceUpdatedAt);
+  const nextOpenTime = normalizeProviderTimestamp(input.statusInfo?.nextOpenTime);
+  const nextCloseTime = normalizeProviderTimestamp(input.statusInfo?.nextCloseTime);
   const warnings: string[] = [];
   warnings.push("Provider timestamps alone do not guarantee data freshness; no market-data freshness SLA has been verified");
+  if (input.tokenPriceUpdatedAt != null && tokenPriceUpdatedAt === undefined) warnings.push("Provider quote timestamp is invalid and was withheld");
+  if (input.statusInfo?.nextOpenTime != null && nextOpenTime === undefined) warnings.push("Provider next-open timestamp is invalid and was withheld");
+  if (input.statusInfo?.nextCloseTime != null && nextCloseTime === undefined) warnings.push("Provider next-close timestamp is invalid and was withheld");
   if (status === "unknown") warnings.push("The platform did not provide a recognized marketStatus");
+  if (hasMarketStateConflict(status, openState)) warnings.push("Provider marketStatus and openState conflict; the market is treated as not open");
   if (input.liquidity == null) warnings.push("Liquidity was not provided and must not be interpreted as zero");
   if (!tokenPrice) warnings.push(input.tokenPrice == null ? "tokenPrice is missing" : "tokenPrice is invalid or non-positive");
   if (!referencePrice) warnings.push(input.referencePrice == null ? "referencePrice is missing" : "referencePrice is invalid or non-positive");
@@ -95,10 +116,16 @@ export function normalizeMarketContext(asset: StockAsset, input: any): MarketCon
     referencePrice,
     priceGap: decimalGap(tokenPrice, referencePrice),
     priceGapPercent: decimalGapPercent(tokenPrice, referencePrice),
-    tokenPriceUpdatedAt: input.tokenPriceUpdatedAt,
+    tokenPriceUpdatedAt,
     marketStatus: status,
-    openState: input.statusInfo?.openState,
-    nextOpenTime: input.statusInfo?.nextOpenTime,
+    ...(typeof input.statusInfo?.marketStatus === "string" ? { providerMarketStatus: input.statusInfo.marketStatus } : {}),
+    openState,
+    nextOpenTime,
+    ...(typeof input.statusInfo?.reasonCode === "string" || typeof input.statusInfo?.reasonCode === "number"
+      ? { reasonCode: input.statusInfo.reasonCode }
+      : {}),
+    ...(typeof input.statusInfo?.reasonMsg === "string" ? { reasonMsg: input.statusInfo.reasonMsg } : {}),
+    nextCloseTime,
     liquidity: input.liquidity,
     volume24H: input.volume24H,
     holders: input.holders,

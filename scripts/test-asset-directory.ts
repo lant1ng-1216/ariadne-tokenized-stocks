@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { DemoTokenizedStocksService } from "../src/services/demo-tokenized-stocks.js";
 import { TokenizedStocksService } from "../src/services/tokenized-stocks.js";
-import { compareRepresentationIdentities, representationIdentityKey, summarizeTokenPriceProbe } from "../src/services/asset-coverage-audit.js";
+import { compareRepresentationIdentities, representationIdentityKey, summarizeQuoteTimestampAges, summarizeTokenPriceProbe } from "../src/services/asset-coverage-audit.js";
 import { buildAssetDirectoryView } from "../src/web/asset-directory.js";
 
 const service = new DemoTokenizedStocksService({} as never);
@@ -92,6 +92,25 @@ const duplicateTargetProbe = summarizeTokenPriceProbe([requestedRepresentations[
 assert.equal(duplicateTargetProbe.identityMatches, false);
 assert.equal(duplicateTargetProbe.matchedRepresentationsWithValidPrice, 0, "duplicate response rows must not inflate valid price coverage");
 assert.equal(duplicateTargetProbe.matchedRepresentationsWithValidUpdateTimestamp, 0, "duplicate response rows must not inflate timestamp coverage");
+
+assert.deepEqual(summarizeQuoteTimestampAges([950, 1_020, 900, "invalid"], 1_000), {
+  validTimestampRows: 3,
+  missingOrInvalidTimestampRows: 1,
+  ageSampleRows: 2,
+  minimumAgeMs: 50,
+  medianAgeMs: 75,
+  maximumAgeMs: 100,
+  futureTimestampRows: 1
+}, "future-dated quote timestamps remain visible but cannot skew observed nonnegative-age statistics");
+assert.deepEqual(summarizeQuoteTimestampAges([1_010], 1_000), {
+  validTimestampRows: 1,
+  missingOrInvalidTimestampRows: 0,
+  ageSampleRows: 0,
+  minimumAgeMs: null,
+  medianAgeMs: null,
+  maximumAgeMs: null,
+  futureTimestampRows: 1
+}, "all-future samples report no age statistics rather than a negative quote age");
 
 const quoteRequests: Array<{ path: string; params?: Record<string, string> }> = [];
 const timestampedPriceService = new TokenizedStocksService({
