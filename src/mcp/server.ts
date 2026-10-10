@@ -54,8 +54,7 @@ const client = dependencies.client ?? new BinanceWeb3Client({
   apiKey: apiKey ?? "demo",
   apiSecret: apiSecret ?? "demo",
   baseUrl: process.env.BINANCE_WEB3_BASE_URL,
-  proxyUrl: process.env.BINANCE_WEB3_PROXY_URL,
-  gatewayToken: process.env.ARIADNE_GATEWAY_TOKEN?.trim()
+  proxyUrl: process.env.BINANCE_WEB3_PROXY_URL
 });
 const stocks = dependencies.stocks ?? (demoMode ? new DemoTokenizedStocksService(client) : new TokenizedStocksService(client));
 const wallet = dependencies.wallet ?? new WalletService(client);

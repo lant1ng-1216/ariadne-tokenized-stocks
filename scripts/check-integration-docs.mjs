@@ -42,7 +42,6 @@ assert.match(mcpConfig, /--env-file=\.env/);
 assert.match(quickstart, /source checkout/i);
 assert.match(apiConfig, /BINANCE_WEB3_EVM_RPC_URL/);
 assert.match(apiConfig, /ARIADNE_MODE=demo/);
-assert.match(apiConfig, /ARIADNE_GATEWAY_TOKEN/);
 assert.match(apiConfig, /ARIADNE_REOWN_PROJECT_ID/);
 assert.match(mcpStage, /API_CONFIGURATION\.md/);
 assert.match(mcpStage, /ARIADNE_WALLET_HOST_BRIDGE\.md/);

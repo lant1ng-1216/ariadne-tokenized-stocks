@@ -106,7 +106,6 @@
     "test:mcp-package": "node scripts/test-mcp-package.mjs",
     "test:remote-mcp": "node scripts/test-remote-mcp.mjs",
     "test:vercel-mcp": "node --import tsx scripts/test-vercel-mcp.ts",
-    "test:cloudflare-gateway": "node --import tsx scripts/test-cloudflare-gateway.ts",
     "pack:check": "npm run build && npm pack --dry-run",
     "example:sdk": "node --env-file=.env --import tsx examples/sdk-usage.ts",
     "probe:post-transaction": "node --env-file=.env --import tsx scripts/probe-post-transaction.ts",

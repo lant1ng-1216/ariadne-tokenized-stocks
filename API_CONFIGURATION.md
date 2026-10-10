@@ -45,6 +45,6 @@ The local MCP process can start an embedded loopback relay when the configured l
 
 `ARIADNE_MODE=demo` selects synthetic, read-only sample data for the MCP package and does not use Binance credentials. Omitting it selects Live mode; Live MCP startup requires both Binance credentials. The SDK has no Demo/Live mode switch: it uses whichever client/configuration the application supplies.
 
-`ARIADNE_GATEWAY_TOKEN` is optional and only applies when `BINANCE_WEB3_BASE_URL` points to an Ariadne HTTPS egress gateway configured to require that token. It is not needed for the direct Binance Web3 endpoint. `ARIADNE_REOWN_PROJECT_ID` is an optional public client identifier for the MCP App's in-panel WalletConnect fallback; it is not a Binance credential or wallet secret.
+`ARIADNE_REOWN_PROJECT_ID` is an optional public client identifier for the MCP App's in-panel WalletConnect fallback; it is not a Binance credential or wallet secret.
 
 The `.env` file is local-only and is excluded by `.gitignore`. Never commit API secrets, relay secrets, wallet private keys, or seed phrases. Ariadne does not hold or generate user wallet signatures.
