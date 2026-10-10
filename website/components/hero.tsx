@@ -42,7 +42,7 @@ export function Hero() {
           <code title={command}><span aria-hidden="true">$</span> {command}</code>
           <button type="button" onClick={copyCommand} aria-label={`Copy ${surface} command`}>{copied ? "Copied" : "Copy"}</button>
         </div>
-        <p className="install-note" aria-live="polite">{copied ? "Copied to clipboard" : surface === "MCP" ? "Local stdio MCP · Demo mode available" : "TypeScript SDK · server-side credentials"}</p>
+        <p className="install-note" aria-live="polite">{copied ? "Copied to clipboard" : surface === "MCP" ? "Local stdio MCP · Live or Demo" : "TypeScript SDK · Live API · server-side credentials"}</p>
       </div>
       <div className="hero-signature" aria-label="Ariadne brand mark">
         <span className="signature-thread" />

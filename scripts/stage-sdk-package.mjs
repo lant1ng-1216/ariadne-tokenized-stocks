@@ -15,9 +15,15 @@ for (const suffix of [".js", ".d.ts", ".d.ts.map"]) {
 }
 await rm(resolve(destination, "dist-package/web"), { recursive: true, force: true });
 await rm(resolve(destination, "dist-package/observability"), { recursive: true, force: true });
-await cp(resolve(root, "README.md"), resolve(destination, "README.md"));
+const repositoryReadme = await readFile(resolve(root, "README.md"), "utf8");
+const packageReadme = repositoryReadme.replace(/\]\((?!https?:\/\/|mailto:|#)([^)]+)\)/g, "](" + "https://github.com/lant1ng-1216/ariadne-tokenized-stocks/blob/main/" + "$1)");
+await writeFile(resolve(destination, "README.md"), packageReadme);
 await cp(resolve(root, "LICENSE"), resolve(destination, "LICENSE"));
 await cp(resolve(root, "docs/SDK_USAGE.md"), resolve(destination, "docs/SDK_USAGE.md"));
+await cp(resolve(root, "API_CONFIGURATION.md"), resolve(destination, "API_CONFIGURATION.md"));
+await cp(resolve(root, "docs/MCP_USAGE.md"), resolve(destination, "docs/MCP_USAGE.md"));
+await cp(resolve(root, "docs/ARIADNE_WALLET_HOST_BRIDGE.md"), resolve(destination, "docs/ARIADNE_WALLET_HOST_BRIDGE.md"));
+await cp(resolve(root, "docs/REMOTE_MCP_DEPLOYMENT.md"), resolve(destination, "docs/REMOTE_MCP_DEPLOYMENT.md"));
 
 const sdkManifest = {
   name: sourceManifest.name,
@@ -36,7 +42,7 @@ const sdkManifest = {
       import: "./dist-package/index.js"
     }
   },
-  files: ["dist-package", "README.md", "LICENSE", "docs/SDK_USAGE.md"],
+  files: ["dist-package", "README.md", "LICENSE", "API_CONFIGURATION.md", "docs/SDK_USAGE.md", "docs/MCP_USAGE.md", "docs/ARIADNE_WALLET_HOST_BRIDGE.md", "docs/REMOTE_MCP_DEPLOYMENT.md"],
   dependencies: {
     undici: sourceManifest.dependencies.undici,
     viem: sourceManifest.dependencies.viem

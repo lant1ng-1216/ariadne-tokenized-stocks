@@ -32,7 +32,7 @@ Paste the JSON into your MCP client's server configuration and reload the host. 
 
 From a source checkout, `npm run mcp:config:demo` remains an equivalent fallback; its generated JSON contains the current absolute working directory.
 
-For Live Mode, use `npm run mcp:config:live` after creating `.env` from `.env.example` and adding your own credentials.
+For Live Mode, use `npm run mcp:config:live` after creating `.env` from `.env.example` and adding your own credentials. This generated command is for the source checkout; the public `npx` package needs its environment passed by the MCP host. See [MCP Package Usage](MCP_USAGE.md) for both configurations.
 
 Then ask in natural language:
 
@@ -62,12 +62,14 @@ For live read-only data and quote preparation:
 
 ```bash
 cp .env.example .env
+# Add the two Binance Web3 credentials to .env; set the proxy only if your network requires one.
+npm run mcp:config:live
 ```
 
-Set your own Binance Web3 API credentials through the MCP host's local secret or environment facility and remove `ARIADNE_MODE=demo`. From a source checkout, `npm run mcp:config:live` prints an equivalent configuration. Keep credentials local and never commit them. Real signing and broadcasting remain separate user-wallet operations.
+Run these commands from a source checkout after `npm ci`. Set `BINANCE_WEB3_API_KEY` and `BINANCE_WEB3_API_SECRET` in the local `.env`; `BINANCE_WEB3_BASE_URL` defaults to `https://web3.binance.com/build`, and `BINANCE_WEB3_PROXY_URL` is optional. `npm run mcp:config:live` prints a stdio configuration using Node's `--env-file=.env`, so the MCP child process reads those local values. For the published `npx` package, configure the child-process environment in your MCP host as described in [MCP Package Usage](MCP_USAGE.md). The MCP package defaults to Live when `ARIADNE_MODE` is omitted, but setting it explicitly to `live` makes the intended mode clear. Keep credentials local and never commit them. Read-only research does not require a wallet or relay. Creating a browser purchase handoff additionally requires a ready relay; see [API Configuration](../API_CONFIGURATION.md) and [Wallet Host Bridge](ARIADNE_WALLET_HOST_BRIDGE.md). Real signing and broadcasting remain separate user-wallet operations.
 
 In Live Mode, use the same natural-language prompts in a host that supports MCP tool selection. Whether the host selects the appropriate catalog or research capability automatically depends on that host and its configuration. The server may expose dedicated MCP App catalog and research panels; other hosts can display the same results as structured content and text. Any purchase plan, signature, transaction or broadcast remains an explicit later boundary.
 
 To use the SDK without an Agent host, follow the [standalone SDK guide](SDK_USAGE.md). It documents local package building and a clean-room consumer check.
 
-The deployed Remote MCP transport is not the recommended Live evaluation path: Binance Web3 currently rejects its Vercel and Cloudflare cloud egress with compliance code `40304`. Remote Live access remains on the product roadmap; the local stdio package is the supported submission path.
+The deployed Remote MCP transport is experimental and is not the recommended Live evaluation path: the verified Vercel and Cloudflare cloud-egress paths returned Binance compliance code `40304`. Remote MCP Live remains a roadmap item; the local stdio package is the supported submission path.

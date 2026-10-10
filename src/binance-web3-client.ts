@@ -48,6 +48,37 @@ function isBinanceResponse(value: unknown): value is BinanceResponse<unknown> {
     Object.hasOwn(value, "data");
 }
 
+function getRateLimitHeaders(response: Awaited<ReturnType<typeof fetch>>): Record<string, string> {
+  const headers: Record<string, string> = {};
+  for (const [key, value] of response.headers.entries()) {
+    if (key.toLowerCase().includes("rate") || key.toLowerCase().includes("limit") || key.toLowerCase().includes("retry-after")) headers[key] = value;
+  }
+  return headers;
+}
+
+function isRetryableProviderError(status: number, code: string | number): boolean {
+  return status === 429 || status >= 500 || code === 429 || code === 42900 || code === 50000 || code === 50001;
+}
+
+function providerErrorCode(payload: unknown, status: number): string | number {
+  if (payload !== null && typeof payload === "object" && !Array.isArray(payload)) {
+    const code = (payload as Record<string, unknown>).code;
+    if (typeof code === "number" && Number.isFinite(code)) return code;
+    if (typeof code === "string" && /^\d{1,12}$/.test(code)) return code;
+  }
+  return status;
+}
+
+function providerErrorMessage(payload: unknown): string {
+  if (payload !== null && typeof payload === "object" && !Array.isArray(payload)) {
+    const message = (payload as Record<string, unknown>).msg;
+    if (typeof message === "string" && message.trim()) {
+      return message.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 240);
+    }
+  }
+  return "request failed";
+}
+
 function parseRetryAfterDelayMs(value: string | undefined, now = Date.now()): number | undefined {
   const raw = value?.trim();
   if (!raw) return undefined;
@@ -151,23 +182,42 @@ export class BinanceWeb3Client {
       throw new BinanceWeb3Error(`Binance Web3 API request failed: ${message}`, 0, "NETWORK_TIMEOUT", true, { timeoutMs: this.config.timeoutMs ?? 30_000 });
     }
 
+    const rateLimitHeaders = getRateLimitHeaders(response);
     let rawPayload: unknown;
     try {
       rawPayload = await response.json();
     } catch {
+      if (!response.ok) {
+        throw new BinanceWeb3Error(
+          `Binance Web3 API ${response.status}: request failed`,
+          response.status,
+          response.status,
+          isRetryableProviderError(response.status, response.status),
+          { rateLimitHeaders },
+          diagnoseInvalidJsonResponse(response.status, response.headers.get("content-type"))
+        );
+      }
       throw new BinanceWeb3Error("Binance Web3 API returned invalid JSON", response.status, "INVALID_JSON", false, undefined, diagnoseInvalidJsonResponse(response.status, response.headers.get("content-type")));
+    }
+    if (!response.ok) {
+      const code = providerErrorCode(rawPayload, response.status);
+      const validEnvelope = isBinanceResponse(rawPayload);
+      throw new BinanceWeb3Error(
+        `Binance Web3 API ${response.status}: ${providerErrorMessage(rawPayload)}`,
+        response.status,
+        code,
+        isRetryableProviderError(response.status, code),
+        { ...(validEnvelope ? { payload: rawPayload } : {}), rateLimitHeaders },
+        validEnvelope ? undefined : diagnoseResponseEnvelope(response.status, response.headers.get("content-type"), rawPayload)
+      );
     }
     if (!isBinanceResponse(rawPayload)) {
       throw new BinanceWeb3Error("Binance Web3 API returned an invalid response envelope", response.status, "INVALID_RESPONSE", false, undefined, diagnoseResponseEnvelope(response.status, response.headers.get("content-type"), rawPayload));
     }
     const payload = rawPayload as BinanceResponse<T>;
-    const rateLimitHeaders: Record<string, string> = {};
-    for (const [key, value] of response.headers.entries()) {
-      if (key.toLowerCase().includes("rate") || key.toLowerCase().includes("limit") || key.toLowerCase().includes("retry-after")) rateLimitHeaders[key] = value;
-    }
-    if (!response.ok || payload.success === false) {
+    if (payload.success === false) {
       const code = payload.code ?? response.status;
-      const retryable = response.status >= 500 || code === 429 || code === 42900 || code === 50000 || code === 50001;
+      const retryable = isRetryableProviderError(response.status, code);
       throw new BinanceWeb3Error(`Binance Web3 API ${response.status}: ${payload.msg || "request failed"}`, response.status, code, retryable, { payload, rateLimitHeaders });
     }
     return { payload, rateLimitHeaders, httpStatus: response.status };

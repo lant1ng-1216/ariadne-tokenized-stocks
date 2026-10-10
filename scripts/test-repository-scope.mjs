@@ -32,6 +32,7 @@ const requiredProductPaths = [
   "src/mcp/server.ts",
   "src/presentation/asset-view.ts",
   "docs/QUICKSTART.md",
+  "docs/MCP_USAGE.md",
   "docs/SDK_USAGE.md",
   "docs/PRODUCT_SURFACE_ARCHITECTURE.md",
   "docs/DEVELOPER_EXPERIENCE_REPORT.md",
@@ -167,6 +168,7 @@ const publicDocs = [
   "docs/PRODUCT_EXPERIENCE_REPORT.md",
   "docs/DEVELOPMENT_LOG.md",
   "docs/PRODUCT_LIMITATIONS.md",
+  "API_CONFIGURATION.md",
 ];
 for (const path of publicDocs) {
   const contents = await readFile(path, "utf8");

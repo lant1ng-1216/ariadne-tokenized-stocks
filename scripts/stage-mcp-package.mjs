@@ -12,9 +12,14 @@ await cp(resolve(root, ".artifacts/mcp-build"), resolve(destination, "dist"), { 
 for (const cssFile of ["catalog-app.css", "purchase-approval-app.css", "research-app.css"]) {
   await cp(resolve(root, "src/mcp/ui", cssFile), resolve(destination, "dist/mcp/ui", cssFile));
 }
-await cp(resolve(root, "README.md"), resolve(destination, "README.md"));
+const repositoryReadme = await readFile(resolve(root, "README.md"), "utf8");
+const packageReadme = repositoryReadme.replace(/\]\((?!https?:\/\/|mailto:|#)([^)]+)\)/g, "](" + "https://github.com/lant1ng-1216/ariadne-tokenized-stocks/blob/main/" + "$1)");
+await writeFile(resolve(destination, "README.md"), packageReadme);
 await cp(resolve(root, "LICENSE"), resolve(destination, "LICENSE"));
 await cp(resolve(root, "docs/MCP_USAGE.md"), resolve(destination, "docs/MCP_USAGE.md"));
+await cp(resolve(root, "API_CONFIGURATION.md"), resolve(destination, "API_CONFIGURATION.md"));
+await cp(resolve(root, "docs/ARIADNE_WALLET_HOST_BRIDGE.md"), resolve(destination, "docs/ARIADNE_WALLET_HOST_BRIDGE.md"));
+await cp(resolve(root, "docs/REMOTE_MCP_DEPLOYMENT.md"), resolve(destination, "docs/REMOTE_MCP_DEPLOYMENT.md"));
 
 const runtimeDependencyNames = [
   "@metamask/connect-evm", "@modelcontextprotocol/ext-apps", "@modelcontextprotocol/ext-apps-v1",
@@ -37,7 +42,7 @@ const manifest = {
   type: "module",
   engines: sourceManifest.engines,
   bin: { "ariadne-mcp": "./dist/mcp/server.js" },
-  files: ["dist", "README.md", "LICENSE", "docs/MCP_USAGE.md"],
+  files: ["dist", "README.md", "LICENSE", "API_CONFIGURATION.md", "docs/MCP_USAGE.md", "docs/ARIADNE_WALLET_HOST_BRIDGE.md", "docs/REMOTE_MCP_DEPLOYMENT.md"],
   dependencies,
   publishConfig: { access: "public" }
 };

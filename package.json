@@ -71,6 +71,7 @@
     "test:provider-contract": "node --import tsx scripts/test-provider-contract.ts",
     "test:provider-data-fidelity": "node --import tsx scripts/test-provider-data-fidelity.ts",
     "test:research-next-step-contract": "node --import tsx scripts/test-research-next-step-contract.ts",
+    "test:integration-docs": "node scripts/check-integration-docs.mjs",
     "test:presentation": "node --import tsx scripts/test-presentation-contract.ts",
     "test:demo-mode": "node --import tsx scripts/test-demo-mode.ts",
     "test:onboarding": "node --import tsx scripts/test-onboarding.ts",

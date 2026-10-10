@@ -27,6 +27,7 @@ const examples = {
 const client = new BinanceWeb3Client({
   apiKey: process.env.BINANCE_WEB3_API_KEY!,
   apiSecret: process.env.BINANCE_WEB3_API_SECRET!,
+  proxyUrl: process.env.BINANCE_WEB3_PROXY_URL || undefined, // optional; only if this network needs a proxy
 });
 
 const stocks = new TokenizedStocksService(client);
@@ -81,7 +82,7 @@ export function DeveloperStage() {
         {(["MCP", "SDK"] as const).map((name) => <button type="button" key={name} role="tab" aria-selected={active === name} onClick={() => { setActive(name); setCopied(false); }}>{name}</button>)}
       </div>
       <pre aria-label={`${active} integration example`}><code>{example.code.split("\n").map((line, index) => <span className="code-line" key={index}><span className="code-line-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span><span>{line ? colorizeLine(line) : " "}</span></span>)}</code></pre>
-      <div className="terminal-foot"><span>{example.language} · {example.file}</span><span>{active === "MCP" ? "LOCAL STDIO · DEMO READY" : "TYPED CLIENT · SERVER SIDE"}</span></div>
+      <div className="terminal-foot"><span>{example.language} · {example.file}</span><span>{active === "MCP" ? "LOCAL STDIO · LIVE OR DEMO" : "TYPED CLIENT · SERVER SIDE"}</span></div>
     </div>
   </section>;
 }

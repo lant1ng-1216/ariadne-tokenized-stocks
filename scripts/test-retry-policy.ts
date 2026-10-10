@@ -20,6 +20,18 @@ const server = createServer((request, response) => {
     response.end(JSON.stringify({ code: 42900, msg: "rate limited", data: null, timestamp: Date.now(), success: false }));
     return;
   }
+  if (path === "/build/http-429-missing-success" && pathCall === 1) {
+    response.statusCode = 429;
+    response.setHeader("Retry-After", "0.01");
+    response.end(JSON.stringify({ code: 42900, msg: "provider rate limit", data: null, timestamp: Date.now() }));
+    return;
+  }
+  if (path === "/build/http-429-exhausted-missing-success") {
+    response.statusCode = 429;
+    response.setHeader("Retry-After", "0");
+    response.end(JSON.stringify({ code: 42900, msg: "provider rate limit persists", data: null, timestamp: Date.now() }));
+    return;
+  }
   if (path === "/build/non-retryable") {
     response.statusCode = 400;
     response.end(JSON.stringify({ code: 40000, msg: "invalid request", data: null, timestamp: Date.now(), success: false }));
@@ -77,6 +89,33 @@ assert.equal(observations[1]?.success, true);
 assert.equal(new Set(nonces).size, 2);
 assert.ok(nonces.every((nonce) => /^[0-9a-f-]{36}$/.test(nonce)));
 assert.ok(elapsed >= 8, `Retry-After was not honored: ${elapsed}ms`);
+
+const beforeHttp429MissingSuccess = observations.length;
+const http429Recovery = await client.get<{ calls: number }>("/http-429-missing-success");
+assert.equal(http429Recovery.success, true, "a 429 error envelope without `success` must recover on a subsequent valid response");
+assert.equal(pathCalls.get("/build/http-429-missing-success"), 2, "an HTTP 429 without `success` must be retried");
+assert.equal(observations[beforeHttp429MissingSuccess]?.status, 429);
+assert.equal(observations[beforeHttp429MissingSuccess]?.code, 42900);
+assert.equal(observations[beforeHttp429MissingSuccess]?.success, false);
+assert.equal(observations[beforeHttp429MissingSuccess]?.rateLimitHeaders?.["retry-after"], "0.01");
+assert.deepEqual(observations[beforeHttp429MissingSuccess]?.responseDiagnostics?.requiredFields, {
+  code: "present", msg: "present", success: "missing", data: "present"
+});
+assert.equal(observations[beforeHttp429MissingSuccess + 1]?.success, true);
+
+const beforeHttp429Exhausted = observations.length;
+await assert.rejects(client.get("/http-429-exhausted-missing-success"), (error: unknown) => {
+  assert.ok(error instanceof BinanceWeb3Error);
+  assert.equal(error.status, 429);
+  assert.equal(error.code, 42900);
+  assert.equal(error.retryable, true);
+  assert.match(error.message, /provider rate limit persists/);
+  return true;
+});
+assert.equal(pathCalls.get("/build/http-429-exhausted-missing-success"), 2, "a persistent HTTP 429 must stop at the configured retry budget");
+assert.equal(observations[beforeHttp429Exhausted]?.responseDiagnostics?.requiredFields.success, "missing");
+assert.equal(observations[beforeHttp429Exhausted + 1]?.status, 429);
+assert.equal(observations[beforeHttp429Exhausted + 1]?.success, false);
 
 const beforeNonRetryable = observations.length;
 await assert.rejects(client.get("/non-retryable"), /Binance Web3 API 400.*invalid request/);
@@ -153,4 +192,4 @@ assert.equal(pathCalls.get("/build/timeout"), 2, "timeout retries are bounded by
 assert.ok(timeoutObservations.every((item) => !item.success && item.code === "NETWORK_TIMEOUT"));
 assert.throws(() => new BinanceWeb3Client({ apiKey: "test", apiSecret: "test", maxRetries: 6 }), /between 0 and 5/);
 await new Promise<void>((resolve) => server.close(() => resolve()));
-console.log(JSON.stringify({ rateLimitRetried: true, nonRetryableNotRetried: true, exhaustedRetriesRemainErrors: true, retryAfterBudgetEnforced: true, retryAfterDateBudgetEnforced: true, malformedResponsesFailClosed: true, timeoutAttemptBudgetEnforced: true, attempts: observations.length, uniqueNoncePerAttempt: true, retryAfterHonored: elapsed >= 8, elapsedMs: elapsed }, null, 2));
+console.log(JSON.stringify({ rateLimitRetried: true, http429WithoutSuccessRetried: true, persistentHttp429StopsAtRetryBudget: true, nonRetryableNotRetried: true, exhaustedRetriesRemainErrors: true, retryAfterBudgetEnforced: true, retryAfterDateBudgetEnforced: true, malformedResponsesFailClosed: true, timeoutAttemptBudgetEnforced: true, attempts: observations.length, uniqueNoncePerAttempt: true, retryAfterHonored: elapsed >= 8, elapsedMs: elapsed }, null, 2));

@@ -49,6 +49,8 @@ npm install /absolute/path/to/ariadne-tokenized-stocks-0.1.0.tgz
 
 The supported runtime is Node.js `>=22.19.0`. The standalone package exposes an **ES module** entry point; use `import` syntax (CommonJS `require()` is not exported). `npm run build:sdk-package` creates a lean package tree under `.artifacts/sdk-package/` with only the SDK runtime dependencies (`undici` and `viem`). `npm run pack:sdk` creates the local tarball. `npm run test:sdk-package` installs that staged tarball in a disposable consumer and exercises issuer-aware search and market context against a loopback fixture. `npm run test:cleanroom` independently verifies the repository package surface, runtime imports, declarations, and the same explicit issuer-selection boundary. These verification commands do not publish the package.
 
+The SDK does not load `.env` files or read environment variables by itself; your Node.js application supplies the values when it constructs `BinanceWeb3Client`. For a local Node.js script, Node `>=22.19.0` can load a private `.env` file with `node --env-file=.env app.js`; use your application's secret manager or configuration loader in deployed services.
+
 ## Minimal SDK use
 
 Keep API credentials on the server or in a local environment file; never place them in browser code or commit them to source control. The client accepts optional endpoint, proxy, timeout, retry, and request-observation settings:
@@ -60,7 +62,7 @@ const client = new BinanceWeb3Client({
   apiKey: process.env.BINANCE_WEB3_API_KEY!,
   apiSecret: process.env.BINANCE_WEB3_API_SECRET!,
   baseUrl: process.env.BINANCE_WEB3_BASE_URL, // optional; defaults to Binance Web3
-  proxyUrl: process.env.HTTPS_PROXY,          // optional
+  proxyUrl: process.env.BINANCE_WEB3_PROXY_URL || undefined, // optional; set only when this network needs a proxy
   timeoutMs: 15_000,                          // optional; default 30 seconds
   maxRetries: 2,                              // optional; default 2
   maxRetryDelayMs: 5_000,                     // optional; default 10 seconds; reject longer Retry-After waits
@@ -81,6 +83,8 @@ if (!asset) throw new Error("The selected assetId was not returned by this searc
 console.info(asset.collectionWarnings); // returned matches are not a verified complete catalog
 const context = await stocks.marketContext(asset);
 ```
+
+`BINANCE_WEB3_PROXY_URL` is this repository's environment-variable convention and is mapped explicitly to the SDK's `proxyUrl` option. The SDK does not automatically discover `HTTPS_PROXY`; if your application uses that variable instead, map it explicitly to `proxyUrl` yourself. The MCP server uses `BINANCE_WEB3_PROXY_URL` directly, so using the same name keeps SDK and MCP setup consistent. `BINANCE_WEB3_BASE_URL` is also optional and defaults to Binance Web3's `/build` endpoint. See [API Configuration](../API_CONFIGURATION.md) for the environment-variable table and relay boundaries.
 
 `search()` rejects an empty or whitespace-only query locally with `TypeError: TokenizedStocksService.search query must not be empty`; no provider request is made. Non-empty queries are trimmed before they are sent.
 
