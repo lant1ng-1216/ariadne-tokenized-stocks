@@ -4,6 +4,7 @@
 node_modules/
 dist/
 dist-package/
+data/ariadne-wallet-handoff/
 .DS_Store
 
 # Local reviewer state and untracked working documents.

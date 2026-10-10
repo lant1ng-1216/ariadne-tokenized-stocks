@@ -12,6 +12,8 @@ const chineseMessages: Record<string, string> = {
   "The platform did not provide a recognized marketStatus": "平台未提供可识别的市场状态",
   "Liquidity was not provided and must not be interpreted as zero": "未提供流动性数据；不得将其理解为 0",
   "Market status is unknown": "市场状态未知",
+  "Provider reports the underlying market is currently tradable": "上游报告底层市场当前可交易",
+  "Provider marketStatus and openState conflict; the market is treated as not open": "上游市场状态字段冲突，按非开放处理",
   "Token price is invalid or non-positive": "代币价格无效或不大于 0",
   "Reference price is invalid or non-positive": "参考价格无效或不大于 0",
   "Per-asset price update time is unavailable": "未提供该资产的价格更新时间",

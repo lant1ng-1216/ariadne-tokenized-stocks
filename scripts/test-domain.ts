@@ -16,12 +16,15 @@ assert.throws(() => parseTokenAmount("1e3", 18), /plain decimal/);
 assert.throws(() => parseTokenAmount("1.5", 0), /precision/);
 
 const requests: Array<{ path: string; params?: Record<string, string> }> = [];
+const approvalSpender = "0x5555555555555555555555555555555555555555";
+const approvalAmount = BigInt(1_250_000).toString(16).padStart(64, "0");
+const approvalCalldata = `0x095ea7b3${approvalSpender.slice(2).toLowerCase().padStart(64, "0")}${approvalAmount}`;
 const mockClient = {
   async get(path: string, params?: Record<string, string>) {
     requests.push({ path, params });
     if (path.endsWith("/aggregator/quote")) return { code: 0, success: true, data: [{ quoteId: "decimal-quote", executionMode: "SWAP", priceImpactPercent: "0.4", toTokenAmount: "100", minToTokenAmount: "99", approveTarget: "0x3333333333333333333333333333333333333333" }] };
     if (path.endsWith("/aggregator/swap")) return { code: 0, success: true, data: { executionMode: "SWAP", tx: { from: "0x1", to: "0x2", value: "0", data: "0x" } } };
-    if (path.endsWith("/aggregator/approve-transaction")) return { code: 0, success: true, data: [{ from: "0x1", to: "0x2", data: "0x" }] };
+    if (path.endsWith("/aggregator/approve-transaction")) return { code: 0, success: true, data: [{ data: approvalCalldata, dexContractAddress: approvalSpender, gasLimit: "70000", gasPrice: "100000000" }] };
     if (path.endsWith("/rwa/platforms")) return { timestamp: 1_790_603_000_100, data: [{ platformId: "bstock" }] };
     if (path.endsWith("/rwa/search")) return { data: [{ ticker: "NVDA", companyName: "Nvidia Corp", assets: [{ binanceChainId: "56", tokenContractAddress: "0xabc", platformId: "bstock", tokenSymbol: "NVDAB" }] }] };
     if (path.endsWith("/rwa/tokens")) return { timestamp: 1_790_603_000_000, data: [{ binanceChainId: "56", tokenContractAddress: "0xabc", platformId: "bstock", tokenSymbol: "NVDAB", underlyingTicker: "NVDA", underlyingName: "Nvidia Corp", tokenPrice: "100", tokenPriceUpdatedAt: 1, statusInfo: { marketStatus: "open", openState: true } }] };
@@ -171,9 +174,9 @@ assert.equal(coverageContexts.length, 102);
 assert.deepEqual(coverageContexts.map((context) => context.asset.assetId), coverageAssets.map((item) => item.assetId), "batch output preserves requested order across chains");
 assert.deepEqual(coverageContexts.map((context) => context.tokenPriceUpdatedAt), coverageAssets.map((item) => timestampByAsset.get(item.chainId + ":" + item.contractAddress.toLowerCase())), "out-of-order provider rows join to the exact chain and contract");
 assert.equal(listRequests.length, 2, "different chains get separate token-list queries");
-assert.equal(priceRequests.length, 3, "101 same-chain addresses split into 100 + 1, plus one other-chain batch");
-assert.deepEqual(priceRequests.filter((request) => request.params?.binanceChainId === "56").map((request) => request.params?.tokenContractAddresses.split(",").length).sort((a, b) => (a ?? 0) - (b ?? 0)), [1, 100]);
-assert.ok(priceRequests.every((request) => (request.params?.tokenContractAddresses.split(",").length ?? 101) <= 100));
+assert.equal(priceRequests.length, 4, "101 same-chain addresses split into 50 + 50 + 1, plus one other-chain batch");
+assert.deepEqual(priceRequests.filter((request) => request.params?.binanceChainId === "56").map((request) => request.params?.tokenContractAddresses.split(",").length).sort((a, b) => (a ?? 0) - (b ?? 0)), [1, 50, 50]);
+assert.ok(priceRequests.every((request) => (request.params?.tokenContractAddresses.split(",").length ?? 51) <= 50));
 
 for (const invalidTimestamp of [Number.NaN, Number.POSITIVE_INFINITY, 0, -1, 1.5, 8_640_000_000_000_001]) {
   const invalidTimestampService = new TokenizedStocksService({
@@ -216,7 +219,7 @@ for (const invalidTimestamp of [0, -1, 1.5, 8_640_000_000_000_001, Number.POSITI
   }]);
   assert.equal(coverage.matchedRepresentationsWithValidUpdateTimestamp, 0, "the provider coverage audit does not count malformed timestamps as valid");
 }
-const decimalPlan = await new TokenizedStocksService(mockClient as any, async () => 2_000_000n, async () => 2_000_000n).createActionPlan({ type: "buy", walletAddress: "0x1", fromTokenAddress: "0x2", toAsset: asset, amount: "1.25", amountDecimals: 6 });
+const decimalPlan = await new TokenizedStocksService(mockClient as any, async () => 2_000_000n, async () => 2_000_000n).createActionPlan({ type: "buy", walletAddress: "0x1", fromTokenAddress: "0x2", toAsset: asset, amount: "1.25", amountDecimals: 6, maxSlippageBps: 50 });
 assert.equal(decimalPlan.status, "awaiting_confirmation");
 assert.equal(decimalPlan.safetyReport?.checks.find((check) => check.name === "input_balance")?.passed, true);
 assert.equal(decimalPlan.authorizationCheck?.required, true);
@@ -228,36 +231,45 @@ const unknownStatusPlan = await new TokenizedStocksService({
     if (path.endsWith("/rwa/tokens")) return { ...response, data: Array.isArray(data) ? data.map((item: any) => ({ ...item, statusInfo: { marketStatus: "future-status", openState: true } })) : data };
     return response;
   }
-} as any, async () => 2_000_000n, async () => 2_000_000n).createActionPlan({ type: "buy", walletAddress: "0x1", fromTokenAddress: "0x2", toAsset: asset, amount: "1.25", amountDecimals: 6 });
-assert.equal(unknownStatusPlan.status, "failed", "SDK preparation must fail closed for an unrecognized provider market status");
-assert.equal(unknownStatusPlan.unsignedActions, undefined, "unknown market status cannot produce an unsigned transaction action");
-assert.equal(unknownStatusPlan.safetyReport?.checks.find((check) => check.name === "market_status")?.passed, false);
-assert.match(unknownStatusPlan.safetyReport?.blockingReasons.join(" ") ?? "", /market status is unknown/i);
-assert.ok(!requests.slice(requestsBeforeUnknownStatus).some((request) => request.path.endsWith("/aggregator/swap")), "a blocked unknown-status plan never builds a swap action");
-const insufficientBalancePlan = await new TokenizedStocksService(mockClient as any, async () => 2_000_000n, async () => 1_249_999n).createActionPlan({ type: "buy", walletAddress: "0x1", fromTokenAddress: "0x2", toAsset: asset, amount: "1.25", amountDecimals: 6 });
-assert.equal(insufficientBalancePlan.status, "failed");
-assert.equal(insufficientBalancePlan.unsignedActions, undefined);
-assert.match(insufficientBalancePlan.safetyReport?.blockingReasons.join(" ") ?? "", /Insufficient input-token balance/);
-const unknownBalancePlan = await new TokenizedStocksService(mockClient as any, async () => 2_000_000n, async () => { throw new Error("RPC unavailable"); }).createActionPlan({ type: "buy", walletAddress: "0x1", fromTokenAddress: "0x2", toAsset: asset, amount: "1.25", amountDecimals: 6 });
-assert.equal(unknownBalancePlan.status, "failed");
-assert.equal(unknownBalancePlan.unsignedActions, undefined);
-assert.match(unknownBalancePlan.safetyReport?.blockingReasons.join(" ") ?? "", /RPC unavailable/);
+} as any, async () => 2_000_000n, async () => 2_000_000n).createActionPlan({ type: "buy", walletAddress: "0x1", fromTokenAddress: "0x2", toAsset: asset, amount: "1.25", amountDecimals: 6, maxSlippageBps: 50 });
+assert.equal(unknownStatusPlan.status, "awaiting_confirmation", "an explicit provider openState=true satisfies tradability even when its category is unrecognized");
+assert.ok((unknownStatusPlan.unsignedActions?.length ?? 0) > 0, "a tradable unknown-category plan may prepare unsigned actions for review");
+const unknownMarketCheck = unknownStatusPlan.safetyReport?.checks.find((check) => check.name === "market_status");
+assert.equal(unknownMarketCheck?.passed, true);
+assert.equal(unknownMarketCheck?.severity, "warning", "the unknown category remains visible as a warning");
+assert.match(unknownMarketCheck?.message ?? "", /category is unknown.*reports the underlying market is currently tradable/i);
+assert.equal(unknownStatusPlan.safetyReport?.blockingReasons.some((reason) => /market status category is unknown/i.test(reason)), false);
+assert.ok(requests.slice(requestsBeforeUnknownStatus).some((request) => request.path.endsWith("/aggregator/swap")), "a provider-confirmed tradable market may build an unsigned swap action");
+const insufficientBalancePlan = await new TokenizedStocksService(mockClient as any, async () => 2_000_000n, async () => 1_249_999n).createActionPlan({ type: "buy", walletAddress: "0x1", fromTokenAddress: "0x2", toAsset: asset, amount: "1.25", amountDecimals: 6, maxSlippageBps: 50 });
+assert.equal(insufficientBalancePlan.status, "awaiting_confirmation", "wallet funds do not block a quote-backed plan");
+assert.ok(insufficientBalancePlan.unsignedActions?.length, "a purchase plan is still prepared for the user's wallet to decide");
+assert.equal(insufficientBalancePlan.safetyReport?.checks.find((check) => check.name === "input_balance")?.message, "Ariadne does not pre-check wallet funds; the wallet decides whether it can submit the transaction");
+let walletBalanceReads = 0;
+const unknownBalancePlan = await new TokenizedStocksService(mockClient as any, async () => 2_000_000n, async () => { walletBalanceReads += 1; throw new Error("RPC unavailable"); }).createActionPlan({ type: "buy", walletAddress: "0x1", fromTokenAddress: "0x2", toAsset: asset, amount: "1.25", amountDecimals: 6, maxSlippageBps: 50 });
+assert.equal(unknownBalancePlan.status, "awaiting_confirmation", "an unreadable wallet balance does not block plan preparation");
+assert.ok(unknownBalancePlan.unsignedActions?.length);
+assert.equal(walletBalanceReads, 0, "plan creation does not query wallet funds");
 assert.equal(requests.find((request) => request.path.endsWith("/aggregator/quote"))?.params?.amount, "1250000");
 assert.equal(requests.find((request) => request.path.endsWith("/aggregator/swap"))?.params?.amount, "1250000");
-const approvalIntent = { type: "buy" as const, walletAddress: "0x1", fromTokenAddress: "0x2", toAsset: asset, amount: "1.25", amountDecimals: 6 };
-const approvalQuote = normalizeQuote(asset, { code: 0, success: true, data: [{ quoteId: "decimal-quote", priceImpactPercent: "0.4", approveTarget: "0xspender" }] });
-await new TokenizedStocksService(mockClient as any).buildApprovalAction(approvalIntent, approvalQuote);
+const approvalIntent = { type: "buy" as const, walletAddress: "0x1", fromTokenAddress: "0x2", toAsset: asset, amount: "1.25", amountDecimals: 6, maxSlippageBps: 50 };
+const approvalQuote = normalizeQuote(asset, { code: 0, success: true, data: [{ quoteId: "decimal-quote", priceImpactPercent: "0.4", approveTarget: approvalSpender }] });
+const approvalAction = await new TokenizedStocksService(mockClient as any).buildApprovalAction(approvalIntent, approvalQuote);
+assert.equal((approvalAction?.payload as any).tx.to, approvalIntent.fromTokenAddress, "approval target is the ERC-20 token contract");
+assert.equal((approvalAction?.payload as any).tx.from, approvalIntent.walletAddress, "approval handoff binds the wallet");
+assert.equal((approvalAction?.payload as any).tx.value, "0", "ERC-20 approval sends no native value");
+assert.equal((approvalAction?.payload as any).tx.data, approvalCalldata, "approval calldata is preserved byte-for-byte");
+assert.equal((approvalAction?.payload as any).tx.gas, "70000");
 assert.equal(requests.find((request) => request.path.endsWith("/aggregator/approve-transaction"))?.params?.approveAmount, "1250000");
 const approvalMockClient = {
   async get(path: string, params?: Record<string, string>) {
-    if (path.endsWith("/aggregator/quote")) return { code: 0, success: true, data: [{ quoteId: "approval-quote", priceImpactPercent: "0.4", approveTarget: "0xspender" }] };
+    if (path.endsWith("/aggregator/quote")) return { code: 0, success: true, data: [{ quoteId: "approval-quote", executionMode: "SWAP", toTokenAmount: "1000000000", minToTokenAmount: "995000000", priceImpactPercent: "0.4", approveTarget: approvalSpender }] };
     return mockClient.get(path, params);
   }
 };
 const blockedApprovalPlan = await new TokenizedStocksService(approvalMockClient as any, async () => 0n, async () => 2_000_000n).createActionPlan(approvalIntent);
-assert.equal(blockedApprovalPlan.status, "failed");
-assert.deepEqual(blockedApprovalPlan.approvalRequired, { tokenAddress: "0x2", spender: "0xspender", requiredAmount: "1250000", currentAllowance: "0" });
-assert.equal(blockedApprovalPlan.unsignedActions, undefined);
+assert.equal(blockedApprovalPlan.status, "awaiting_confirmation", `an insufficient allowance is a separate approval step, not a reason to hide the purchase plan: ${JSON.stringify(blockedApprovalPlan)}`);
+assert.deepEqual(blockedApprovalPlan.approvalRequired, { tokenAddress: "0x2", spender: approvalSpender, requiredAmount: "1250000", currentAllowance: "0" });
+assert.ok(blockedApprovalPlan.unsignedActions?.length);
 
 const market = normalizeMarketContext(asset, {
   tokenPrice: "0.3000000000000000001",
@@ -283,12 +295,12 @@ for (const status of ["premarket", "postmarket", "overnight"]) {
 assert.equal(normalizeMarketContext(asset, { statusInfo: { marketStatus: "pause" } }).marketStatus, "closed", "a provider-reported pause must remain non-tradable");
 assert.equal(normalizeMarketContext(asset, { statusInfo: { marketStatus: "future-provider-value" } }).marketStatus, "unknown", "undocumented provider states must not be guessed");
 
-const quote = normalizeQuote(asset, { code: 0, success: true, data: [{ quoteId: "q1", toTokenAmount: "10", priceImpactPercent: "0.4", vendorName: "LiquidMesh", approveTarget: "0xapprove" }] });
+const quote = normalizeQuote(asset, { code: 0, success: true, data: [{ quoteId: "q1", executionMode: "SWAP", toTokenAmount: "10", priceImpactPercent: "0.4", vendorName: "LiquidMesh", approveTarget: approvalSpender }] });
 assert.equal(quote.success, true);
 assert.equal(quote.routes[0]?.quoteId, "q1");
 assert.equal(quote.routes[0]?.priceImpact, "0.4");
 assert.equal(quote.routes[0]?.priceImpactUnit, "percent");
-assert.equal(quote.routes[0]?.approvalTarget, "0xapprove");
+assert.equal(quote.routes[0]?.approvalTarget, approvalSpender);
 assert.match(quote.warnings.join(" "), /minToTokenAmount/);
 const rfqQuote = normalizeQuote(asset, { code: 0, success: true, data: [{ quoteId: "q-rfq", executionMode: "RFQ", toTokenAmount: "10" }] });
 assert.equal(rfqQuote.platformMode, "rfq");
@@ -303,20 +315,27 @@ assert.equal(missingSimulationStatus.success, false, "a successful HTTP/API enve
 assert.match(missingSimulationStatus.warnings.join(" "), /explicit successful status/);
 const simulation = normalizeSimulation({ code: 0, success: true, data: { status: "SUCCESS", balanceChanges: [], allowanceChanges: [] } });
 assert.equal(simulation.success, true);
+const walletFundsSimulation = normalizeSimulation({ code: 0, success: true, data: { status: "FAILED", failReason: "BEP20: transfer amount exceeds balance", balanceChanges: [], allowanceChanges: [] } });
+assert.equal(walletFundsSimulation.success, false, "a provider funds failure is not mislabeled as a successful simulation");
+assert.equal(walletFundsSimulation.walletFundsOnlyFailure, true, "the wallet alone decides whether the request has enough token funds");
+assert.equal(normalizeSimulation({ code: 0, success: true, data: { status: "FAILED", failReason: "insufficient funds for gas; invalid opcode" } }).walletFundsOnlyFailure, undefined, "a composite or ambiguous simulation error remains blocking");
+assert.equal(normalizeSimulation({ code: 0, success: true, data: { status: "FAILED", failReason: "execution reverted: insufficient funds for gas * price + value" } }).walletFundsOnlyFailure, true, "a standard explicit gas-funds error may proceed as a wallet warning");
+assert.equal(normalizeSimulation({ code: 0, success: true, data: { status: "FAILED", failReason: "BEP20: transfer amount exceeds allowance" } }).walletFundsOnlyFailure, undefined, "authorization failures remain separate from wallet funds warnings");
 assert.equal(normalizeSimulation({ code: 0, success: true, data: { status: "UNKNOWN", balanceChanges: [], allowanceChanges: [] } }).success, false);
 assert.equal(normalizeSimulation({ code: 0, success: true, data: { status: "FAILED", balanceChanges: [], allowanceChanges: [] } }).success, false);
 
 const plan = { planId: "p1", status: "awaiting_confirmation" as const, intent: {
   type: "buy" as const, walletAddress: "0x1", fromTokenAddress: "0x2", toAsset: asset, amount: "1", amountDecimals: 18
 }, requiresUserConfirmation: true };
-const balanceContext = { availableBalance: 2n * 10n ** 18n, requiredBalance: 10n ** 18n };
-const safety = evaluateSafety({ plan, market, quote, simulation, allowance: 10n ** 18n, requiredAllowance: 1n * (10n ** 18n), ...balanceContext });
+const safety = evaluateSafety({ plan, market, quote, simulation, allowance: 10n ** 18n, requiredAllowance: 1n * (10n ** 18n) });
 assert.equal(safety.passed, true);
+assert.equal(safety.checks.find((check) => check.name === "input_balance")?.severity, "info");
+assert.equal(safety.checks.find((check) => check.name === "input_balance")?.passed, true);
 const quoteWithoutSpender = normalizeQuote(asset, { code: 0, success: true, data: [{ quoteId: "q-no-spender", toTokenAmount: "10", priceImpactPercent: "0.1" }] });
-const missingSpenderSafety = evaluateSafety({ plan, quote: quoteWithoutSpender, allowance: 10n ** 18n, requiredAllowance: 10n ** 18n, ...balanceContext });
+const missingSpenderSafety = evaluateSafety({ plan, quote: quoteWithoutSpender, allowance: 10n ** 18n, requiredAllowance: 10n ** 18n });
 assert.equal(missingSpenderSafety.checks.find((check) => check.name === "authorization_visibility")?.passed, false, "missing spender metadata must fail closed for ERC-20 input");
 assert.match(missingSpenderSafety.blockingReasons.join(" "), /spender.*cannot be verified/i);
-assert.equal(evaluateSafety({ plan, market, quote, simulation, allowance: 10n ** 18n, requiredAllowance: 10n ** 18n }).checks.find((check) => check.name === "input_balance")?.passed, false);
+assert.equal(evaluateSafety({ plan, market, quote, simulation, allowance: 10n ** 18n, requiredAllowance: 10n ** 18n }).checks.find((check) => check.name === "input_balance")?.passed, true);
 const unverifiedImpact = normalizeQuote(asset, { code: 0, success: true, data: [{ quoteId: "q2", priceImpact: "0.04" }] });
 assert.equal(unverifiedImpact.routes[0]?.priceImpactUnit, "unknown");
 assert.equal(evaluateSafety({ plan, market, quote: unverifiedImpact }).passed, false);
@@ -324,8 +343,8 @@ const missingImpact = normalizeQuote(asset, { code: 0, success: true, data: [{ q
 assert.equal(evaluateSafety({ plan, market, quote: missingImpact }).passed, false);
 const excessiveImpact = normalizeQuote(asset, { code: 0, success: true, data: [{ quoteId: "q4", priceImpactPercent: "5.1" }] });
 assert.equal(evaluateSafety({ plan, market, quote: excessiveImpact }).passed, false);
-const insufficientAllowance = evaluateSafety({ plan, market, quote, allowance: 0n, requiredAllowance: 10n ** 18n, ...balanceContext });
-assert.equal(insufficientAllowance.passed, false);
+const insufficientAllowance = evaluateSafety({ plan, market, quote, allowance: 0n, requiredAllowance: 10n ** 18n });
+assert.equal(insufficientAllowance.passed, true, "a visible spender with insufficient allowance routes to a separate approval step");
 const closedMarket = normalizeMarketContext(asset, {
   tokenPrice: "0.3",
   tokenPriceUpdatedAt: 1,
@@ -339,21 +358,27 @@ assert.equal(invalidTimestampSafety.checks.find((check) => check.name === "marke
 const invalidSlippage = evaluateSafety({ plan: { ...plan, intent: { ...plan.intent, maxSlippageBps: 10_001 } }, market, quote, simulation });
 assert.equal(invalidSlippage.passed, false);
 assert.equal(attachSimulation(plan, simulation).status, "failed", "simulation cannot erase missing preflight checks");
-assert.equal(attachSimulation({ ...plan, safetyReport: insufficientAllowance }, simulation).status, "failed", "simulation cannot erase insufficient allowance");
+assert.equal(attachSimulation({ ...plan, safetyReport: insufficientAllowance }, simulation).status, "simulated", "a separate approval requirement does not hide the quote-backed swap plan");
 const preparedPlan = { ...plan, safetyReport: safety, assetContext: market };
 const simulatedPlan = attachSimulation(preparedPlan, simulation);
 assert.equal(simulatedPlan.status, "simulated");
 assert.equal(simulatedPlan.safetyReport?.checks.find((check) => check.name === "authorization_visibility")?.passed, true);
 assert.equal(simulatedPlan.safetyReport?.checks.find((check) => check.name === "price_impact")?.passed, true);
+const walletReviewPlan = attachSimulation(preparedPlan, walletFundsSimulation);
+assert.equal(walletReviewPlan.status, "wallet_review", "a provider-only funds failure stays explicit but does not prevent the wallet from reviewing the request");
+assert.equal((walletReviewPlan.simulation as any).success, false, "the funds warning never marks the provider simulation as passed");
+const walletReviewConfirmation = confirmPlan(walletReviewPlan);
+assert.equal(walletReviewConfirmation.status, "confirmed");
+assert.doesNotThrow(() => assertExecutable(walletReviewConfirmation));
 assert.throws(() => assertExecutable(simulatedPlan), /confirmation/);
 const confirmedPlan = confirmPlan(simulatedPlan);
 assert.equal(confirmedPlan.status, "confirmed");
 assert.doesNotThrow(() => assertExecutable(confirmedPlan));
 assert.throws(() => assertExecutable({ ...confirmedPlan, safetyReport: { passed: true, checks: [], blockingReasons: [] } }), /incomplete safety report/);
-assert.throws(() => confirmPlan(confirmedPlan), /simulation and safety/);
+assert.throws(() => confirmPlan(confirmedPlan), /transaction checks or carry an explicit wallet-only funds warning/);
 const failedSimulationPlan = attachSimulation(preparedPlan, { ...simulation, success: false, warnings: ["failed"] });
 assert.equal(failedSimulationPlan.status, "failed");
-assert.throws(() => confirmPlan(failedSimulationPlan), /simulation and safety/);
+assert.throws(() => confirmPlan(failedSimulationPlan), /transaction checks or carry an explicit wallet-only funds warning/);
 assert.equal(attachSimulation(confirmedPlan, simulation).status, "failed");
 assert.equal(isPlanExpired({ ...confirmedPlan, expiresAt: 1 }, 2), true);
 assert.throws(() => confirmPlan({ ...simulatedPlan, expiresAt: 1 }, 2), /expired/);
@@ -371,4 +396,4 @@ const failingExecutor = new ExecutionService(
 const signedOnce = await failingExecutor.signConfirmed(executable);
 await assert.rejects(() => failingExecutor.broadcastSignedActions(signedOnce, executable), /status must be queried/);
 assert.equal(broadcastCalls, 1);
-console.log(JSON.stringify({ sdkUnknownMarketStatusFailsClosed: true, unknownStatusDoesNotBuildAction: true, invalidCatalogAndPriceSnapshotTimestampsWithheld: true, malformedAuditTimesNotCountedAsValid: true, invalidSafetyTimestampNotReportedFresh: true, passed: true }, null, 2));
+console.log(JSON.stringify({ unknownCategoryWithTrueOpenStateRetainsWarningAndPreparesConfirmationPlan: true, invalidCatalogAndPriceSnapshotTimestampsWithheld: true, malformedAuditTimesNotCountedAsValid: true, invalidSafetyTimestampNotReportedFresh: true, passed: true }, null, 2));

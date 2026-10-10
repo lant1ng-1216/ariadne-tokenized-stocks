@@ -31,10 +31,10 @@ const timing = {
   agentReasoningExcluded: true as const
 };
 const presentation = renderResearchBrief(enriched, comparison, timing, nextSteps);
-const researchOnlyPresentation = renderResearchBrief(enriched, comparison, timing, researchOnlyNextSteps, { allowQuoteFollowUp: false });
+const researchOnlyPresentation = renderResearchBrief(enriched, comparison, timing, researchOnlyNextSteps);
 assert.doesNotMatch(presentation, /\| Rank \| Issuer \|/);
 const filteredComparison = renderComparisonTable(comparison);
-assert.match(filteredComparison, /request a quote/);
+assert.doesNotMatch(filteredComparison, /request a quote|read-only quote/i, "research comparison must not advertise an unavailable standalone quote step");
 assert.match(filteredComparison, /Filter status: \*\*Matches filters\*\*/);
 assert.match(filteredComparison, /Price-gap rank: \*\*1\*\*/);
 assert.doesNotMatch(filteredComparison, /\bEligible\b|Eligibility:/i, "criteria match must not be presented as execution eligibility");
@@ -42,7 +42,7 @@ const unfilteredComparison = renderComparisonTable(compareAgentAssets(enriched))
 assert.match(unfilteredComparison, /Filter status: \*\*No filters applied\*\*/);
 assert.match(unfilteredComparison, /Price-gap rank:/);
 assert.match(unfilteredComparison, /Neither indicates tradability or recommends a trade/);
-assert.match(researchOnlyPresentation, /Next: review the evidence or data gaps\. No transaction was created\./);
+assert.match(researchOnlyPresentation, /Next: review the evidence or data gaps; explicitly request a purchase plan only if you decide to continue\. No purchase plan or transaction was created\./);
 assert.doesNotMatch(researchOnlyPresentation, /request a quote/i, "research-only brief must not contain a quote CTA in nested comparison content");
 assert.equal((researchOnlyPresentation.match(/Warnings:/g) ?? []).length, 0, "brief should avoid repeating aggregate warnings after row-level evidence warnings");
 assert.match(presentation, /Representation 1/);
@@ -101,15 +101,19 @@ const fidelityMarket = {
 };
 const fidelityAsset = toAgentAsset(enriched[0]!, fidelityMarket);
 const fidelityComparison = compareAgentAssets([fidelityAsset]);
-const chineseFidelityCard = renderAssetCard(fidelityAsset, { language: "zh-CN", allowQuoteFollowUp: false });
-const englishFidelityCard = renderAssetCard(fidelityAsset, { language: "en", allowQuoteFollowUp: false });
+const chineseFidelityCard = renderAssetCard(fidelityAsset, { language: "zh-CN" });
+const englishFidelityCard = renderAssetCard(fidelityAsset, { language: "en" });
 assert.equal(fidelityAsset.market?.liquidity, undefined, "an absent liquidity observation stays absent in structured evidence");
 assert.ok(fidelityAsset.dataQuality.missingFields.includes("liquidity"));
 assert.ok(fidelityAsset.dataQuality.missingFields.includes("marketStatus"));
 assert.match(chineseFidelityCard, /代币观测价格：\*\*123\.45\*\* · 标的参考价格：\*\*234\.56\*\*/);
 assert.match(englishFidelityCard, /Observed price: \*\*123\.45\*\* · Reference price: \*\*234\.56\*\*/);
-assert.match(chineseFidelityCard, /市场状态未知（上游报告开放标记，但未确认）/);
-assert.match(englishFidelityCard, /Market status unknown \(provider open flag is unconfirmed\)/);
+assert.match(chineseFidelityCard, /市场状态：\*\*未知\*\*/);
+assert.match(englishFidelityCard, /Status: \*\*Unknown\*\*/);
+assert.doesNotMatch(chineseFidelityCard, /市场状态：\*\*市场状态未知/);
+assert.doesNotMatch(englishFidelityCard, /Status: \*\*Market status unknown/);
+assert.match(chineseFidelityCard, /上游报告底层市场当前可交易/);
+assert.match(englishFidelityCard, /Provider reports the underlying market is currently tradable/);
 assert.match(chineseFidelityCard, /未提供流动性数据；不得将其理解为 0/);
 assert.match(englishFidelityCard, /Liquidity was not provided and must not be interpreted as zero/);
 assert.match(chineseFidelityCard, /仅凭上游时间戳无法保证行情数据新鲜度；尚未验证行情数据服务等级/);
@@ -118,14 +122,15 @@ assert.doesNotMatch(chineseFidelityCard, /流动性(?:数据)?[：:]\s*0(?:\.0+)
 assert.doesNotMatch(englishFidelityCard, /liquidity(?: data)?\s*[:=]\s*0(?:\.0+)?/i);
 
 const fidelityNextStepsZh = researchNextSteps([fidelityAsset], fidelityComparison, {
-  allowQuoteFollowUp: false,
   allowWalletExposureFollowUp: false,
   language: "zh-CN"
 });
-const fidelityBriefZh = renderResearchBrief([fidelityAsset], fidelityComparison, undefined, fidelityNextStepsZh, { language: "zh-CN", allowQuoteFollowUp: false });
-const fidelityBriefEn = renderResearchBrief([fidelityAsset], fidelityComparison, undefined, [], { language: "en", allowQuoteFollowUp: false });
+const fidelityBriefZh = renderResearchBrief([fidelityAsset], fidelityComparison, undefined, fidelityNextStepsZh, { language: "zh-CN" });
+const fidelityBriefEn = renderResearchBrief([fidelityAsset], fidelityComparison, undefined, [], { language: "en" });
 assert.match(fidelityBriefZh, /代币观测价格：\*\*123\.45\*\* · 标的参考价格：\*\*234\.56\*\*/);
 assert.match(fidelityBriefEn, /Observed price: \*\*123\.45\*\* · Reference price: \*\*234\.56\*\*/);
+assert.match(fidelityBriefEn, /Status: \*\*Unknown\*\*/);
+assert.match(fidelityBriefEn, /Provider reports the underlying market is currently tradable/);
 assert.doesNotMatch(fidelityBriefZh, /下一步[^\n]*(?:request a quote|请求报价)/i);
 
 const fidelityViewInput = (query: string) => ({
@@ -138,8 +143,8 @@ const fidelityViewInput = (query: string) => ({
 const fidelityUiZh = renderResearchView(fidelityViewInput("研究 NVDA；行情未知，不要交易"));
 const fidelityUiEn = renderResearchView(fidelityViewInput("Research NVDA; status is unknown, no trading"));
 for (const [surface, ui, statusLabel, warning] of [
-  ["Chinese", fidelityUiZh, "市场状态未知（上游报告开放标记，但未确认）", "未提供流动性数据；不得将其理解为 0"],
-  ["English", fidelityUiEn, "market status unknown (provider open flag is unconfirmed)", "Liquidity was not provided and must not be interpreted as zero"]
+  ["Chinese", fidelityUiZh, "市场状态类别未知（上游报告当前可交易）", "未提供流动性数据；不得将其理解为 0"],
+  ["English", fidelityUiEn, "market status category unknown (provider reports tradable)", "Liquidity was not provided and must not be interpreted as zero"]
 ] as const) {
   assert.ok(ui.includes("123.45") && ui.includes("234.56"), `${surface} native view retains the separate exact observed/reference prices`);
   assert.ok(ui.includes(statusLabel), `${surface} native view preserves unknown market status`);

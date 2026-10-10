@@ -5,7 +5,7 @@ import { PlanRegistry } from "../src/mcp/plan-registry.js";
 import { jsonDataFingerprint } from "../src/domain/json-snapshot.js";
 
 const spender = "0x3333333333333333333333333333333333333333";
-const checks: SafetyCheck[] = ["asset_identity", "market_status", "quote_available", "price_impact", "authorization_visibility", "input_balance"].map((name) => ({ name, passed: true, severity: "blocking", message: name === "authorization_visibility" ? `ERC-20 allowance is sufficient, spender=${spender}` : "test preflight" }));
+const checks: SafetyCheck[] = ["asset_identity", "market_status", "quote_available", "price_impact", "authorization_visibility", "input_balance"].map((name) => ({ name, passed: true, severity: name === "input_balance" || name === "authorization_visibility" ? "info" : "blocking", message: name === "authorization_visibility" ? `Verified ERC-20 spender=${spender}; wallet funds are not pre-checked` : name === "input_balance" ? "Ariadne does not pre-check wallet funds; the wallet decides whether it can submit" : "test preflight" }));
 const prepared: ActionPlan = {
   planId: "plan-registry-test",
   status: "awaiting_confirmation",

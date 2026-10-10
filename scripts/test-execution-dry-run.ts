@@ -3,8 +3,7 @@ import { readFile } from "node:fs/promises";
 import { privateKeyToAccount } from "viem/accounts";
 import type { ActionPlan, StockAsset, TradeIntent, UnsignedAction } from "../src/domain/types.js";
 import { attachSimulation, confirmPlan } from "../src/domain/action-plan.js";
-import { assertInputBalanceCoversPlan } from "../src/domain/balance-safety.js";
-import { assessSignedTransactionFee, assertNativeBalanceCoversFee, requireReviewedGasBudget } from "../src/domain/gas-safety.js";
+import { assessSignedTransactionFee, requireReviewedGasBudget } from "../src/domain/gas-safety.js";
 import { assertSignedTransactionMatchesPlan } from "../src/domain/signed-transaction.js";
 import { PlanRegistry } from "../src/mcp/plan-registry.js";
 import { TokenizedStocksService } from "../src/services/tokenized-stocks.js";
@@ -52,7 +51,7 @@ const makeService = (balance: bigint) => new TokenizedStocksService(
 );
 const intent: TradeIntent = {
   type: "buy", walletAddress: account.address, fromTokenAddress: fixture.inputTokenAddress,
-  amount: fixture.amount, amountDecimals: fixture.amountDecimals, maxGasCostBnb: fixture.maxGasCostBnb, toAsset: fixture.asset
+  amount: fixture.amount, amountDecimals: fixture.amountDecimals, maxSlippageBps: 50, maxGasCostBnb: fixture.maxGasCostBnb, toAsset: fixture.asset
 };
 const registry = new PlanRegistry();
 const prepared = await makeService(BigInt(fixture.inputBalanceBaseUnits)).createActionPlan(intent);
@@ -76,13 +75,12 @@ const sign = (signer = account, gasPrice = 1_000_000_000n) => signer.signTransac
 const signed = await sign();
 await assertSignedTransactionMatchesPlan(reviewed, signed, account.address);
 const fee = assessSignedTransactionFee(reviewed, signed);
-assertNativeBalanceCoversFee(BigInt(fixture.bnbBalanceWei), fee);
-assertInputBalanceCoversPlan(reviewed, BigInt(fixture.inputBalanceBaseUnits));
+assert.ok(fee.maxGasCostWei <= fee.reviewedGasBudgetWei, "transaction fee risk stays within the reviewed cap");
 
 // Negative paths use the same production checks, and stop before any network broadcast.
 const lowBalance = await makeService(0n).createActionPlan(intent);
-assert.equal(lowBalance.status, "failed");
-assert.equal(lowBalance.unsignedActions, undefined);
+assert.equal(lowBalance.status, "awaiting_confirmation", "input-token funds do not gate a quote-backed purchase plan");
+assert.ok(lowBalance.unsignedActions?.length);
 const second = await makeService(BigInt(fixture.inputBalanceBaseUnits)).createActionPlan(intent);
 registry.registerPrepared(second);
 assert.throws(() => registry.requireExact({ ...second, intent: { ...second.intent, amount: "11" } }, "awaiting_confirmation"), /changed/);
@@ -92,15 +90,14 @@ await assert.rejects(assertSignedTransactionMatchesPlan(reviewed, await sign(wro
 const expensive = await sign(account, 3_000_000_000n);
 await assertSignedTransactionMatchesPlan(reviewed, expensive, account.address);
 assert.throws(() => assessSignedTransactionFee(reviewed, expensive), /exceeds confirmed plan budget/);
-assert.throws(() => assertNativeBalanceCoversFee(0n, fee), /BNB balance is insufficient/);
-assert.throws(() => assertInputBalanceCoversPlan(reviewed, 0n), /Input-token balance is now insufficient/);
 registry.reserveBroadcast(confirmed);
 assert.throws(() => registry.reserveBroadcast(confirmed), /already attempted/);
 assert.equal(broadcastRequests, 0);
 
 console.log(JSON.stringify({
   mode: "offline synthetic rehearsal", asset: fixture.asset.tokenSymbol, chainId: fixture.chainId,
-  stages: ["quote+balance+allowance", "plan registered", "simulated", "confirmed", "locally signed", "signature+gas+balances checked"],
-  rejected: ["insufficient input funds", "changed plan", "expired plan", "failed simulation", "wrong signer", "gas over budget", "insufficient BNB", "changed input balance", "replay"],
+  stages: ["quote+authorization visibility", "plan registered", "simulated", "confirmed", "locally signed", "signature+reviewed gas checked"],
+  rejected: ["changed plan", "expired plan", "failed simulation", "wrong signer", "gas over budget", "insufficient live allowance", "replay"],
+  fundsPolicy: "zero input/native balance is not an Ariadne submission precheck; transaction content remains bounded by the reviewed fee cap",
   broadcastRequests, realWalletUsed: false, passed: true
 }, null, 2));

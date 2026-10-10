@@ -29,6 +29,11 @@ const assertResearchTiming = (payload: Record<string, any>) => {
   assert.equal(timing.marketContextBatchCalls, 1);
   assert.equal(timing.marketContextAssets, payload.assets.length);
 };
+const readPayload = (result: Awaited<ReturnType<typeof client.callTool>>) => {
+  if (result.structuredContent) return result.structuredContent as Record<string, any>;
+  const text = (result.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text ?? "{}";
+  return JSON.parse(text) as Record<string, any>;
+};
 const result = await client.callTool({ name: "discover_tokenized_assets", arguments: { query: "NVDA", chainId: "56" } });
 const text = (result.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
 assert.ok(text);
@@ -42,6 +47,8 @@ assert.ok(payload.assets.every((asset: Record<string, any>) => asset.market.data
 assert.ok(payload.assets.every((asset: Record<string, any>) => asset.market.marketStatus === "unknown" && asset.market.liquidity === undefined));
 assert.equal(payload.assets[0].market.tokenPriceUpdatedAt, payload.assets[1].market.tokenPriceUpdatedAt, "both issuer views use one stable fixture timestamp");
 assert.ok(payload.presentation.includes("Synthetic Demo Mode fixture; not live market data"));
+assert.doesNotMatch(payload.presentation, /request a quote|read-only quote/i, "discovery must not advertise an unavailable standalone quote step");
+assert.match(payload.outcome.nextAction, /create a purchase plan only after deciding to continue/i);
 
 const renderedDemoView = renderResearchView(result.structuredContent);
 assert.match(renderedDemoView, /Synthetic demo data/);
@@ -67,10 +74,12 @@ assert.equal(platformFilteredPayload.assets[0].metadata.source, "synthetic", "De
 assert.equal(platformFilteredPayload.assets[0].market, undefined);
 
 const unsupported = await client.callTool({ name: "research_tokenized_stock", arguments: { query: "BTC", chainId: "56" } });
-const unsupportedPayload = JSON.parse((unsupported.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text ?? "{}");
+const unsupportedPayload = readPayload(unsupported);
 assert.equal(unsupportedPayload.outcome.status, "warning");
 assert.equal(unsupportedPayload.assets.length, 0);
-assert.equal(unsupportedPayload.presentation, "No representations available.");
+assert.equal(unsupportedPayload.presentation, "No specific underlying was identified, so issuer market data was not requested. Browse the BSC catalog first or name a ticker or company.");
+assert.ok(unsupportedPayload.nextSteps.every((step: { id: string }) => step.id !== "read_wallet_exposure"), "empty research must not suggest wallet exposure");
+assert.match((unsupported.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text ?? "", /no specific stock was identified/i);
 
 const issuerComparisonResult = await client.callTool({ name: "compare_asset_representations", arguments: { query: "TSLA", chainId: "56" } });
 const issuerComparison = JSON.parse((issuerComparisonResult.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text ?? "{}");
@@ -78,6 +87,20 @@ assert.deepEqual(issuerComparisonResult.structuredContent, issuerComparison, "co
 assert.equal(issuerComparison.comparison.rows.length, 2, "Demo catalogue discovery must expose both seeded TSLA issuers");
 assert.deepEqual(issuerComparison.comparison.rows.map((row: Record<string, any>) => row.asset.platformId).sort(), ["bstock", "ondo"]);
 assert.match(issuerComparison.presentation, /No filters applied/);
+assert.doesNotMatch(issuerComparison.presentation, /request a quote|read-only quote/i, "comparison must not advertise an unavailable standalone quote step");
+assert.match(issuerComparison.outcome.nextAction, /create a purchase plan only after deciding to continue/i);
+
+const screeningResult = await client.callTool({
+  name: "screen_assets_by_preferences",
+  arguments: { query: "TSLA", chainId: "56", preference: { requireMarketPrice: true } }
+});
+const screening = readPayload(screeningResult);
+assert.doesNotMatch(screening.presentation, /request a quote|read-only quote/i, "screening must not advertise an unavailable standalone quote step");
+assert.match(screening.outcome.nextAction, /create a purchase plan only after deciding to continue/i);
+
+const wrapperComparisonResult = await client.callTool({ name: "compare_stock_wrappers", arguments: { query: "TSLA", chainId: "56" } });
+const wrapperComparison = readPayload(wrapperComparisonResult);
+assert.match(wrapperComparison.outcome.nextAction, /create a purchase plan only after deciding to continue/i);
 
 const issuerFilteredComparisonResult = await client.callTool({
   name: "compare_asset_representations",
@@ -91,7 +114,7 @@ const noKnownStatus = await client.callTool({
   name: "research_tokenized_stock",
   arguments: { query: "TSLA", chainId: "56", preference: { requireKnownMarketStatus: true } }
 });
-const noKnownStatusPayload = JSON.parse((noKnownStatus.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text ?? "{}");
+const noKnownStatusPayload = readPayload(noKnownStatus);
 assert.equal(noKnownStatusPayload.outcome.status, "blocked");
 assert.ok(noKnownStatusPayload.comparison.rows.every((row: Record<string, any>) => row.excludedReasons.some((reason: string) => reason.includes("market status is unknown"))));
 
@@ -133,8 +156,8 @@ const naturalLanguageResult = await client.callTool({
 });
 const naturalLanguageText = (naturalLanguageResult.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
 assert.ok(naturalLanguageText);
-const naturalLanguage = JSON.parse(naturalLanguageText!);
-assert.deepEqual(naturalLanguageResult.structuredContent, naturalLanguage, "research text and structured content must match for the natural-language journey");
+assert.match(naturalLanguageText!, /^市场解读：/);
+const naturalLanguage = readPayload(naturalLanguageResult);
 assert.equal(naturalLanguage.resolvedQuery, "NVDA");
 assert.equal(naturalLanguage.assets.length, 2);
 assert.equal(naturalLanguage.outcome.sideEffects, "none");
@@ -144,7 +167,7 @@ assert.equal("marketContextFailureCategory" in naturalLanguage.timing, false, "s
 assert.match(naturalLanguage.outcome.nextAction, /未请求任何交易后续操作/);
 assert.ok(naturalLanguage.nextSteps.every((step: { id: string }) => step.id !== "request_read_only_quote"));
 assert.ok(naturalLanguage.nextSteps.every((step: { id: string }) => step.id !== "read_wallet_exposure"));
-assert.match(naturalLanguage.presentation, /建议的下一步：\*\*查看证据和数据缺口\*\*/);
+assert.match(naturalLanguage.presentation, /建议的下一步：\*\*查看证据和数据缺口；决定继续后再明确创建购买计划\*\*/);
 assert.doesNotMatch(naturalLanguage.presentation, /下一步：[^\n]*请求报价|获取只读报价/);
 assert.match(naturalLanguage.presentation, /研究简报/);
 assert.match(naturalLanguage.presentation, /本研究仅为只读查询/);
@@ -155,8 +178,8 @@ const englishNoTradingResult = await client.callTool({
 });
 const englishNoTradingText = (englishNoTradingResult.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
 assert.ok(englishNoTradingText);
-const englishNoTrading = JSON.parse(englishNoTradingText!);
-assert.deepEqual(englishNoTradingResult.structuredContent, englishNoTrading);
+assert.match(englishNoTradingText!, /^Market read:/);
+const englishNoTrading = readPayload(englishNoTradingResult);
 assert.equal(englishNoTrading.resolvedQuery, "NVDA");
 assert.equal(englishNoTrading.outcome.sideEffects, "none");
 assert.match(englishNoTrading.outcome.nextAction, /no trading follow-up was requested/);
@@ -168,8 +191,7 @@ assert.doesNotMatch(englishNoTrading.presentation, /request a quote/i);
 const directResearchResult = await client.callTool({ name: "research_tokenized_stock", arguments: { query: "NVDA", chainId: "56" } });
 const directResearchText = (directResearchResult.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
 assert.ok(directResearchText);
-const directResearch = JSON.parse(directResearchText!);
-assert.deepEqual(directResearchResult.structuredContent, directResearch, "direct-ticker research text and structured content must match");
+const directResearch = readPayload(directResearchResult);
 assert.deepEqual(
   naturalLanguage.assets.map((asset: Record<string, any>) => ({ id: asset.assetId, source: asset.metadata.source, market: asset.market })),
   payload.assets.map((asset: Record<string, any>) => ({ id: asset.assetId, source: asset.metadata.source, market: asset.market })),
@@ -177,14 +199,16 @@ assert.deepEqual(
 );
 assertResearchTiming(directResearch);
 assert.deepEqual(directResearch.timing.searchResolution.calls, { directSearch: 1, catalogRead: 0, resolvedSearch: 0 }, "a direct ticker research request must use the no-catalog fast path");
-assert.doesNotMatch(naturalLanguage.presentation, /request a quote/i, "explicit no-trade request must suppress quote CTAs throughout the rendered brief");
+assert.ok(directResearch.nextSteps.every((step: { id: string }) => step.id !== "request_read_only_quote"), "ordinary research must never advertise an unavailable standalone quote step");
+assert.doesNotMatch(directResearch.presentation, /request a quote|read-only quote/i, "ordinary research must not contain quote CTAs throughout the rendered brief");
+assert.match(directResearch.outcome.nextAction, /create a purchase plan only after deciding to continue/i);
 const ambiguousResult = await client.callTool({ name: "research_tokenized_stock", arguments: { query: "比较 NVDA 和 TSLA", chainId: "56" } });
 const ambiguousText = (ambiguousResult.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
 assert.ok(ambiguousText);
 const ambiguous = JSON.parse(ambiguousText!);
 assert.equal(ambiguous.outcome.status, "blocked");
 assert.deepEqual(ambiguous.candidateTickers.sort(), ["NVDA", "TSLA"]);
-const plan = await client.callTool({ name: "prepare_action_from_intent", arguments: { query: "NVDA", type: "buy", walletAddress: "0x0000000000000000000000000000000000000000", fromTokenAddress: "0x0000000000000000000000000000000000000000", amount: "10", amountDecimals: 18, chainId: "56", platformId: "bstock" } });
+const plan = await client.callTool({ name: "prepare_action_from_intent", arguments: { query: "NVDA", type: "buy", walletAddress: "0x0000000000000000000000000000000000000000", fromTokenAddress: "0x0000000000000000000000000000000000000000", amount: "10", amountDecimals: 18, chainId: "56", platformId: "bstock", maxSlippageBps: 50 } });
 const planText = (plan.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
 assert.ok(planText);
 const planPayload = JSON.parse(planText!);

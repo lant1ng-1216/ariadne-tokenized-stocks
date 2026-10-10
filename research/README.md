@@ -47,6 +47,10 @@ The audited experiment figures are stored in `figures/nature-sample/` in editabl
 
 Each figure has a contract describing its claim, evidence source and limitations. Values are generated from recorded observations rather than manually entered into the artwork.
 
+## Founder-funded pilot evidence
+
+The original audited experiment remains a no-signing, no-broadcast dataset. Separately, the owner authorized and completed one 7 USDT bStocks NVDAB purchase on BNB Smart Chain on 2026-10-09. Its structured record is [`founder-funded-bsc-purchase-2026-10-09.json`](../records/ariadne-workflow/evidence/founder-funded-bsc-purchase-2026-10-09.json), with the two owner-selected MetaMask and BscScan captures in the adjacent `media/` directory. The main stock-purchase transaction is distinguished from MetaMask's auxiliary gas transaction. This verifies only the tested bStocks NVDAB route; it is not evidence of an Ondo purchase or general production reliability.
+
 ## Reading the evidence
 
-The reports under `docs/` summarize what the source, local tests and bounded provider observations establish. The structured files preserve the underlying sanitized evidence and its limitations. No directory count, timestamp, or test result should be read as proof of a complete market catalog, a provider freshness guarantee, or a successful funded trade.
+The reports under `docs/` summarize what the source, local tests, bounded provider observations and separately identified funded pilot establish. The structured files preserve the underlying sanitized evidence and its limitations. No directory count, timestamp, local test result or single funded purchase should be read as proof of a complete market catalog, a provider freshness guarantee, or general transaction reliability.

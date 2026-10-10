@@ -62,17 +62,18 @@ The complete evidence model, audit output and reproducible figure inputs are mai
 ## Current capabilities
 
 - Resolve tokenized-stock identity by ticker, chain, platform and contract.
-- Discover and compare issuer-aware tokenized-stock representations through high-level Agent-native MCP tools.
+- Browse the current BSC catalog before choosing a stock, then discover and compare issuer-aware representations through high-level Agent-native MCP tools.
 - Prepare an ActionPlan from a user intent without silently selecting between multiple issuers.
 - Screen assets by explicit preferences and summarize tokenized-stock wallet exposure without making investment recommendations.
 - Compare wrappers such as Ondo and bStocks.
 - Normalize token price, reference price, market state, candles and data warnings.
 - Read wallet exposure, portfolio information and transaction context.
 - Create and simulate ActionPlans before execution.
-- Enforce allowance, market-state, slippage and verified-unit price-impact checks. ERC-20 plans without a quote-declared, verifiable spender fail closed; input-token/native BNB balances and allowance are rechecked before guarded BSC EVM broadcast. Funded settlement remains unverified.
+- Enforce allowance, market-state, slippage and verified-unit price-impact checks. ERC-20 plans without a quote-declared, verifiable spender fail closed; input-token/native BNB balances and allowance are rechecked before guarded BSC EVM broadcast. One owner-funded bStocks NVDAB BSC purchase is recorded and verified; Ondo/RFQ and cross-asset funded reliability remain unverified.
+- For the MCP browser journey, collect the selected stock, issuer and USDT amount, then return a wallet-free intent link. The external page uses the current MetaMask account and BSC network to form the exact plan with a 2% maximum slippage and provider-derived fee estimate. Chinese and English conversations open matching localized wallet pages. SDK callers retain explicit wallet and risk inputs.
 - Offer `GuardedEvmExecutionService` for one standard BSC EVM action through the standalone SDK, accepting only the unchanged in-memory plan object issued by SDK preparation; it applies staged plan binding, external signature verification, reviewed gas limits, live balance and allowance checks, and one-attempt replay protection.
 - Prepare RFQ signing requests without handling private keys.
-- Expose 18 MCP tools for existing agents and applications, including the one-call `research_tokenized_stock` workflow.
+- Expose Agent-native MCP capabilities including `browse_tokenized_stock_catalog` for open-ended exploration and `research_tokenized_stock` for a selected stock.
 - Return stable issuer-by-issuer evidence entries, explicit identity/market-data coverage and read-only next steps instead of relying on fragile Markdown tables.
 - Report Ariadne workflow timing with an explicit boundary that excludes calling-Agent reasoning and final-answer rendering.
 - Browse the verified BSC RWA directory with official token and issuer metadata, then move into issuer comparison, evidence inspection, public-address exposure or explicit-issuer quote preview.
@@ -117,14 +118,14 @@ Demo Mode is deterministic and read-only. It does not create executable plans, s
 
 For offline local checks, run `npm run typecheck`, `npm run test:domain` and `npm run test:demo-mode`. Live API checks require your own credentials and are documented separately.
 
-The no-funds simulation path does not broadcast a transaction. If the Agent host supports automatic tool selection, it may select `research_tokenized_stock` from a natural-language request; otherwise invoke that tool explicitly. Tool selection behavior depends on the host and is not guaranteed by Ariadne. MCP App rendering also depends on the host; the bundled native research view is verified locally, but its visual presentation can vary by client.
+The no-funds simulation path does not broadcast a transaction. The catalog and research tool descriptions distinguish an undecided exploration stage from selected-stock research, so a capable Agent host can choose from conversational meaning without Ariadne matching fixed phrases. Tool selection behavior still depends on the host. MCP App rendering also depends on the host; the bundled native catalog and research views are verified locally, but their visual presentation can vary by client.
 
 ## Evidence and limitations
 
 The complete evaluation protocol, observations, failure taxonomy and deferred tests are in [`docs/TECHNICAL_RESEARCH_REPORT.md`](docs/TECHNICAL_RESEARCH_REPORT.md). In particular:
 
 - Real RFQ settlement requires an external wallet signature and remains deferred.
-- Funded post-trade balance and successful broadcast validation remain deferred until a funded wallet is intentionally used.
+- One owner-authorized 7 USDT bStocks NVDAB purchase has successful BSC receipt and wallet-display evidence. The purchase-plan path now attaches a background MCP App monitor that registers the wallet hash, reconciles BSC finality and balances, and sends one durable, deduplicated terminal report when the host supports conversation messages; that automatic host round trip awaits the next owner-run purchase. Ondo/RFQ funded settlement and broader cross-asset validation remain unverified.
 - Three documented DeFi Positions request variants returned upstream business code `50000`; Ariadne records this as an upstream blocker rather than an empty result.
 - The SDK package is not published to npm; the Hosted MCP implementation is a local proof of concept, not a production endpoint.
 - Demo video and final submission material are intentionally outside the current implementation scope.

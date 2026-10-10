@@ -16,6 +16,7 @@ export type MarketContextEnrichmentDiagnostics = {
   assetsRequested: number;
   durationMs: number;
   failureCategory?: MarketContextFailureCategory;
+  failedGroups?: number;
 };
 
 class MarketContextIntegrityError extends Error {}
@@ -40,37 +41,65 @@ export async function enrichAgentAssets(
   }
 
   const startedAt = performance.now();
-  try {
-    const contexts = await stocks.marketContexts(assets);
-    if (contexts.length !== assets.length) throw new MarketContextIntegrityError("Market-context result count does not match requested asset count");
+  const assetsByChain = new Map<string, StockAsset[]>();
+  for (const asset of assets) assetsByChain.set(asset.chainId, [...(assetsByChain.get(asset.chainId) ?? []), asset]);
 
-    const contextsByAsset = new Map(contexts.map((context) => [
-      `${makeAssetId(context.asset.chainId, context.asset.contractAddress)}:${context.asset.platformId}`,
-      context
-    ]));
-    const enriched = assets.map((asset) => {
-      const key = `${makeAssetId(asset.chainId, asset.contractAddress)}:${asset.platformId}`;
-      const context = contextsByAsset.get(key);
-      if (!context) throw new MarketContextIntegrityError("Market context does not match the requested asset set");
-      const enrichedAsset: StockAsset = {
-        ...asset,
-        tokenName: context.asset.tokenName ?? asset.tokenName,
-        tokenLogoUrl: context.asset.tokenLogoUrl ?? asset.tokenLogoUrl,
-        issuerLogoUrl: context.asset.issuerLogoUrl ?? asset.issuerLogoUrl,
-        issuerWebsite: context.asset.issuerWebsite ?? asset.issuerWebsite
-      };
-      const isSynthetic = stocks.dataMode === "synthetic" || context.dataWarnings.includes(DEMO_DATA_WARNING);
-      return toAgentAsset(enrichedAsset, context, {}, isSynthetic ? { source: "synthetic" } : {}, { marketContextRequested: true });
-    });
-    onDiagnostics?.({ batchCalls: 1, assetsRequested: assets.length, durationMs: elapsedMs(startedAt) });
-    return enriched;
-  } catch (error) {
-    const failureCategory = failureCategoryFor(error);
-    onDiagnostics?.({ batchCalls: 1, assetsRequested: assets.length, durationMs: elapsedMs(startedAt), failureCategory });
-    return assets.map((asset) => toAgentAsset(asset, undefined, {}, stocks.dataMode ? { source: stocks.dataMode } : {}, {
-      marketContextRequested: true,
-      marketContextUnavailable: true,
-      marketContextFailureCategory: failureCategory
-    }));
+  const enrichedByAsset = new Map<string, AgentTokenizedAsset>();
+  const failureCategories: MarketContextFailureCategory[] = [];
+  let failedGroups = 0;
+  for (const chainAssets of assetsByChain.values()) {
+    try {
+      // The provider groups market-context requests by chain. Keep those groups
+      // isolated so one unsupported chain cannot erase valid data from another.
+      const contexts = await stocks.marketContexts(chainAssets);
+      if (contexts.length !== chainAssets.length) throw new MarketContextIntegrityError("Market-context result count does not match requested asset count");
+
+      const contextsByAsset = new Map(contexts.map((context) => [
+        `${makeAssetId(context.asset.chainId, context.asset.contractAddress)}:${context.asset.platformId}`,
+        context
+      ]));
+      const expectedKeys = new Set(chainAssets.map((asset) => `${makeAssetId(asset.chainId, asset.contractAddress)}:${asset.platformId}`));
+      if (contextsByAsset.size !== contexts.length || contexts.some((context) => !expectedKeys.has(`${makeAssetId(context.asset.chainId, context.asset.contractAddress)}:${context.asset.platformId}`))) {
+        throw new MarketContextIntegrityError("Market context does not match the requested asset set");
+      }
+
+      for (const asset of chainAssets) {
+        const key = `${makeAssetId(asset.chainId, asset.contractAddress)}:${asset.platformId}`;
+        const context = contextsByAsset.get(key);
+        if (!context) throw new MarketContextIntegrityError("Market context does not match the requested asset set");
+        const enrichedAsset: StockAsset = {
+          ...asset,
+          tokenName: context.asset.tokenName ?? asset.tokenName,
+          tokenLogoUrl: context.asset.tokenLogoUrl ?? asset.tokenLogoUrl,
+          issuerLogoUrl: context.asset.issuerLogoUrl ?? asset.issuerLogoUrl,
+          issuerWebsite: context.asset.issuerWebsite ?? asset.issuerWebsite
+        };
+        const isSynthetic = stocks.dataMode === "synthetic" || context.dataWarnings.includes(DEMO_DATA_WARNING);
+        enrichedByAsset.set(key, toAgentAsset(enrichedAsset, context, {}, isSynthetic ? { source: "synthetic" } : {}, { marketContextRequested: true }));
+      }
+    } catch (error) {
+      failedGroups += 1;
+      failureCategories.push(failureCategoryFor(error));
+      const failureCategory = failureCategoryFor(error);
+      for (const asset of chainAssets) {
+        const key = `${makeAssetId(asset.chainId, asset.contractAddress)}:${asset.platformId}`;
+        enrichedByAsset.set(key, toAgentAsset(asset, undefined, {}, stocks.dataMode ? { source: stocks.dataMode } : {}, {
+          marketContextRequested: true,
+          marketContextUnavailable: true,
+          marketContextFailureCategory: failureCategory
+        }));
+      }
+    }
   }
+
+  const enriched = assets.map((asset) => enrichedByAsset.get(`${makeAssetId(asset.chainId, asset.contractAddress)}:${asset.platformId}`)!).filter(Boolean);
+  const uniqueCategories = [...new Set(failureCategories)];
+  onDiagnostics?.({
+    batchCalls: assetsByChain.size,
+    assetsRequested: assets.length,
+    durationMs: elapsedMs(startedAt),
+    ...(uniqueCategories.length === 1 ? { failureCategory: uniqueCategories[0] } : uniqueCategories.length > 1 ? { failureCategory: "unexpected_failure" as MarketContextFailureCategory } : {}),
+    ...(failedGroups ? { failedGroups } : {})
+  });
+  return enriched;
 }

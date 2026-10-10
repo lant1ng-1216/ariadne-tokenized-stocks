@@ -90,7 +90,7 @@ One-line result, key differences, data gaps, risk context, suggested next action
 | Inspect a portfolio | wallet → holdings → market | Portfolio summary |
 | Create a theme basket | screen → compare → portfolio | Basket preview |
 | Simulate rebalance | portfolio → strategy → quote → simulate | Simulated changes |
-| Execute a standard BSC EVM plan | register → simulate → explicit confirmation → external sign → guarded broadcast | Plan-bound signature/gas/current-balance/allowance checks and one-attempt broadcast; MCP or `GuardedEvmExecutionService` |
+| Execute a standard BSC EVM plan | register → simulate → explicit confirmation → external sign → guarded broadcast | Plan-bound transaction/gas/allowance checks and one-attempt broadcast; wallet decides whether available funds cover the request; pre/post balances support settlement reconciliation |
 
 ## 7. Priority
 
@@ -117,7 +117,7 @@ Scheduled DCA; automatic rebalance; event calendar; DeFi positions and calldata;
 | ActionPlan | Implemented and tested | Funded final-stage validation |
 | Simulation | Verified | Multi-asset portfolio simulation |
 | External signing | External-only; raw signed EVM transaction is checked against its confirmed plan | Funded-wallet validation |
-| Broadcast | MCP and guarded SDK workflows validate plan, signature, gas, balances, reviewed allowance and one-attempt replay locally | Funded-wallet validation; RFQ/multi-action remain unsupported by guarded flow |
+| Broadcast | MCP and guarded SDK workflows validate plan, signature, gas cap, reviewed allowance and one-attempt replay locally; balances are captured for settlement evidence, not used to qualify the wallet | Wallet-native funds decision; RFQ/multi-action remain unsupported by guarded flow |
 | Wallet / portfolio | MCP read-only exposure verified | Strategy and rebalance preview |
 | DeFi Positions | Upstream blocked | Re-test after service recovery |
 | Demo Mode | Implemented locally across directory, research, exposure and quote | Broader fixture maintenance |

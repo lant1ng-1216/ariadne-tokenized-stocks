@@ -35,7 +35,7 @@ const preparedClient = {
 async function preparedPlan(): Promise<ActionPlan> {
   const plan = await new TokenizedStocksService(preparedClient as any, async () => 2_000_000n, async () => 2_000_000n).createActionPlan({
     type: "buy", walletAddress: account.address, fromTokenAddress: inputToken,
-    amount: "1", amountDecimals: 6, maxGasCostBnb: "0.0002",
+    amount: "1", amountDecimals: 6, maxSlippageBps: 50, maxGasCostBnb: "0.0002",
     toAsset: { assetId: `56:${stockToken}`, chainId: "56", platformId: "bstock", contractAddress: stockToken,
       tokenSymbol: "TESTB", underlyingTicker: "TEST", underlyingName: "Synthetic Test" }
   });
@@ -88,7 +88,7 @@ const signedTransaction = await signTestTransaction();
 await assert.rejects(service.broadcastSigned({ ...confirmed, quoteId: "changed-quote" }, signedTransaction), /changed or is not at the required stage/);
 const result = await service.broadcastSigned(confirmed, signedTransaction);
 assert.deepEqual(result, { txHash: "0xsynthetic-only" });
-assert.deepEqual(calls, { simulate: 1, nativeBalance: 1, inputBalance: 1, allowance: 1, mockedBroadcast: 1, networkBroadcasts: 0 });
+assert.deepEqual(calls, { simulate: 1, nativeBalance: 0, inputBalance: 0, allowance: 1, mockedBroadcast: 1, networkBroadcasts: 0 }, "the SDK checks permission but leaves funds and fees to the wallet/network");
 await assert.rejects(service.broadcastSigned(confirmed, signedTransaction), /already attempted/);
 assert.equal(calls.mockedBroadcast, 1, "the same plan cannot call the broadcaster twice");
 
@@ -106,8 +106,9 @@ for (const [label, overrides, expectedError] of [
 
 const insufficient = createService({ input: 0n });
 const insufficientPlan = await prepareAndConfirm(insufficient.service, await preparedPlan());
-await assert.rejects(insufficient.service.broadcastSigned(insufficientPlan, signedTransaction), /input-token balance is now insufficient/i);
-assert.equal(insufficient.calls.mockedBroadcast, 0);
+await insufficient.service.broadcastSigned(insufficientPlan, signedTransaction);
+assert.equal(insufficient.calls.inputBalance, 0, "the SDK does not read or gate on input-token funds before handing off the signed transaction");
+assert.equal(insufficient.calls.mockedBroadcast, 1, "the wallet/network remains responsible for accepting or rejecting insufficient funds");
 
 const revokedAllowance = createService({ allowance: 0n });
 const revokedAllowancePlan = await prepareAndConfirm(revokedAllowance.service, await preparedPlan());
@@ -153,7 +154,7 @@ console.log(JSON.stringify({
   externalTestKeyOnly: true,
   signatureAndGasValidationBeforeBroadcast: true,
   transactionFieldMismatchesRejectedBeforeBroadcast: ["chainId", "target", "value", "calldata"],
-  latestBalancesChecked: true,
+  walletFundsAndGasBalancePrechecks: false,
   allowanceRecheckedBeforeBroadcast: true,
   handBuiltOrModifiedPlanRejected: true,
   serializationHooksRejectedWithoutExecution: true,

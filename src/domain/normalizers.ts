@@ -105,6 +105,7 @@ export function normalizeMarketContext(asset: StockAsset, input: any): MarketCon
   if (input.statusInfo?.nextOpenTime != null && nextOpenTime === undefined) warnings.push("Provider next-open timestamp is invalid and was withheld");
   if (input.statusInfo?.nextCloseTime != null && nextCloseTime === undefined) warnings.push("Provider next-close timestamp is invalid and was withheld");
   if (status === "unknown") warnings.push("The platform did not provide a recognized marketStatus");
+  if (status === "unknown" && openState === true) warnings.push("Provider reports the underlying market is currently tradable");
   if (hasMarketStateConflict(status, openState)) warnings.push("Provider marketStatus and openState conflict; the market is treated as not open");
   if (input.liquidity == null) warnings.push("Liquidity was not provided and must not be interpreted as zero");
   if (!tokenPrice) warnings.push(input.tokenPrice == null ? "tokenPrice is missing" : "tokenPrice is invalid or non-positive");
@@ -156,6 +157,7 @@ export function normalizeWalletHolding(input: any, asset?: StockAsset): WalletHo
 }
 
 export function normalizeQuote(asset: StockAsset, input: any): QuoteResult {
+  const quoteTimestamp = normalizeProviderTimestamp(input.timestamp);
   const routes = (input.data ?? []).map((route: any) => ({
     quoteId: String(route.quoteId ?? ""),
     executionMode: route.executionMode,
@@ -164,7 +166,11 @@ export function normalizeQuote(asset: StockAsset, input: any): QuoteResult {
     priceImpact: route.priceImpactPercent ?? route.priceImpact,
     priceImpactUnit: route.priceImpactPercent != null ? "percent" as const : "unknown" as const,
     dexName: route.vendorName ?? route.dexName,
-    approvalTarget: route.approveTarget ?? null
+    approvalTarget: route.approveTarget ?? null,
+    providerRouteFeeUsd: route.tradeFee != null ? String(route.tradeFee) : undefined,
+    estimatedGasFeeBaseUnits: route.estimateGasFee != null ? String(route.estimateGasFee) : route.estimatedGasFee != null ? String(route.estimatedGasFee) : undefined,
+    estimatedGas: route.estimateGas != null ? String(route.estimateGas) : undefined,
+    expiresAt: normalizeProviderTimestamp(route.expiresAt ?? route.expireTime) ?? (quoteTimestamp !== undefined ? quoteTimestamp + 30_000 : undefined)
   }));
   const explicitMode = routes.find((route: any) => route.executionMode)?.executionMode;
   const isRfq = explicitMode === "RFQ" || (!explicitMode && ["ondo", "bstock", "xstocks"].includes(asset.platformId));
@@ -193,15 +199,36 @@ export function normalizeSimulation(input: any): SimulationResult {
   const explicitlySucceeded = successfulStatuses.has(status ?? "");
   const failedByStatus = Boolean(status && !explicitlySucceeded) || Boolean(data.failReason);
   const success = input.success === true && input.code === 0 && explicitlySucceeded && !failedByStatus;
+  const failureReason = typeof data.failReason === "string"
+    ? data.failReason
+    : !status ? "Simulation response did not include an explicit successful status" : `Simulation did not succeed (status: ${status})`;
+  const walletFundsOnlyFailure = !success && isWalletFundsOnlyFailureReason(failureReason);
   const warnings: string[] = success ? [] : [
-    data.failReason ?? (!status ? "Simulation response did not include an explicit successful status" : `Simulation did not succeed (status: ${status})`)
+    failureReason
   ];
   return {
     success,
+    ...(walletFundsOnlyFailure ? { walletFundsOnlyFailure: true } : {}),
     status,
     balanceChanges: data.balanceChanges ?? [],
     allowanceChanges: data.allowanceChanges ?? [],
     warnings,
     raw: data
   };
+}
+
+/** Only classify a provider's single, explicit balance/gas error as a wallet decision. */
+function isWalletFundsOnlyFailureReason(reason: string): boolean {
+  const normalized = reason.trim()
+    .replace(/^execution reverted\s*:?[\s]*/i, "")
+    .replace(/^revert(?:ed)?\s*:?[\s]*/i, "")
+    .trim();
+  return [
+    /^(?:BEP20:\s*)?transfer amount exceeds balance[.!]?$/i,
+    /^insufficient funds(?: for (?:gas(?: \* price(?: \+ value)?)?|intrinsic(?: transaction)?(?: cost)?|transaction))?[.!]?$/i,
+    /^not enough funds for gas(?: \* price(?: \+ value)?)?[.!]?$/i,
+    /^insufficient (?:token )?balance[.!]?$/i,
+    /^balance is too low[.!]?$/i,
+    /^exceeds available balance[.!]?$/i
+  ].some((pattern) => pattern.test(normalized));
 }

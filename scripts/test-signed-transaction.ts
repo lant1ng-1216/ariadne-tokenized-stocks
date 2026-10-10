@@ -9,7 +9,7 @@ const account = privateKeyToAccount(`0x${"11".repeat(32)}`);
 const otherAccount = privateKeyToAccount(`0x${"22".repeat(32)}`);
 const target = "0x3333333333333333333333333333333333333333";
 const otherTarget = "0x4444444444444444444444444444444444444444";
-const checks: SafetyCheck[] = ["asset_identity", "quote_available", "price_impact", "authorization_visibility", "input_balance", "simulation"]
+const checks: SafetyCheck[] = ["asset_identity", "market_status", "quote_available", "price_impact", "authorization_visibility", "input_balance", "simulation"]
   .map((name) => ({ name, passed: true, severity: "blocking", message: "offline fixture" }));
 const plan: ActionPlan = {
   planId: "signed-transaction-offline-test",

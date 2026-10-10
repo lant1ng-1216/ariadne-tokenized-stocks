@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { BinanceWeb3Client, type RequestObservation } from "../src/binance-web3-client.js";
 import { BinanceWeb3Error } from "../src/errors.js";
+import { errorOutcome } from "../src/mcp/response.js";
+import { diagnoseResponseEnvelope, sanitizeProviderResponseDiagnostics } from "../src/provider-response-diagnostics.js";
 
 let calls = 0;
 const pathCalls = new Map<string, number>();
@@ -46,6 +48,11 @@ const server = createServer((request, response) => {
     response.end("null");
     return;
   }
+  if (path === "/build/wrong-envelope") {
+    response.setHeader("content-type", "Application/JSON; charset=utf-8");
+    response.end(JSON.stringify({ code: "not-a-number", success: "not-a-boolean", nested: { secretValue: "must not escape" }, "unsafe key with spaces": "must not escape" }));
+    return;
+  }
   if (path === "/build/timeout") {
     setTimeout(() => { if (!response.destroyed) response.end(JSON.stringify({ code: 0, msg: "late", data: {}, timestamp: Date.now(), success: true })); }, 100);
     return;
@@ -88,10 +95,56 @@ await assert.rejects(client.get("/retry-after-date-too-long"), (error: unknown) 
 assert.equal(pathCalls.get("/build/retry-after-date-too-long"), 1, "an HTTP-date Retry-After must be parsed and must not be retried early");
 
 const beforeInvalidJson = pathCalls.get("/build/invalid-json") ?? 0;
-await assert.rejects(client.get("/invalid-json"), (error: unknown) => error instanceof BinanceWeb3Error && error.code === "INVALID_JSON" && !error.message.includes("private marker"));
+await assert.rejects(client.get("/invalid-json"), (error: unknown) => {
+  assert.ok(error instanceof BinanceWeb3Error);
+  assert.equal(error.code, "INVALID_JSON");
+  assert.ok(!error.message.includes("private marker"));
+  assert.deepEqual(error.responseDiagnostics, {
+    httpStatus: 200,
+    contentType: "application/json",
+    jsonType: "invalid_json",
+    topLevelKeys: [],
+    topLevelKeysTruncated: false,
+    requiredFields: { code: "unavailable", msg: "unavailable", success: "unavailable", data: "unavailable" }
+  });
+  return true;
+});
 assert.equal(pathCalls.get("/build/invalid-json"), beforeInvalidJson + 1, "malformed JSON is a non-retryable provider response");
-await assert.rejects(client.get("/invalid-envelope"), (error: unknown) => error instanceof BinanceWeb3Error && error.code === "INVALID_RESPONSE");
+const beforeInvalidEnvelopeObservations = observations.length;
+await assert.rejects(client.get("/invalid-envelope"), (error: unknown) => {
+  assert.ok(error instanceof BinanceWeb3Error);
+  assert.equal(error.code, "INVALID_RESPONSE");
+  assert.deepEqual(error.responseDiagnostics?.requiredFields, { code: "missing", msg: "missing", success: "missing", data: "missing" });
+  return true;
+});
 assert.equal(pathCalls.get("/build/invalid-envelope"), 1, "a malformed provider envelope must not be retried");
+assert.deepEqual(observations[beforeInvalidEnvelopeObservations]?.responseDiagnostics?.jsonType, "null", "request observations retain the safe provider shape");
+
+const beforeWrongEnvelopeObservations = observations.length;
+await assert.rejects(client.get("/wrong-envelope"), (error: unknown) => {
+  assert.ok(error instanceof BinanceWeb3Error);
+  assert.equal(error.code, "INVALID_RESPONSE");
+  const outcome = errorOutcome(error, "inspect diagnostics", "provider_response_failed");
+  assert.deepEqual(outcome.outcome.error?.diagnostics, {
+    httpStatus: 200,
+    contentType: "application/json",
+    jsonType: "object",
+    topLevelKeys: ["[redacted-key]", "code", "nested", "success"],
+    topLevelKeysTruncated: false,
+    requiredFields: { code: "wrong_type", msg: "missing", success: "wrong_type", data: "missing" }
+  });
+  const forgedExtraField = { ...error.responseDiagnostics, providerBody: "must not escape" };
+  assert.deepEqual(sanitizeProviderResponseDiagnostics(forgedExtraField), error.responseDiagnostics, "MCP diagnostics must be projected onto an explicit allowlist");
+  assert.equal(sanitizeProviderResponseDiagnostics({ ...error.responseDiagnostics, contentType: "application/json; secret=marker" }), undefined, "MIME parameters must not pass through the diagnostic sanitizer");
+  assert.doesNotMatch(JSON.stringify(outcome), /not-a-number|not-a-boolean|must not escape|secretValue|charset=utf-8/i, "provider body values and Content-Type parameters must stay out of diagnostics");
+  return true;
+});
+assert.equal(pathCalls.get("/build/wrong-envelope"), 1, "a wrong-type provider envelope must not be retried");
+assert.deepEqual(observations[beforeWrongEnvelopeObservations]?.responseDiagnostics?.requiredFields, { code: "wrong_type", msg: "missing", success: "wrong_type", data: "missing" });
+const manyKeys = Object.fromEntries(Array.from({ length: 24 }, (_, index) => [`field${String(index).padStart(2, "0")}`, "synthetic"]));
+const boundedKeys = diagnoseResponseEnvelope(200, "application/json", manyKeys);
+assert.equal(boundedKeys.topLevelKeys.length, 20, "provider keys must be bounded");
+assert.equal(boundedKeys.topLevelKeysTruncated, true, "truncation must be explicit");
 
 const timeoutObservations: RequestObservation[] = [];
 const timeoutClient = new BinanceWeb3Client({ apiKey: "test", apiSecret: "test", baseUrl, maxRetries: 1, maxRetryDelayMs: 0, retryBaseDelayMs: 0, timeoutMs: 20, onRequest: (item) => timeoutObservations.push(item) });

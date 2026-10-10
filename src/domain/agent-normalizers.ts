@@ -1,6 +1,6 @@
 import type { AssetComparison, AssetComparisonRow, AgentTokenizedAsset, AssetMetadata, AssetPreference, DataQuality, Issuer, MarketContextFailureCategory } from "./agent-types.js";
 import type { MarketContext, StockAsset } from "./types.js";
-import { normalizeProviderTimestamp, positiveDecimal } from "./normalizers.js";
+import { hasMarketStateConflict, normalizeProviderTimestamp, positiveDecimal } from "./normalizers.js";
 
 const knownIssuers: Record<string, string> = {
   ondo: "Ondo",
@@ -58,7 +58,13 @@ export function dataQualityFor(
   const warnings = [...(market?.dataWarnings ?? [])];
   if (market && market.tokenPrice != null && !positiveDecimal(market.tokenPrice)) warnings.push("Token price is invalid or non-positive");
   if (market && market.referencePrice != null && !positiveDecimal(market.referencePrice)) warnings.push("Reference price is invalid or non-positive");
-  if (market?.marketStatus === "unknown") warnings.push("Market status is unknown");
+  if (market?.marketStatus === "unknown") {
+    warnings.push("Market status is unknown");
+    if (market.openState === true) warnings.push("Provider reports the underlying market is currently tradable");
+  }
+  if (market && hasMarketStateConflict(market.marketStatus, market.openState)) {
+    warnings.push("Provider marketStatus and openState conflict; the market is treated as not open");
+  }
   if (market?.tokenPrice && normalizeProviderTimestamp(market.tokenPriceUpdatedAt) === undefined) warnings.push("Per-asset price update time is unavailable");
   if (!market) warnings.push(marketContextRequested
     ? "Market context was requested but is unavailable"

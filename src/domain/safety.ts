@@ -8,9 +8,6 @@ export function evaluateSafety(input: {
   simulation?: SimulationResult;
   allowance?: bigint;
   requiredAllowance?: bigint;
-  availableBalance?: bigint;
-  requiredBalance?: bigint;
-  balanceError?: string;
 }): SafetyReport {
   const checks = [] as SafetyReport["checks"];
   const asset = input.plan.intent.toAsset;
@@ -39,30 +36,29 @@ export function evaluateSafety(input: {
     const marketStateConflict = hasMarketStateConflict(input.market.marketStatus, input.market.openState);
     const marketClosed = input.market.marketStatus === "closed" || input.market.openState === false;
     const marketUnknown = input.market.marketStatus === "unknown";
+    const unknownWithoutTradabilitySignal = marketUnknown && input.market.openState !== true;
+    const marketStatusBlocked = marketClosed || marketStateConflict || unknownWithoutTradabilitySignal;
     checks.push({
       name: "market_status",
-      passed: !marketClosed && !marketUnknown && !marketStateConflict,
-      severity: marketClosed || marketUnknown || marketStateConflict ? "blocking" : "warning",
+      passed: !marketStatusBlocked,
+      severity: marketStatusBlocked ? "blocking" : "warning",
       message: marketStateConflict
         ? "Provider marketStatus and openState conflict; executable plans are blocked"
         : marketClosed
         ? "Market is closed or halted; executable plans are blocked"
-        : marketUnknown ? "Market status is unknown; executable plans are blocked" : `Market status: ${input.market.marketStatus}`
+        : unknownWithoutTradabilitySignal
+          ? "Market status category is unknown and the provider did not confirm current tradability; executable plans are blocked"
+          : marketUnknown
+            ? "Market status category is unknown; provider reports the underlying market is currently tradable"
+            : `Market status: ${input.market.marketStatus}`
     });
   }
   if (input.quote) {
-    const balanceKnown = input.availableBalance !== undefined && input.requiredBalance !== undefined;
     checks.push({
       name: "input_balance",
-      passed: balanceKnown && input.availableBalance! >= input.requiredBalance!,
-      severity: "blocking",
-      message: input.balanceError
-        ? `Unable to read input-token balance: ${input.balanceError}`
-        : !balanceKnown
-          ? "Input-token balance is unavailable"
-          : input.availableBalance! < input.requiredBalance!
-            ? `Insufficient input-token balance: ${input.availableBalance} < ${input.requiredBalance} base units`
-            : "Input-token balance is sufficient"
+      passed: true,
+      severity: "info",
+      message: "Ariadne does not pre-check wallet funds; the wallet decides whether it can submit the transaction"
     });
     checks.push({
       name: "quote_available",
@@ -82,17 +78,19 @@ export function evaluateSafety(input: {
         severity: "blocking",
         message: !validImpact ? "Quote price impact is missing, malformed or has an unverified unit" : `Quote price impact: ${impact}%`
       });
+      const hasSpender = typeof route.approvalTarget === "string" && /^0x[0-9a-fA-F]{40}$/.test(route.approvalTarget);
+      const hasAllowanceRead = input.allowance !== undefined;
       checks.push({
         name: "authorization_visibility",
-        passed: Boolean(route.approvalTarget && input.allowance !== undefined && input.requiredAllowance !== undefined && input.allowance >= input.requiredAllowance),
-        severity: "blocking",
-        message: !route.approvalTarget
+        passed: hasSpender,
+        severity: hasSpender ? "info" : "blocking",
+        message: !hasSpender
           ? "Quote omitted an ERC-20 spender; authorization cannot be verified"
-          : input.allowance === undefined
-            ? `Unable to read ERC-20 allowance, spender=${route.approvalTarget}`
-            : input.allowance >= (input.requiredAllowance ?? 0n)
-              ? `ERC-20 allowance is sufficient, spender=${route.approvalTarget}`
-              : `ERC-20 allowance is insufficient, spender=${route.approvalTarget}`
+          : !hasAllowanceRead
+            ? `Verified spender=${route.approvalTarget}; current allowance was not used to block plan preparation`
+            : input.allowance! >= (input.requiredAllowance ?? 0n)
+              ? `Verified spender=${route.approvalTarget}; current allowance is sufficient`
+              : `Verified spender=${route.approvalTarget}; a separate exact allowance step is required before the swap`
       });
     }
   }
@@ -100,8 +98,12 @@ export function evaluateSafety(input: {
     checks.push({
       name: "simulation",
       passed: input.simulation.success,
-      severity: "blocking",
-      message: input.simulation.success ? "Transaction simulation succeeded" : "Transaction simulation failed"
+      severity: input.simulation.success || input.simulation.walletFundsOnlyFailure ? "warning" : "blocking",
+      message: input.simulation.success
+        ? "Transaction simulation succeeded"
+        : input.simulation.walletFundsOnlyFailure
+          ? "Provider simulation could not confirm wallet funds or fee sufficiency; the wallet will decide whether it can submit"
+          : "Transaction simulation failed for a reason other than wallet funds"
     });
   }
   return {

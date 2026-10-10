@@ -13,8 +13,8 @@ const issuerMetadata = {
 } as const;
 
 const demoAssets: StockAsset[] = [
-  { assetId: "56:0xa9ee28c80f960b889dfbd1902055218cba016f75", chainId: "56", platformId: "ondo", contractAddress: "0xa9ee28c80f960b889dfbd1902055218cba016f75", tokenSymbol: "NVDAon", tokenName: "NVIDIA (Ondo)", tokenLogoUrl: "https://onchainos.bnbstatic.com/images/web3-data/public/token/logos/4357ecbcd49d4dea9bca1072cb0da0f6.png", issuerLogoUrl: issuerMetadata.ondo.logoUrl, issuerWebsite: issuerMetadata.ondo.website, underlyingTicker: "NVDA", underlyingName: "NVIDIA Corporation" },
-  { assetId: "56:0x02fca66c1d1afb4e2a7884261eb00f63598a7436", chainId: "56", platformId: "bstock", contractAddress: "0x02fca66c1d1afb4e2a7884261eb00f63598a7436", tokenSymbol: "NVDAB", tokenName: "NVIDIA (bStocks)", tokenLogoUrl: "https://onchainos.bnbstatic.com/images/web3-data/public/token/logos/9dc00cf6f4c44054b6be2d2e032b76c0.png", issuerLogoUrl: issuerMetadata.bstock.logoUrl, issuerWebsite: issuerMetadata.bstock.website, underlyingTicker: "NVDA", underlyingName: "NVIDIA Corporation" }
+  { assetId: "56:0xa9ee28c80f960b889dfbd1902055218cba016f75", chainId: "56", platformId: "ondo", contractAddress: "0xa9ee28c80f960b889dfbd1902055218cba016f75", tokenSymbol: "NVDAon", tokenName: "NVIDIA (Ondo)", tokenLogoUrl: "https://onchainos.bnbstatic.com/images/web3-data/public/token/logos/4357ecbcd49d4dea9bca1072cb0da0f6.png", issuerLogoUrl: issuerMetadata.ondo.logoUrl, issuerWebsite: issuerMetadata.ondo.website, underlyingTicker: "NVDA", underlyingName: "NVIDIA Corporation", assetType: 1 },
+  { assetId: "56:0x02fca66c1d1afb4e2a7884261eb00f63598a7436", chainId: "56", platformId: "bstock", contractAddress: "0x02fca66c1d1afb4e2a7884261eb00f63598a7436", tokenSymbol: "NVDAB", tokenName: "NVIDIA (bStocks)", tokenLogoUrl: "https://onchainos.bnbstatic.com/images/web3-data/public/token/logos/9dc00cf6f4c44054b6be2d2e032b76c0.png", issuerLogoUrl: issuerMetadata.bstock.logoUrl, issuerWebsite: issuerMetadata.bstock.website, underlyingTicker: "NVDA", underlyingName: "NVIDIA Corporation", assetType: 1 }
 ];
 export const DEMO_DATA_WARNING = "Demo Mode data is synthetic, deterministic, and not live market data";
 export const DEMO_CATALOG_SCOPE_WARNING = "Demo Mode uses a limited synthetic sample and is not a complete live asset catalog";
@@ -44,7 +44,8 @@ function catalogAssets(): StockAsset[] {
     issuerLogoUrl: issuerMetadata[platformId].logoUrl,
     issuerWebsite: issuerMetadata[platformId].website,
     underlyingTicker: ticker,
-    underlyingName: name
+    underlyingName: name,
+    assetType: 1
   }));
 }
 

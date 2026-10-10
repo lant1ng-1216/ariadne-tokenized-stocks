@@ -58,9 +58,11 @@ export type MarketContext = {
   priceGap?: string;
   priceGapPercent?: string;
   tokenPriceUpdatedAt?: number;
+  /** Normalized provider market-status category; unknown remains unknown even when openState is true. */
   marketStatus: MarketStatus;
-  /** Exact provider enum, kept separate from the conservative normalized marketStatus used by safety logic. */
+  /** Exact provider market-status category, when supplied. */
   providerMarketStatus?: string;
+  /** Provider's independent assertion that the underlying market is currently tradable. */
   openState?: boolean;
   nextOpenTime?: number;
   reasonCode?: string | number;
@@ -98,6 +100,16 @@ export type TradeIntent = {
   maxGasCostBnb?: string;
 };
 
+export type VerifiedTokenIdentity = {
+  chainId: string;
+  contractAddress: string;
+  symbol: string;
+  name?: string;
+  decimals: number;
+  verifiedAt: number;
+  verificationSource: "bsc-eth-call";
+};
+
 export type QuoteRoute = {
   quoteId: string;
   executionMode?: "SWAP" | "RFQ" | string;
@@ -108,6 +120,9 @@ export type QuoteRoute = {
   priceImpactUnit?: "percent" | "unknown";
   dexName?: string;
   approvalTarget?: string | null;
+  providerRouteFeeUsd?: string;
+  estimatedGasFeeBaseUnits?: string;
+  estimatedGas?: string;
   expiresAt?: number;
 };
 
@@ -146,6 +161,8 @@ export type BalanceChange = {
 
 export type SimulationResult = {
   success: boolean;
+  /** The provider explicitly reports only an insufficient wallet-balance condition; the wallet makes the final sufficiency decision. */
+  walletFundsOnlyFailure?: boolean;
   status?: string;
   balanceChanges: BalanceChange[];
   allowanceChanges: unknown[];
@@ -156,6 +173,7 @@ export type SimulationResult = {
 export type ActionPlanStatus =
   | "draft"
   | "simulated"
+  | "wallet_review"
   | "awaiting_confirmation"
   | "confirmed"
   | "executed"
@@ -181,13 +199,68 @@ export type ActionPlan = {
   assetContext?: MarketContext;
   quoteId?: string;
   expectedOutput?: string;
+  minimumOutput?: string;
+  executionMode?: string;
+  verifiedTokens?: { input: VerifiedTokenIdentity; output: VerifiedTokenIdentity };
+  estimatedFees?: {
+    providerRouteFeeUsd?: string;
+    providerGasFeeBaseUnits?: string;
+    networkGasLimit?: string;
+    highGasPriceWei?: string;
+    estimatedMaxGasCostBnb?: string;
+    nativeGasBudgetBnb?: string;
+    gasBudgetSource?: "user_provided" | "provider_high_tier_estimate";
+    feeEstimateStatus?: "deferred_until_allowance";
+  };
   unsignedActions?: unknown[];
   simulation?: unknown;
   safetyReport?: SafetyReport;
   /** Read-only evidence for a separate approval step; never an approval or swap authorization. */
   approvalRequired?: { tokenAddress: string; spender: string; requiredAmount: string; currentAllowance: string };
   /** Quote-declared ERC-20 spender and allowance reviewed during preparation; re-read before broadcast. */
-  authorizationCheck?: { required: true; tokenAddress: string; spender: string; requiredAmount: string; reviewedAllowance: string };
+  authorizationCheck?: {
+    required: true;
+    tokenAddress: string;
+    spender: string;
+    requiredAmount: string;
+    reviewedAllowance?: string;
+    allowanceReadStatus?: "verified" | "unavailable";
+  };
+  preparationDiagnostics?: Array<{
+    stage: "asset_discovery" | "input_token_verification" | "stock_token_verification" | "market_context" | "price_quote" | "allowance_check" | "swap_build" | "transaction_validation" | "gas_estimate";
+    status: "unavailable" | "failed";
+    retryable: boolean;
+    attempts: number;
+    message: string;
+  }>;
   expiresAt?: number;
   requiresUserConfirmation: boolean;
+};
+
+export type AllowanceApprovalPlan = {
+  approvalPlanId: string;
+  status: "ready_for_wallet_review" | "not_required" | "blocked";
+  walletAddress: string;
+  inputToken: VerifiedTokenIdentity;
+  outputToken: VerifiedTokenIdentity;
+  marketReview: {
+    status: MarketStatus;
+    providerOpenState?: boolean;
+    warnings: string[];
+  };
+  spender: string;
+  amountBaseUnits: string;
+  amountDisplay: string;
+  unsignedTransaction?: { from: string; to: string; value: string; data: string; gas?: string; gasPrice?: string };
+  simulation?: SimulationResult;
+  quoteId: string;
+  expiresAt: number;
+  maxGasCostBnb: string;
+  estimatedMaxGasCostBnb: string;
+  nativeBalanceBnb?: string;
+  gasBudgetSource?: "user_provided" | "provider_high_tier_estimate";
+  purchase: { amount: string; maxSlippageBps: number; maxGasCostBnb?: string; asset: StockAsset };
+  /** Exact user-confirmed purchase plan this allowance is intended to continue after finality. */
+  confirmedPurchasePlan?: ActionPlan;
+  requiresUserConfirmation: true;
 };

@@ -58,7 +58,7 @@ try {
   assert.equal(capturedForm?.mode, "form");
   assert.match(capturedForm?.message ?? "", /TESTB/);
   assert.match(capturedForm?.message ?? "", /does not sign, submit, or broadcast/i);
-  assert.equal(response.confirmationStatus, "declined");
+  assert.equal(response.confirmationStatus, "not_confirmed");
   assert.equal(response.plan?.status, "simulated");
   assert.equal(response.outcome?.sideEffects, "none");
 

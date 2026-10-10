@@ -20,7 +20,7 @@
 
 ## 交易与资金安全
 
-- 离线 `TESTB` 流程和本地合成服务验证模拟及拒绝路径；未验证真实资金广播成功、RFQ 结算、链上确认或交易后余额对账。
+- 离线 `TESTB` 流程和本地合成服务验证模拟及拒绝路径。2026-10-09 另有一笔 owner 授权的 bStocks NVDAB 真实资金购买，BSC 主交易成功且 MetaMask 显示到账资产；这不验证 Ondo/RFQ、其他股票、其他钱包/宿主或长期可靠性。购买计划后的 Agent 后台登记、链上核验与去重终局消息已实现，但该新版路径尚未经过下一笔 owner 真实交易验证。
 - 当前受保护的 `GuardedEvmExecutionService` 面向单个标准 BSC EVM 操作及有可验证 spender 的 ERC-20 输入路径。原生输入、RFQ 和多操作计划不由该 helper 覆盖。
 - SDK 的通用 `ExecutionService` 和原始交易广播 API 是集成方控制的低层接口，不自动继承标准 Guarded 流程的全部校验。
 - Ariadne 不持有私钥或代替用户签名；钱包签名和链上广播需要独立的用户授权。

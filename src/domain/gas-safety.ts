@@ -8,7 +8,6 @@ export type SignedTransactionFee = {
   maxFeePerGasWei: bigint;
   maxGasCostWei: bigint;
   nativeValueWei: bigint;
-  totalNativeCostWei: bigint;
   reviewedGasBudgetWei: bigint;
 };
 
@@ -38,11 +37,5 @@ export function assessSignedTransactionFee(plan: ActionPlan, signedTransaction: 
   const maxGasCostWei = gasLimit * maxFeePerGasWei;
   if (maxGasCostWei > reviewedGasBudgetWei) throw new Error(`Signed transaction maximum gas cost exceeds confirmed plan budget: ${maxGasCostWei} > ${reviewedGasBudgetWei} wei`);
   const nativeValueWei = signed.value ?? 0n;
-  return { gasLimit, maxFeePerGasWei, maxGasCostWei, nativeValueWei, totalNativeCostWei: maxGasCostWei + nativeValueWei, reviewedGasBudgetWei };
-}
-
-export function assertNativeBalanceCoversFee(nativeBalanceWei: bigint, fee: SignedTransactionFee): void {
-  if (nativeBalanceWei < fee.totalNativeCostWei) {
-    throw new Error(`BNB balance is insufficient for transaction value and maximum gas cost: ${nativeBalanceWei} < ${fee.totalNativeCostWei} wei`);
-  }
+  return { gasLimit, maxFeePerGasWei, maxGasCostWei, nativeValueWei, reviewedGasBudgetWei };
 }

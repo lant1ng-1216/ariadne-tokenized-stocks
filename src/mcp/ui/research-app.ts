@@ -14,9 +14,48 @@ const root = document.querySelector<HTMLElement>("#app") ?? (() => {
 
 let currentPayload: unknown;
 
+function selectChainTab(tab: HTMLButtonElement, focus = false) {
+  const group = tab.closest<HTMLElement>("[data-issuer-group]");
+  if (!group) return;
+  const selectedPanelId = tab.getAttribute("aria-controls");
+  for (const candidate of group.querySelectorAll<HTMLButtonElement>("[role=tab]")) {
+    const selected = candidate === tab;
+    candidate.setAttribute("aria-selected", String(selected));
+    candidate.setAttribute("tabindex", selected ? "0" : "-1");
+  }
+  for (const panel of group.querySelectorAll<HTMLElement>("[role=tabpanel]")) {
+    panel.hidden = panel.id !== selectedPanelId;
+  }
+  if (focus) tab.focus();
+}
+
+root.addEventListener("click", (event) => {
+  if (!(event.target instanceof Element)) return;
+  const tab = event.target.closest<HTMLButtonElement>("button[data-chain-tab]");
+  if (tab) selectChainTab(tab);
+});
+
+root.addEventListener("keydown", (event) => {
+  if (!(event.target instanceof Element)) return;
+  const tab = event.target.closest<HTMLButtonElement>("button[data-chain-tab]");
+  if (!tab) return;
+  const group = tab.closest<HTMLElement>("[data-issuer-group]");
+  const tabs = group ? [...group.querySelectorAll<HTMLButtonElement>("[role=tab]")] : [];
+  const index = tabs.indexOf(tab);
+  if (index < 0 || tabs.length < 2) return;
+  let nextIndex: number | undefined;
+  if (event.key === "ArrowRight") nextIndex = (index + 1) % tabs.length;
+  else if (event.key === "ArrowLeft") nextIndex = (index - 1 + tabs.length) % tabs.length;
+  else if (event.key === "Home") nextIndex = 0;
+  else if (event.key === "End") nextIndex = tabs.length - 1;
+  if (nextIndex === undefined) return;
+  event.preventDefault();
+  selectChainTab(tabs[nextIndex]!, true);
+});
+
 function showFallback(message: string) {
   root.innerHTML = `<main class="research-shell">
-    <header class="result-heading"><div class="brandline"><span class="brand-thread" aria-hidden="true"></span><span class="brand-name">Ariadne</span><span class="brand-divider">·</span><span class="brand-context">Research</span></div></header>
+    <header class="result-heading"><div class="brandline"><span class="brand-thread" aria-hidden="true"></span><span class="brand-name">Ariadne</span><span class="brand-divider">·</span><span class="brand-context">Research · Binance Web3 · BSC</span></div></header>
     <section class="empty-state"><h1>Research data is available in the conversation.</h1><p>${message}</p><p>This Agent host may not render the MCP App. The text result remains available in the conversation.</p></section>
   </main>`;
 }
@@ -49,7 +88,7 @@ function applyHostContext(context: HostContext) {
   }
 }
 
-const app = new App({ name: "Ariadne Research View", version: "0.2.0" }, {}, { autoResize: true });
+const app = new App({ name: "Ariadne Research View", version: "0.4.0" }, {}, { autoResize: true });
 app.onhostcontextchanged = (context) => applyHostContext(context);
 app.ontoolresult = (result) => {
   const structured = result.structuredContent;

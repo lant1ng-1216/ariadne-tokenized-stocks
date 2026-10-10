@@ -1,6 +1,7 @@
 import { createHmac, randomUUID } from "node:crypto";
 import { fetch, ProxyAgent } from "undici";
 import { BinanceWeb3Error } from "./errors.js";
+import { diagnoseInvalidJsonResponse, diagnoseResponseEnvelope, sanitizeProviderResponseDiagnostics, type ProviderResponseDiagnostics } from "./provider-response-diagnostics.js";
 
 export type BinanceWeb3Config = {
   apiKey: string;
@@ -24,6 +25,7 @@ export type RequestObservation = {
   success: boolean;
   attempt: number;
   rateLimitHeaders?: Record<string, string>;
+  responseDiagnostics?: ProviderResponseDiagnostics;
 };
 
 export type BinanceResponse<T> = {
@@ -93,7 +95,7 @@ export class BinanceWeb3Client {
         return result.payload;
       } catch (error) {
         const retryable = error instanceof BinanceWeb3Error ? error.retryable : true;
-        this.config.onRequest?.({ method, path: requestPath, durationMs: Date.now() - startedAt, status: error instanceof BinanceWeb3Error ? error.status : undefined, code: error instanceof BinanceWeb3Error ? error.code : undefined, success: false, attempt, rateLimitHeaders: error instanceof BinanceWeb3Error && error.details && typeof error.details === "object" && "rateLimitHeaders" in error.details ? (error.details as any).rateLimitHeaders : undefined });
+        this.config.onRequest?.({ method, path: requestPath, durationMs: Date.now() - startedAt, status: error instanceof BinanceWeb3Error ? error.status : undefined, code: error instanceof BinanceWeb3Error ? error.code : undefined, success: false, attempt, rateLimitHeaders: error instanceof BinanceWeb3Error && error.details && typeof error.details === "object" && "rateLimitHeaders" in error.details ? (error.details as any).rateLimitHeaders : undefined, responseDiagnostics: error instanceof BinanceWeb3Error ? sanitizeProviderResponseDiagnostics(error.responseDiagnostics) : undefined });
         if (!retryable || attempt >= maxRetries) throw error;
         const retryAfterHeader = error instanceof BinanceWeb3Error && error.details && typeof error.details === "object" && "rateLimitHeaders" in error.details
           ? (error.details as { rateLimitHeaders?: Record<string, string> }).rateLimitHeaders?.["retry-after"] ??
@@ -150,10 +152,10 @@ export class BinanceWeb3Client {
     try {
       rawPayload = await response.json();
     } catch {
-      throw new BinanceWeb3Error("Binance Web3 API returned invalid JSON", response.status, "INVALID_JSON", false);
+      throw new BinanceWeb3Error("Binance Web3 API returned invalid JSON", response.status, "INVALID_JSON", false, undefined, diagnoseInvalidJsonResponse(response.status, response.headers.get("content-type")));
     }
     if (!isBinanceResponse(rawPayload)) {
-      throw new BinanceWeb3Error("Binance Web3 API returned an invalid response envelope", response.status, "INVALID_RESPONSE", false);
+      throw new BinanceWeb3Error("Binance Web3 API returned an invalid response envelope", response.status, "INVALID_RESPONSE", false, undefined, diagnoseResponseEnvelope(response.status, response.headers.get("content-type"), rawPayload));
     }
     const payload = rawPayload as BinanceResponse<T>;
     const rateLimitHeaders: Record<string, string> = {};

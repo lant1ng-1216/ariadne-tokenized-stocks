@@ -29,6 +29,10 @@ assert.ok(names.includes("discover_tokenized_assets"));
 assert.ok(names.includes("compare_asset_representations"));
 assert.ok(names.includes("research_tokenized_stock"));
 assert.ok(names.includes("prepare_action_from_intent"));
+assert.ok(names.includes("prepare_bsc_stock_purchase"));
+assert.ok(names.includes("prepare_bsc_stock_allowance_approval"));
+assert.ok(names.includes("refresh_bsc_stock_purchase_after_approval"));
+assert.ok(names.includes("reconcile_stock_purchase"));
 assert.ok(names.includes("screen_assets_by_preferences"));
 assert.ok(names.includes("analyze_portfolio_exposure"));
 
@@ -78,7 +82,10 @@ assert.match(highLevelComparisonPayload.presentation, /Contract: `0x/);
 const researchBrief = await client.callTool({ name: "research_tokenized_stock", arguments: { query: "NVDA", chainId: "56", preference: { requireMarketPrice: true } } });
 const researchBriefText = (researchBrief.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
 assert.ok(researchBriefText);
-const researchBriefPayload = JSON.parse(researchBriefText!);
+assert.ok(researchBrief.structuredContent, "the MCP App and structured consumers retain the full research report");
+assert.match(researchBriefText!, /^Market read:/, "conversation text is a short market interpretation");
+assert.doesNotMatch(researchBriefText!, /Cross-issuer comparison|\| Rank \| Issuer \|/, "conversation text does not repeat the full panel report");
+const researchBriefPayload = researchBrief.structuredContent as Record<string, any>;
 assert.equal(researchBriefPayload.assets.length, 2);
 assert.equal(researchBriefPayload.comparison.rows.length, 2);
 assert.match(researchBriefPayload.decisionBoundary, /does not make an investment decision/);
@@ -90,13 +97,23 @@ assert.match(researchBriefPayload.presentation, /Execution boundary/);
 assert.match(researchBriefPayload.presentation, /What Ariadne can do next/);
 assert.match(researchBriefPayload.presentation, /Product timing/);
 assert.doesNotMatch(researchBriefPayload.presentation, /\| Rank \| Issuer \|/);
-assert.equal(researchBriefPayload.timing.agentReasoningExcluded, true);
-assert.equal(researchBriefPayload.timing.marketContextAssets, 2);
-assert.deepEqual(researchBriefPayload.timing.searchResolution.calls, { directSearch: 1, catalogRead: 0, resolvedSearch: 0 }, "a direct ticker lookup must not read the full catalog");
-assert.equal(researchBriefPayload.timing.marketContextBatchCalls, 1);
-assert.ok(Object.values(researchBriefPayload.timing.searchResolution.durationsMs).every((value: unknown) => typeof value === "number" && Number.isFinite(value) && value >= 0));
-assert.ok(Number.isFinite(researchBriefPayload.timing.totalMs));
-const ambiguousIntent = await client.callTool({ name: "prepare_action_from_intent", arguments: { query: "NVDA", type: "buy", walletAddress: "0x0000000000000000000000000000000000000000", fromTokenAddress: "0x55d398326f99059fF775485246999027B3197955", amount: "10", amountDecimals: 18, chainId: "56" } });
+const timing = researchBriefPayload.timing;
+assert.equal(timing.agentReasoningExcluded, true);
+assert.equal(timing.marketContextAssets, 2);
+assert.deepEqual(timing.searchResolution.calls, { directSearch: 1, catalogRead: 0, resolvedSearch: 0 }, "a direct ticker lookup must not read the full catalog");
+assert.equal(timing.marketContextBatchCalls, 1);
+const searchDurations = [
+  timing.searchResolution.directSearchMs,
+  timing.searchResolution.catalogReadMs,
+  timing.searchResolution.catalogMatchMs,
+  timing.searchResolution.resolvedSearchMs
+];
+assert.ok(searchDurations.every((value: unknown) => typeof value === "number" && Number.isFinite(value) && value >= 0), "each flat search-resolution duration must be finite and nonnegative");
+assert.ok(searchDurations.every((value: number) => value <= timing.searchMs + 0.1), "each search-resolution duration must fit within the enclosing search stage");
+const workflowDurations = [timing.searchMs, timing.marketContextMs, timing.comparisonMs, timing.presentationMs, timing.totalMs];
+assert.ok(workflowDurations.every((value: unknown) => typeof value === "number" && Number.isFinite(value) && value >= 0), "all workflow stage durations must be finite and nonnegative");
+assert.ok(timing.totalMs + 0.1 >= timing.searchMs + timing.marketContextMs + timing.comparisonMs + timing.presentationMs, "the total workflow duration must include each measured stage");
+const ambiguousIntent = await client.callTool({ name: "prepare_action_from_intent", arguments: { query: "NVDA", type: "buy", walletAddress: "0x0000000000000000000000000000000000000000", fromTokenAddress: "0x55d398326f99059fF775485246999027B3197955", amount: "10", amountDecimals: 18, maxSlippageBps: 50, chainId: "56" } });
 const ambiguousIntentText = (ambiguousIntent.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
 assert.ok(ambiguousIntentText);
 const ambiguousIntentPayload = JSON.parse(ambiguousIntentText!);
@@ -127,6 +144,7 @@ const planResult = await client.callTool({
     fromTokenAddress: "0x55d398326f99059fF775485246999027B3197955",
     amount: "10",
     amountDecimals: 18,
+    maxSlippageBps: 50,
     asset: bstock
   }
 });
@@ -137,6 +155,20 @@ assert.match(planText, /plan/);
 const parsedPlan = JSON.parse(planText) as { plan: any };
 assert.ok(JSON.parse(planText).outcome);
 assert.ok(["awaiting_confirmation", "failed"].includes(parsedPlan.plan.status));
+const planMarket = parsedPlan.plan.assetContext;
+const marketStatusCheck = parsedPlan.plan.safetyReport?.checks?.find((check: { name: string }) => check.name === "market_status");
+assert.ok(marketStatusCheck, "the Live action plan must include an explicit market-status safety check");
+const marketStatusConflict = (planMarket?.marketStatus === "open" && planMarket?.openState === false)
+  || (planMarket?.marketStatus === "closed" && planMarket?.openState === true);
+const expectedMarketStatusPass = !marketStatusConflict
+  && planMarket?.marketStatus !== "closed"
+  && planMarket?.openState !== false
+  && (planMarket?.marketStatus !== "unknown" || planMarket?.openState === true);
+assert.equal(marketStatusCheck.passed, expectedMarketStatusPass, "Live market-status safety must agree with the category/openState contract");
+if (planMarket?.marketStatus === "unknown" && planMarket?.openState === true) {
+  assert.equal(marketStatusCheck.severity, "warning");
+  assert.match(marketStatusCheck.message, /category is unknown.*reports the underlying market is currently tradable/i);
+}
 const simulationPlan = {
   planId: "real-simulation-plan",
   status: "awaiting_confirmation",
@@ -209,7 +241,7 @@ const executableShape = {
   status: "confirmed",
   requiresUserConfirmation: false,
   expiresAt: Date.now() + 60_000,
-  safetyReport: { passed: true, checks: ["asset_identity", "quote_available", "price_impact", "authorization_visibility", "input_balance", "simulation"].map((name) => ({ name, passed: true, severity: "blocking", message: "test fixture" })), blockingReasons: [] },
+  safetyReport: { passed: true, checks: ["asset_identity", "quote_available", "price_impact", "authorization_visibility", "input_balance", "simulation"].map((name) => ({ name, passed: true, severity: name === "input_balance" || name === "authorization_visibility" ? "info" : "blocking", message: "test fixture" })), blockingReasons: [] },
   simulation: { success: true, balanceChanges: [], allowanceChanges: [], warnings: [] },
   intent: { walletAddress: "0x0000000000000000000000000000000000000000", toAsset: { chainId: "56" } }
 };
@@ -221,5 +253,31 @@ const expiredBroadcast = await client.callTool({ name: "broadcast_confirmed_tran
 const expiredBroadcastText = (expiredBroadcast.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
 assert.ok(expiredBroadcastText && /not created in this MCP session/i.test(expiredBroadcastText));
 
-console.log(JSON.stringify({ toolCount: names.length, tools: names, resolveSucceeded: true, compareSucceeded: true, wrapperCount: comparisonPayload.count, planSucceeded: true, syntheticPlanRejected, syntheticPlanConfirmationRejected: true, unsafePlanMarkedFailed: true, unreadyPlanConfirmationRejected: true, simulationSucceeded: true, walletExposureSucceeded: true, walletHoldingCount: exposurePayload.holdings.length, broadcastOrderStatusSucceeded: true, unregisteredBroadcastRejected: true }, null, 2));
+console.log(JSON.stringify({
+  toolCount: names.length,
+  tools: names,
+  resolveSucceeded: true,
+  compareSucceeded: true,
+  wrapperCount: comparisonPayload.count,
+  planResponseReceived: true,
+  planStatus: parsedPlan.plan.status,
+  marketStatusCheck: {
+    category: planMarket?.marketStatus,
+    providerOpenState: planMarket?.openState,
+    passed: marketStatusCheck.passed,
+    severity: marketStatusCheck.severity,
+    message: marketStatusCheck.message
+  },
+  planBlockingReasons: parsedPlan.plan.safetyReport?.blockingReasons ?? [],
+  planAwaitingConfirmation: parsedPlan.plan.status === "awaiting_confirmation",
+  syntheticPlanRejected,
+  syntheticPlanConfirmationRejected: true,
+  unsafePlanMarkedFailed: true,
+  unreadyPlanConfirmationRejected: true,
+  zeroValueSimulationResponseReceived: true,
+  walletExposureSucceeded: true,
+  walletHoldingCount: exposurePayload.holdings.length,
+  broadcastOrderStatusSucceeded: true,
+  unregisteredBroadcastRejected: true
+}, null, 2));
 await transport.close();

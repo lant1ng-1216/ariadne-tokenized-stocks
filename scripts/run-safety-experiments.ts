@@ -38,7 +38,7 @@ async function run(id: string, label: string, operation: () => Promise<unknown>,
     if (chunk.length) await appendFile(output, chunk.map((record) => JSON.stringify(record)).join("\n") + "\n", "utf8");
   }
 }
-const bstockIntent = { type: "buy" as const, walletAddress: zero, fromTokenAddress: usdt, toAsset: bstock, amount: "10", amountDecimals: 18 };
+const bstockIntent = { type: "buy" as const, walletAddress: zero, fromTokenAddress: usdt, toAsset: bstock, amount: "10", amountDecimals: 18, maxSlippageBps: 50 };
 const ondoIntent = { ...bstockIntent, toAsset: ondo };
 await run("quote_standard", "bStocks NVDAB / zero address", () => stocks.quote(bstockIntent));
 await run("quote_rfq", "Ondo NVDAon / zero address", () => stocks.quote(ondoIntent));

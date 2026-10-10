@@ -5,11 +5,11 @@ import { localizeEvidenceMessage, type OutputLanguage } from "./language.js";
 const value = (input: string | number | boolean | undefined, fallback = "Not available") => input === undefined || input === "" ? fallback : String(input);
 const compactAddress = (input: string | undefined) => input && input.length > 14 ? `${input.slice(0, 8)}…${input.slice(-6)}` : value(input);
 const statusLabel = (asset: AgentTokenizedAsset, language: OutputLanguage) => {
-  if (asset.market && hasMarketStateConflict(asset.market.marketStatus, asset.market.openState)) return language === "zh-CN" ? "非开放（上游状态字段矛盾）" : "Not open (provider status fields conflict)";
+  if (asset.market && hasMarketStateConflict(asset.market.marketStatus, asset.market.openState)) return language === "zh-CN" ? "非开放" : "Not open";
   if (asset.market?.marketStatus === "closed") return language === "zh-CN" ? "已休市" : "Closed";
   if (asset.market?.marketStatus === "offhours") return language === "zh-CN" ? "非正常交易时段" : "Off-hours";
   if (asset.market?.marketStatus === "open") return language === "zh-CN" ? "开放" : "Open";
-  if (asset.market?.openState === true) return language === "zh-CN" ? "市场状态未知（上游报告开放标记，但未确认）" : "Market status unknown (provider open flag is unconfirmed)";
+  if (asset.market?.openState === true) return language === "zh-CN" ? "未知" : "Unknown";
   return language === "zh-CN" ? "未知" : "Unknown";
 };
 const assetTypeLabel = (assetType: number | undefined, language: OutputLanguage) => {
@@ -58,7 +58,7 @@ const coverageLabel = (asset: AgentTokenizedAsset, language: OutputLanguage) => 
   : `${asset.dataQuality.coverage.identity} identity · ${asset.dataQuality.coverage.marketContext.replaceAll("_", " ")} market context`;
 const unique = (values: string[]) => [...new Set(values)];
 
-export function researchNextSteps(assets: AgentTokenizedAsset[], comparison: AssetComparison, options: { allowQuoteFollowUp?: boolean; allowWalletExposureFollowUp?: boolean; language?: OutputLanguage } = {}): ResearchNextStep[] {
+export function researchNextSteps(assets: AgentTokenizedAsset[], comparison: AssetComparison, options: { allowWalletExposureFollowUp?: boolean; language?: OutputLanguage } = {}): ResearchNextStep[] {
   const language = options.language ?? "en";
   const eligible = comparison.rows.filter((row) => !row.excludedReasons.length);
   const hasGaps = assets.some((asset) => asset.dataQuality.coverage.marketContext !== "fetched" || asset.dataQuality.warnings.length > 0);
@@ -80,16 +80,7 @@ export function researchNextSteps(assets: AgentTokenizedAsset[], comparison: Ass
       sideEffects: "none"
     });
   }
-  if (options.allowQuoteFollowUp !== false && eligible.length && assets.some((asset) => asset.dataQuality.coverage.marketContext === "fetched")) {
-    steps.push({
-      id: "request_read_only_quote",
-      title: language === "zh-CN" ? "获取只读报价" : "Request a read-only quote",
-      description: language === "zh-CN" ? "仅针对明确选定的发行方版本请求报价；此步骤不会创建计划、签名或广播交易。" : "Ask for a fresh quote for the explicitly selected representation; no plan, signature or broadcast is created by this step.",
-      sideEffects: "none",
-      requiresExplicitSelection: true
-    });
-  }
-  if (options.allowWalletExposureFollowUp !== false) {
+  if (assets.length > 0 && options.allowWalletExposureFollowUp !== false) {
     steps.push({
       id: "read_wallet_exposure",
       title: language === "zh-CN" ? "查看钱包持仓" : "Read wallet exposure",
@@ -100,7 +91,7 @@ export function researchNextSteps(assets: AgentTokenizedAsset[], comparison: Ass
   return steps.slice(0, 4);
 }
 
-export function renderAssetCard(asset: AgentTokenizedAsset, options: { allowQuoteFollowUp?: boolean; includeWarnings?: boolean; language?: OutputLanguage } = {}): string {
+export function renderAssetCard(asset: AgentTokenizedAsset, options: { includeWarnings?: boolean; language?: OutputLanguage } = {}): string {
   const language = options.language ?? "en";
   const zh = language === "zh-CN";
   const market = asset.market;
@@ -133,11 +124,11 @@ export function renderAssetCard(asset: AgentTokenizedAsset, options: { allowQuot
     zh ? `- 链接：${links}` : `- Links: ${links}`,
     "",
     ...(options.includeWarnings === false ? [] : [zh ? "数据警告：" : "Warnings:", warnings, ""]),
-    zh ? `下一步：${options.allowQuoteFollowUp === false ? "查看证据和数据缺口。" : "比较该发行方版本；如需报价，请先明确选择。"} 副作用：**无**。` : `Next safe step: ${options.allowQuoteFollowUp === false ? "review the evidence and data gaps." : "compare this representation or request a quote after an explicit selection."} Side effects: **none**.`
+    zh ? "下一步：查看证据和数据缺口；如果决定继续交易，请明确要求创建购买计划。副作用：**无**。" : "Next safe step: review the evidence and data gaps; explicitly request a purchase plan only if you decide to continue. Side effects: **none**."
   ].join("\n");
 }
 
-export function renderComparisonTable(comparison: AssetComparison, options: { allowQuoteFollowUp?: boolean; includeAggregateWarnings?: boolean; language?: OutputLanguage } = {}): string {
+export function renderComparisonTable(comparison: AssetComparison, options: { includeAggregateWarnings?: boolean; language?: OutputLanguage } = {}): string {
   const language = options.language ?? "en";
   const zh = language === "zh-CN";
   const hasFilters = Object.keys(comparison.criteria).length > 0;
@@ -173,9 +164,7 @@ export function renderComparisonTable(comparison: AssetComparison, options: { al
     ...(options.includeAggregateWarnings === false ? [] : [comparison.warnings.length ? `${zh ? "数据警告：" : "Warnings:"}\n${comparison.warnings.map((warning) => `- ${localizeEvidenceMessage(warning, language)}`).join("\n")}` : (zh ? "数据警告：无" : "Warnings: none")]),
     "",
     zh ? "说明：筛选状态只表示发行方版本是否被所提供的筛选条件排除；比较仅包含上游本次返回的版本，目录完整性、分页和总数语义尚未验证。价差排序仅按观测到的绝对价差排序。筛选匹配或排序均不代表可交易性，也不构成交易建议。" : "Interpretation: filter status only describes whether supplied filters excluded a representation; this comparison contains the upstream-returned matches, not a verified complete catalog, and pagination/total-count semantics are unverified. Price-gap rank sorts by the observed absolute gap only. Neither indicates tradability or recommends a trade.",
-    options.allowQuoteFollowUp === false
-      ? zh ? "下一步：查看证据或数据缺口；未创建任何交易。" : "Next: review the evidence or data gaps. No transaction was created."
-      : zh ? "下一步：检查选定的发行方版本，或请求报价；未创建任何交易。" : "Next: inspect a chosen representation or request a quote. No transaction was created."
+    zh ? "下一步：查看证据或数据缺口；如果决定继续交易，请明确要求创建购买计划。本步骤未创建购买计划或交易。" : "Next: review the evidence or data gaps; explicitly request a purchase plan only if you decide to continue. No purchase plan or transaction was created."
   ].join("\n");
 }
 
@@ -184,7 +173,7 @@ export function renderResearchBrief(
   comparison: AssetComparison,
   timing?: ResearchTiming,
   nextSteps = researchNextSteps(assets, comparison),
-  options: { allowQuoteFollowUp?: boolean; language?: OutputLanguage } = {}
+  options: { language?: OutputLanguage } = {}
 ): string {
   const language = options.language ?? "en";
   const zh = language === "zh-CN";
@@ -192,12 +181,13 @@ export function renderResearchBrief(
   const limited = assets.filter((asset) => asset.dataQuality.completeness !== "complete").length;
   const warnings = new Set([...comparison.warnings, ...assets.flatMap((asset) => asset.dataQuality.warnings)]);
   const fetchedMarketContexts = assets.filter((asset) => asset.dataQuality.coverage.marketContext === "fetched").length;
+  const scopeLabel = assets.length > 0 && assets.every((asset) => asset.chainId === "56") ? " · Binance Web3 · BSC" : "";
   const actions = nextSteps.map((step, index) => [
     `${index + 1}. **${step.title}** — ${step.description}`,
     zh ? `   副作用：**无**${step.requiresExplicitSelection ? " · 必须明确选择发行方版本" : ""}` : `   Side effects: **${step.sideEffects}**${step.requiresExplicitSelection ? " · explicit representation selection required" : ""}`
   ].join("\n"));
   return [
-    `# Ariadne ${zh ? "研究简报" : "research brief"} · ${comparison.underlyingName || comparison.underlyingTicker}`,
+    `# Ariadne ${zh ? "研究简报" : "research brief"}${scopeLabel} · ${comparison.underlyingName || comparison.underlyingTicker}`,
     "",
     zh ? "> 面向 Agent 的证据摘要，不构成投资建议，也不会创建交易。" : "> Evidence-first view for an existing Agent. This is not investment advice and does not create a transaction.",
     "",
@@ -206,11 +196,11 @@ export function renderResearchBrief(
     zh ? `- 找到 **${assets.length}** 个发行方版本 · **${eligible.length}** 个符合给定条件 · **${warnings.size}** 条不同的数据警告` : `- **${assets.length}** issuer representations found · **${eligible.length}** match the supplied criteria · **${warnings.size}** distinct warnings`,
     zh ? `- 身份已确认：**${assets.filter((asset) => asset.dataQuality.coverage.identity === "confirmed").length}/${assets.length}** · 行情已获取：**${fetchedMarketContexts}/${assets.length}**` : `- Identity coverage: **${assets.filter((asset) => asset.dataQuality.coverage.identity === "confirmed").length}/${assets.length} confirmed** · market context: **${fetchedMarketContexts}/${assets.length} fetched**`,
     zh ? `- **${limited}** 个版本的数据不完整；缺失数据不按 0 处理，也不代表正面信号` : `- **${limited}** representation(s) have incomplete data; missing data is not treated as zero or as a positive signal`,
-    zh ? `- 建议的下一步：**${options.allowQuoteFollowUp === false ? eligible.length ? "查看证据和数据缺口" : "检查排除原因或放宽条件" : eligible.length ? "先查看具体发行方版本，再决定是否请求报价" : "检查排除原因或放宽条件"}**` : `- Preferred next step: **${options.allowQuoteFollowUp === false ? eligible.length ? "review the evidence and data gaps" : "inspect exclusions or relax the criteria" : eligible.length ? "review a specific representation before requesting a quote" : "inspect exclusions or relax the criteria"}**`,
+    zh ? `- 建议的下一步：**${eligible.length ? "查看证据和数据缺口；决定继续后再明确创建购买计划" : "检查排除原因或放宽条件"}**` : `- Preferred next step: **${eligible.length ? "review the evidence and data gaps; explicitly create a purchase plan only after deciding to continue" : "inspect exclusions or relax the criteria"}**`,
     "",
     zh ? "## 发行方比较" : "## Cross-issuer comparison",
     "",
-    renderComparisonTable(comparison, { allowQuoteFollowUp: options.allowQuoteFollowUp, includeAggregateWarnings: false, language }),
+    renderComparisonTable(comparison, { includeAggregateWarnings: false, language }),
     "",
     zh ? "## 版本详情" : "## Representation details",
     "",
@@ -218,7 +208,7 @@ export function renderResearchBrief(
     "",
     zh ? "## 操作边界" : "## Execution boundary",
     "",
-    zh ? "本研究仅为只读查询。未请求报价、签名或交易，也未修改钱包状态或广播交易。" : "Research is read-only. No quote, signature, transaction, wallet mutation or broadcast was performed.",
+    zh ? "本研究仅为只读查询。未创建购买计划，未请求签名或交易，也未修改钱包状态或广播交易。" : "Research is read-only. No purchase plan, signature, transaction, wallet mutation or broadcast was created or requested.",
     "",
     zh ? "## Ariadne 接下来可以做什么" : "## What Ariadne can do next",
     "",
@@ -231,4 +221,51 @@ export function renderResearchBrief(
       zh ? "- 该耗时仅覆盖 MCP 处理器及 SDK/API 路径，不包含 Agent 推理和最终回答的呈现时间。" : "- This measurement covers the MCP handler and SDK/API path only; Agent reasoning and final answer rendering are excluded."
     ] : [])
   ].join("\n");
+}
+
+/** A short conversational interpretation that complements the full MCP App report. */
+export function renderResearchInterpretation(
+  assets: AgentTokenizedAsset[],
+  comparison: AssetComparison,
+  language: OutputLanguage
+): string {
+  const zh = language === "zh-CN";
+  if (!assets.length) return zh
+    ? "市场解读：本次没有识别到具体股票，因此没有请求发行方行情。可以先浏览 BSC 链上股票目录，或明确一个股票代码或公司。"
+    : "Market read: no specific stock was identified, so issuer market data was not requested. Browse the BSC catalog first or name a ticker or company.";
+  const rows = comparison.rows;
+  const comparable = rows.filter((row) => {
+    const rawGap = row.asset.market?.priceGapPercent;
+    return typeof rawGap === "string" && rawGap.trim() !== "" && Number.isFinite(Number(rawGap.replace(/%$/, "")));
+  });
+  const unknownStatus = assets.filter((asset) => asset.market?.marketStatus !== "open" && asset.market?.marketStatus !== "closed" && asset.market?.marketStatus !== "offhours").length;
+  const missingContext = assets.filter((asset) => asset.dataQuality.coverage.marketContext !== "fetched").length;
+  const gaps = comparable.map((row) => ({
+    issuer: row.asset.issuer.name,
+    gap: Number(String(row.asset.market?.priceGapPercent ?? "").replace(/%$/, ""))
+  })).filter((entry) => Number.isFinite(entry.gap));
+  const smallest = [...gaps].sort((a, b) => Math.abs(a.gap) - Math.abs(b.gap))[0];
+  const largest = [...gaps].sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap))[0];
+
+  if (zh) {
+    const comparisonInsight = gaps.length >= 2 && smallest && largest && smallest.issuer !== largest.issuer
+      ? `按本次上游价差快照，${smallest.issuer} 的价差相对较小；这只是行情快照的差异，不等同于实际成交报价或总成本。`
+      : gaps.length >= 1
+        ? "当前有可比较的价差快照，但发行方之间没有形成足够的差异来支持明确排序。"
+        : "本次没有足够的价差数据进行有效比较。";
+    const dataCaveat = unknownStatus || missingContext
+      ? `${unknownStatus} 个发行方的市场状态未确认，${missingContext} 个发行方缺少完整行情上下文；具体缺口和来源时间见上方报告。`
+      : "市场状态和行情上下文均已返回；数据来源与时间仍以报告列出的上游记录为准。";
+    return `市场解读：本次 Binance Web3 在 BSC 返回 ${assets.length} 个发行方版本。${comparisonInsight}${dataCaveat}这里只解读当前证据，不构成投资建议。`;
+  }
+
+  const comparisonInsight = gaps.length >= 2 && smallest && largest && smallest.issuer !== largest.issuer
+    ? `In this provider snapshot, ${smallest.issuer} has the smaller reported price gap; this is a snapshot comparison, not an execution quote or total cost estimate.`
+    : gaps.length >= 1
+      ? "Comparable gap data is available, but the current results do not show a clear issuer separation."
+      : "There is not enough gap data for a meaningful comparison in this result.";
+  const dataCaveat = unknownStatus || missingContext
+    ? `${unknownStatus} issuer market status value(s) remain unconfirmed, and ${missingContext} issuer context(s) are incomplete; see the report for source times and missing fields.`
+    : "Market status and context were returned; use the upstream provenance and timestamps in the report when interpreting freshness.";
+  return `Market read: Binance Web3 returned ${assets.length} BSC issuer representation(s). ${comparisonInsight} ${dataCaveat} This summarizes the available evidence and is not investment advice.`;
 }

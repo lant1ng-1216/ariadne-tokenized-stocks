@@ -81,10 +81,11 @@ for (let iteration = 1; iteration <= 3; iteration += 1) {
   const researchMs = now() - researchStarted;
   const researchText = (research.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
   if (!researchText) throw new Error("MCP research returned no text payload");
-  const researchPayload = JSON.parse(researchText) as {
+  const researchPayload = research.structuredContent as {
     outcome?: { status?: string; sideEffects?: string };
     timing?: { searchMs?: number; marketContextMs?: number; comparisonMs?: number; presentationMs?: number; totalMs?: number; marketContextAssets?: number };
   };
+  if (!researchPayload) throw new Error("MCP research returned no structured metrics payload");
   researchRuns.push({ iteration, clientWallMs: researchMs, serverTiming: researchPayload.timing, status: researchPayload.outcome?.status, sideEffects: researchPayload.outcome?.sideEffects });
 }
 await transport.close();

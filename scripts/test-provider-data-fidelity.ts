@@ -100,8 +100,8 @@ for (const [assetType, englishLabel, chineseLabel] of [
   assert.equal(normalized.assetType, assetType, `domain normalization preserves asset type ${assetType}`);
   const typedAsset = { ...toAgentAsset(searchResults[0]!, listing.market), assetType };
   const typedComparison = compareAgentAssets([typedAsset]);
-  assert.ok(renderAssetCard(typedAsset, { language: "en", allowQuoteFollowUp: false }).includes(englishLabel));
-  assert.ok(renderAssetCard(typedAsset, { language: "zh-CN", allowQuoteFollowUp: false }).includes(chineseLabel));
+  assert.ok(renderAssetCard(typedAsset, { language: "en" }).includes(englishLabel));
+  assert.ok(renderAssetCard(typedAsset, { language: "zh-CN" }).includes(chineseLabel));
   const typedNativeView = renderResearchView({
     query: "Research TEST",
     resolvedQuery: "TEST",
@@ -135,7 +135,7 @@ assert.deepEqual(marketContextAgent.market, recoveredMarket, "all supported mark
 assert.equal(marketContextAgent.assetType, 2);
 assert.equal(marketContextAgent.market?.providerMarketStatus, "pause");
 assert.equal(marketContextAgent.market?.reasonMsg, token.statusInfo.reasonMsg);
-const marketContextCardEn = renderAssetCard(marketContextAgent, { language: "en", allowQuoteFollowUp: false });
+const marketContextCardEn = renderAssetCard(marketContextAgent, { language: "en" });
 assert.match(marketContextCardEn, /Provider status: pause/);
 assert.match(marketContextCardEn, /Reason code: ASSET\\_PAUSED/);
 assert.match(marketContextCardEn, /Provider note: Halted \\<for review\\> & fixture only/);
@@ -172,6 +172,13 @@ assert.ok(tokenProvenance?.fields.includes("nextCloseTime"));
 const unknownMarket = normalizeMarketContext(listing, { statusInfo: { marketStatus: "future-status" } });
 assert.equal(unknownMarket.marketStatus, "unknown");
 assert.equal(unknownMarket.providerMarketStatus, "future-status", "unrecognized status remains visible as raw source data");
+const unknownTradableMarket = normalizeMarketContext(listing, { statusInfo: { marketStatus: "future-status", openState: true } });
+assert.equal(unknownTradableMarket.marketStatus, "unknown", "an explicit open signal must not relabel an unrecognized category");
+assert.equal(unknownTradableMarket.openState, true);
+assert.ok(unknownTradableMarket.dataWarnings.includes("Provider reports the underlying market is currently tradable"));
+const unknownClosedMarket = normalizeMarketContext(listing, { statusInfo: { marketStatus: "future-status", openState: false } });
+assert.equal(unknownClosedMarket.marketStatus, "unknown");
+assert.equal(unknownClosedMarket.openState, false);
 assert.equal(normalizeMarketContext(listing, { statusInfo: { nextOpenTime: "1800000000000", nextCloseTime: Number.NaN } }).nextOpenTime, undefined);
 assert.equal(normalizeMarketContext(listing, { statusInfo: { nextCloseTime: 8_640_000_000_000_001 } }).nextCloseTime, undefined);
 for (const invalidTimestamp of [0, -1, 1.5, 8_640_000_000_000_001, Number.POSITIVE_INFINITY]) {
@@ -189,10 +196,10 @@ assert.equal(structuredContent.assets[0]?.assetType, 2);
 assert.equal(structuredContent.assets[0]?.market?.reasonCode, "ASSET_PAUSED");
 assert.equal(structuredContent.assets[0]?.market?.reasonMsg, token.statusInfo.reasonMsg);
 
-const safeNextSteps = researchNextSteps([agentAsset], comparison, { allowQuoteFollowUp: false, allowWalletExposureFollowUp: false });
-const briefEn = renderResearchBrief([agentAsset], comparison, undefined, safeNextSteps, { language: "en", allowQuoteFollowUp: false });
-const cardZh = renderAssetCard(agentAsset, { language: "zh-CN", allowQuoteFollowUp: false });
-const comparisonEn = renderComparisonTable(comparison, { language: "en", allowQuoteFollowUp: false });
+const safeNextSteps = researchNextSteps([agentAsset], comparison, { allowWalletExposureFollowUp: false });
+const briefEn = renderResearchBrief([agentAsset], comparison, undefined, safeNextSteps, { language: "en" });
+const cardZh = renderAssetCard(agentAsset, { language: "zh-CN" });
+const comparisonEn = renderComparisonTable(comparison, { language: "en" });
 assert.match(briefEn, /Asset type: \*\*Pre-IPO \(2\)\*\*/);
 assert.match(briefEn, /Provider status: pause/);
 assert.match(briefEn, /Reason code: ASSET\\_PAUSED/);
@@ -204,7 +211,7 @@ assert.match(cardZh, /上游状态：pause/);
 assert.match(cardZh, /原因代码：ASSET\\_PAUSED/);
 assert.match(comparisonEn, /Provider status: pause/);
 assert.match(comparisonEn, /Asset type: \*\*Pre-IPO \(2\)\*\*/);
-const markdownAttack = renderAssetCard({ ...agentAsset, market: { ...agentAsset.market!, reasonMsg: "Paused\n\n# forged section\n- forged instruction" } }, { language: "en", allowQuoteFollowUp: false });
+const markdownAttack = renderAssetCard({ ...agentAsset, market: { ...agentAsset.market!, reasonMsg: "Paused\n\n# forged section\n- forged instruction" } }, { language: "en" });
 assert.ok(!markdownAttack.includes("\n\n# forged section"), "provider notes cannot create Markdown sections");
 assert.ok(!markdownAttack.includes("\n- forged instruction"), "provider notes cannot inject Markdown list items");
 
@@ -232,11 +239,15 @@ const conflictNativeView = renderResearchView({
   outcome: { status: "warning", warnings: [], sideEffects: "none" }
 });
 assert.match(conflictNativeView, /Not open \(provider status fields conflict\)/, "native UI cannot imply an open market when openState is false");
-assert.match(renderAssetCard(conflictAgent, { language: "en", allowQuoteFollowUp: false }), /Not open \(provider status fields conflict\)/);
-assert.match(renderAssetCard(conflictAgent, { language: "zh-CN", allowQuoteFollowUp: false }), /非开放（上游状态字段矛盾）/);
+const conflictCardEn = renderAssetCard(conflictAgent, { language: "en" });
+const conflictCardZh = renderAssetCard(conflictAgent, { language: "zh-CN" });
+assert.match(conflictCardEn, /Status: \*\*Not open\*\*/);
+assert.match(conflictCardZh, /市场状态：\*\*非开放\*\*/);
+assert.match(conflictCardEn, /Provider marketStatus and openState conflict/);
+assert.match(conflictCardZh, /上游市场状态字段冲突，按非开放处理/);
 const invalidTimestampAsset = { ...agentAsset, market: { ...agentAsset.market!, tokenPriceUpdatedAt: Number.POSITIVE_INFINITY } };
-assert.doesNotThrow(() => renderAssetCard(invalidTimestampAsset, { language: "en", allowQuoteFollowUp: false }), "an invalid injected quote timestamp cannot crash Agent rendering");
-assert.match(renderAssetCard(invalidTimestampAsset, { language: "en", allowQuoteFollowUp: false }), /No valid source timestamp supplied/);
+assert.doesNotThrow(() => renderAssetCard(invalidTimestampAsset, { language: "en" }), "an invalid injected quote timestamp cannot crash Agent rendering");
+assert.match(renderAssetCard(invalidTimestampAsset, { language: "en" }), /No valid source timestamp supplied/);
 const invalidTimestampUiAsset = { ...agentAsset, market: { ...agentAsset.market!, tokenPriceUpdatedAt: 1.5, nextOpenTime: 1.5, nextCloseTime: 0 } };
 const invalidTimestampNativeView = renderResearchView({
   query: "Research TEST",
@@ -254,10 +265,20 @@ assert.equal(pauseSafety.passed, false, "the normalized provider pause remains a
 assert.ok(pauseSafety.blockingReasons.some((reason) => /closed or halted/.test(reason)));
 const unknownStatusSafety = evaluateSafety({ plan: actionPlan, market: unknownMarket });
 assert.equal(unknownStatusSafety.passed, false, "unknown market status must block an executable plan");
-assert.ok(unknownStatusSafety.blockingReasons.some((reason) => /market status is unknown/i.test(reason)));
+assert.ok(unknownStatusSafety.blockingReasons.some((reason) => /category is unknown and the provider did not confirm current tradability/i.test(reason)));
+const unknownTradableSafety = evaluateSafety({ plan: actionPlan, market: unknownTradableMarket });
+assert.equal(unknownTradableSafety.passed, true, "explicit provider openState=true confirms current tradability despite an unknown category");
+assert.equal(unknownTradableSafety.checks.find((check) => check.name === "market_status")?.severity, "warning");
+assert.match(unknownTradableSafety.checks.find((check) => check.name === "market_status")?.message ?? "", /category is unknown.*reports the underlying market is currently tradable/i);
+const unknownClosedSafety = evaluateSafety({ plan: actionPlan, market: unknownClosedMarket });
+assert.equal(unknownClosedSafety.passed, false, "openState=false blocks an unknown category");
+assert.ok(unknownClosedSafety.blockingReasons.some((reason) => /closed or halted/i.test(reason)));
 const conflictingOpenSafety = evaluateSafety({ plan: actionPlan, market: conflictMarket });
 assert.equal(conflictingOpenSafety.passed, false, "contradictory provider market fields fail closed");
 assert.ok(conflictingOpenSafety.blockingReasons.some((reason) => /marketstatus and openstate conflict/i.test(reason)));
+const conflictingClosedSafety = evaluateSafety({ plan: actionPlan, market: { ...unknownTradableMarket, marketStatus: "closed", openState: true } });
+assert.equal(conflictingClosedSafety.passed, false, "a closed market category conflicts with openState=true and must fail closed");
+assert.ok(conflictingClosedSafety.blockingReasons.some((reason) => /marketstatus and openstate conflict/i.test(reason)));
 
 console.log(JSON.stringify({
   searchAndDirectoryAssetTypeParity: true,
@@ -266,6 +287,7 @@ console.log(JSON.stringify({
   marketContextAssetTypeFallbackAndProvenanceParity: true,
   marketContextAllFieldsPreservedAcrossAgentAndNativeUi: true,
   contradictoryMarketFlagsFailClosedAndRenderConservatively: true,
+  unknownCategoryRequiresExplicitTradabilityAndRetainsWarning: true,
   completeMarketContextValuesAndDistinctSourceTimesVerified: true,
   quoteAndMarketTimestampsRequirePositiveSafeMilliseconds: true,
   nativeUiRejectsInvalidProviderTimes: true,
@@ -276,6 +298,7 @@ console.log(JSON.stringify({
   hostileMarkdownProviderTextIsolated: true,
   invalidProviderTimestampsWithheld: true,
   pauseStillBlocksSafety: true,
-  unknownStatusRemainsUnknownAndBlocksExecution: true,
+  unknownCategoryWithoutTradabilitySignalBlocks: true,
+  unknownCategoryWithTrueOpenStatePassesTradabilityWithWarning: true,
   passed: true
 }, null, 2));

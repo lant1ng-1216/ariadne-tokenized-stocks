@@ -62,16 +62,27 @@ import { BinanceWeb3Client, BinanceWeb3Error, TokenizedStocksService, compareAge
 const observedRequests = [];
 const server = createServer((request, response) => {
   observedRequests.push({ method: request.method, url: request.url, apiKey: request.headers["x-oc-apikey"], signature: request.headers["x-oc-sign"] });
-  const path = new URL(request.url, "http://127.0.0.1").pathname;
+  const requestUrl = new URL(request.url, "http://127.0.0.1");
+  const path = requestUrl.pathname;
   let data;
   if (path === "/api/v1/dex/market/rwa/search") {
-    data = [{ ticker: "NVDA", companyName: "NVIDIA", assets: [{ platformId: "ondo", binanceChainId: "56", tokenContractAddress: "0x1111111111111111111111111111111111111111", tokenSymbol: "NVDAon" }] }];
+    data = [{ ticker: "NVDA", companyName: "NVIDIA", assets: [
+      { platformId: "ondo", binanceChainId: "56", tokenContractAddress: "0x1111111111111111111111111111111111111111", tokenSymbol: "NVDAon" },
+      { platformId: "bstock", binanceChainId: "56", tokenContractAddress: "0x2222222222222222222222222222222222222222", tokenSymbol: "NVDAB" }
+    ] }];
   } else if (path === "/api/v1/dex/market/rwa/platforms") {
-    data = [{ platformId: "ondo", website: "https://example.invalid", logoUrl: "https://example.invalid/logo.svg", chainDistribution: [{ binanceChainId: "56", tokenCount: 1 }] }];
+    data = ["ondo", "bstock"].map((platformId) => ({ platformId, website: "https://example.invalid", logoUrl: "https://example.invalid/logo.svg", chainDistribution: [{ binanceChainId: "56", tokenCount: 1 }] }));
   } else if (path === "/api/v1/dex/market/rwa/tokens") {
-    data = [{ binanceChainId: "56", tokenContractAddress: "0x1111111111111111111111111111111111111111", platformId: "ondo", tokenSymbol: "NVDAon", underlyingTicker: "NVDA", underlyingName: "NVIDIA", statusInfo: { openState: true, marketStatus: "regular" }, volume24H: "1000" }];
+    data = [
+      { binanceChainId: "56", tokenContractAddress: "0x1111111111111111111111111111111111111111", platformId: "ondo", tokenSymbol: "NVDAon", underlyingTicker: "NVDA", underlyingName: "NVIDIA", statusInfo: { openState: true, marketStatus: "regular" }, volume24H: "1000" },
+      { binanceChainId: "56", tokenContractAddress: "0x2222222222222222222222222222222222222222", platformId: "bstock", tokenSymbol: "NVDAB", underlyingTicker: "NVDA", underlyingName: "NVIDIA", statusInfo: { openState: true, marketStatus: "regular" }, volume24H: "2000" }
+    ];
   } else if (path === "/api/v1/dex/market/rwa/price") {
-    data = [{ binanceChainId: "56", tokenContractAddress: "0x1111111111111111111111111111111111111111", platformId: "ondo", tokenPrice: "120.00", referencePrice: "121.00", tokenPriceUpdatedAt: 1790928000000 }];
+    const requestedAddresses = new Set((requestUrl.searchParams.get("tokenContractAddresses") ?? "").split(","));
+    data = [
+      { binanceChainId: "56", tokenContractAddress: "0x1111111111111111111111111111111111111111", platformId: "ondo", tokenPrice: "120.00", referencePrice: "121.00", tokenPriceUpdatedAt: 1790928000000 },
+      { binanceChainId: "56", tokenContractAddress: "0x2222222222222222222222222222222222222222", platformId: "bstock", tokenPrice: "234.50", referencePrice: "234.00", tokenPriceUpdatedAt: 1790928000000 }
+    ].filter((row) => requestedAddresses.has(row.tokenContractAddress));
   } else {
     response.writeHead(404, { "content-type": "application/json" });
     response.end(JSON.stringify({ code: 404, msg: "unknown fixture route", data: null, timestamp: Date.now(), success: false }));
@@ -97,12 +108,28 @@ try {
 
   // Exercise the documented standalone SDK journey against a loopback-only fixture.
   const stocks = new TokenizedStocksService(client);
+  for (const query of ["", String.fromCharCode(32, 9, 10, 32)]) {
+    await assert.rejects(
+      stocks.search(query),
+      (error) => error instanceof TypeError && error.message === "TokenizedStocksService.search query must not be empty"
+    );
+  }
+  assert.equal(observedRequests.length, 0, "blank and whitespace-only searches must fail before any provider request");
   const assets = await stocks.search("NVDA", { chainId: "56" });
-  assert.equal(assets.length, 1);
-  assert.equal(assets[0].tokenSymbol, "NVDAon");
-  const market = await stocks.marketContext(assets[0]);
-  assert.equal(market.tokenPrice, "120.00");
-  assert.equal(market.referencePrice, "121.00");
+  assert.equal(assets.length, 2);
+  assert.deepEqual(assets.map((asset) => ({ platformId: asset.platformId, tokenSymbol: asset.tokenSymbol, contractAddress: asset.contractAddress })), [
+    { platformId: "ondo", tokenSymbol: "NVDAon", contractAddress: "0x1111111111111111111111111111111111111111" },
+    { platformId: "bstock", tokenSymbol: "NVDAB", contractAddress: "0x2222222222222222222222222222222222222222" }
+  ]);
+  const chosenPlatform = "bstock";
+  const selectedAsset = assets.find((asset) => asset.platformId === chosenPlatform);
+  assert.ok(selectedAsset, "the consumer must explicitly choose a returned issuer representation");
+  const market = await stocks.marketContext(selectedAsset);
+  assert.equal(market.asset.platformId, chosenPlatform);
+  assert.equal(market.asset.tokenSymbol, "NVDAB");
+  assert.equal(market.asset.contractAddress, "0x2222222222222222222222222222222222222222");
+  assert.equal(market.tokenPrice, "234.50");
+  assert.equal(market.referencePrice, "234.00");
   assert.equal(market.marketStatus, "open");
   assert.equal(market.tokenPriceUpdatedAt, 1790928000000);
   assert.ok(market.dataWarnings.some((warning) => warning.includes("Liquidity was not provided")));
@@ -139,7 +166,7 @@ void observations;
   assert.equal(manifest.name, "ariadne-tokenized-stocks");
   assert.equal(manifest.engines?.node, ">=22.19.0");
   assert.ok(manifest.exports["."]);
-  console.log(JSON.stringify({ status: "passed", cacheIsolation: "fresh per run", packageInstalled: true, runtimeImport: true, localFixtureSdkSearchAndMarketContext: true, requestSigningHeaders: true, provenanceAndMissingLiquidityPreserved: true, typeDeclarations: true, packageRootExports: true, nodeEngine: manifest.engines.node, passed: true }, null, 2));
+  console.log(JSON.stringify({ status: "passed", cacheIsolation: "fresh per run", packageInstalled: true, runtimeImport: true, blankQueriesRejectedBeforeProviderRequest: true, bothIssuerRepresentationsInspected: true, marketContextRequestedForExplicitBstocksSelection: true, requestSigningHeaders: true, provenanceAndMissingLiquidityPreserved: true, typeDeclarations: true, packageRootExports: true, nodeEngine: manifest.engines.node, passed: true }, null, 2));
 } catch (error) {
   const output = error && typeof error === "object" && "output" in error ? String(error.output) : "";
   const timedOut = error && typeof error === "object" && "code" in error && error.code === "CLEANROOM_TIMEOUT";

@@ -66,5 +66,5 @@ return server;
 }
 
 serveStdio(() => createSyntheticServer(), {
-  onerror: (error) => console.error(`Synthetic confirmation test transport error: ${error.name}`)
+  onerror: (error) => console.error(`Synthetic confirmation test transport error: ${error.name}: ${error.message}`)
 });

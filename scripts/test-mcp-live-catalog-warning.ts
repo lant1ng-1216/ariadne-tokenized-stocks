@@ -153,8 +153,8 @@ try {
   assert.match(research.presentation, /24 小时成交量：54321\\\.75/);
   assert.match(research.presentation, /上游流动性字段：250000\\\.00/);
   assert.match(research.presentation, /持有者数量字段：101/);
-  assert.match(chineseMcpText, /资产类型：\*\*Pre-IPO \(2\)\*\*/);
-  assert.match(chineseMcpText, /上游状态：pause/);
+  assert.match(chineseMcpText, /^市场解读：/);
+  assert.doesNotMatch(chineseMcpText, /代币观测价格|资产类型|上游状态：pause/);
 
   const englishQuery = "Please research NVDA on BNB Chain, compare issuer versions and prices, list missing data, and do not trade.";
   const englishResult = await client.callTool({ name: names[2]!, arguments: { query: englishQuery, chainId: "56" } });
@@ -171,14 +171,17 @@ try {
   assert.match(english.presentation, /Provider holder-count field: 101/);
   assert.match(english.presentation, /Reason code: SYNTHETIC\\_PAUSE/);
   assert.match(english.presentation, new RegExp(`Last update: \\*\\*${new Date(now - 1_000).toISOString()}\\*\\*`));
-  assert.match(englishMcpText, /Provider status: pause/);
-  assert.match(englishMcpText, /\"reasonCode\":\s*\"SYNTHETIC_PAUSE\"/, "the MCP text block must retain the exact structured reason code");
+  assert.match(englishMcpText, /^Market read:/);
+  assert.doesNotMatch(englishMcpText, /Provider status: pause|SYNTHETIC_PAUSE/);
+  const englishRendered = renderResearchView(english);
+  assert.ok(englishRendered.includes("This shows Binance API matches; catalog completeness, pagination, and total-count semantics are unverified."), "the native research UI must retain the complete-catalog caveat in concise English");
   const localizedPresentation = research.presentation as string;
   assert.match(localizedPresentation, /资产类型：\*\*Pre-IPO \(2\)\*\*/);
   assert.match(localizedPresentation, /上游状态：pause/);
   assert.match(localizedPresentation, /原因代码：SYNTHETIC\\_PAUSE/);
   const rendered = renderResearchView(research);
-  assert.ok(rendered.includes(localizedWarning), "the native research UI must render the warning from the actual live-mode MCP result");
+  assert.ok(rendered.includes("本次仅展示 Binance API 返回的匹配项；目录完整性、分页和总数规则尚未验证。"), "the native research UI must retain the complete-catalog caveat in concise Chinese");
+  assert.ok(!rendered.includes(localizedWarning), "the native research UI summarizes the caveat instead of repeating verbose provider text");
   assert.ok(rendered.includes("Pre-IPO (2)"));
   assert.ok(rendered.includes("上游状态：pause"));
   assert.ok(rendered.includes("Scheduled maintenance in synthetic test fixture"));
@@ -208,7 +211,7 @@ try {
     allThreeLiveToolResultsCarryLocalizedWarning: true,
     englishLiveWarningPreserved: true,
     realMcpPipelinePreservesPhase28Fields: true,
-    bilingualMcpTextAndStructuredContentAgree: true,
+    bilingualShortTextAndCompleteStructuredReport: true,
     nativeUiRendersActualLiveWarning: true,
     nativeUiRendersPhase28ProviderEvidence: true,
     allSupportedMarketFieldsAndSourceTimestampSemanticsReachActualMcpAndUi: true,

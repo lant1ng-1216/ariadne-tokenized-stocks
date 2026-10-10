@@ -16,7 +16,7 @@ assert.doesNotMatch(sdkUsage, /confirmation token is an operation identifier/i);
 async function exerciseModernConfirmation(
   label: string,
   answer: "approve" | "decline" | "cancel",
-  expectedStatus: "approved" | "declined" | "cancelled",
+  expectedStatus: "approved" | "declined" | "not_confirmed" | "cancelled",
 ) {
   const client = new Client(
     { name: `ariadne-confirmation-modern-${label}`, version: "0.1.0" },
@@ -90,16 +90,25 @@ async function exerciseModernConfirmation(
     for (const requiredDetail of [
       "Ariadne requests an explicit user decision for this exact simulated action plan.",
       "Operation: buy",
-      "Input amount: 1.25 (decimals: 6)",
-      "Input token contract: 0x2222222222222222222222222222222222222222",
+      "Input amount: 1.25 USDT (6 decimals)",
+      "Input token contract: 0x2222222222222222222222222222222222222222; verified on BSC at 2027-01-15T08:00:00.000Z",
       "Wallet: 0x1111111111111111111111111111111111111111",
       "Underlying asset: Synthetic TEST asset — not a real security (TEST)",
       "Representation: TESTB; issuer/platform: synthetic-test-only",
       "Asset chain / contract: 56 / 0x4444444444444444444444444444444444444444",
+      "Market status category: unknown",
+      "Provider open state: true",
+      "Market-status caveat: Unknown is not confirmation that the market is open; the provider open-state flag is an independent signal and must be reviewed as a caveat.",
+      "Market data caveat: Market status category is unknown; provider openState=true is only an independent signal.",
       "Planned action / chain: evm_transaction / 56",
       "Transaction target: 0x3333333333333333333333333333333333333333",
       "Native transaction value (wei): 0",
-      "Provider-reported expected output (raw token units): 1250000",
+      "Expected output: 1.25 TESTB (1250000 base units)",
+      "Minimum acceptable output at reviewed slippage: 1.24375 TESTB (1243750 base units)",
+      "ERC-20 allowance spender: 0x5555555555555555555555555555555555555555",
+      "Provider route fee estimate (USD): 0.12",
+      "Provider estimated gas fee (raw chain units): 150000",
+      "Estimated maximum network gas cost: 0.00008 BNB (80000 gas × 100000000 wei)",
       "Maximum gas budget (BNB): 0.0002",
       `Plan expiry (UTC): ${new Date(fixture.plan!.expiresAt!).toISOString()}`,
     ]) {
@@ -108,10 +117,10 @@ async function exerciseModernConfirmation(
     assert.match(capturedMessage, /does not sign, submit, or broadcast/i);
     assert.deepEqual((capturedSchema?.properties as Record<string, unknown>)?.decision, {
       type: "string",
-      title: "Review this simulated transaction plan",
-      description: "Choose approve only if the exact plan details below are expected.",
+      title: "Review this transaction plan",
+      description: "Continue only if the exact plan details below are expected.",
       enum: ["approve", "decline"],
-      enumNames: ["Approve plan", "Decline"],
+      enumNames: ["Continue", "Decline"],
     });
     assert.equal(response.confirmationStatus, expectedStatus);
     assert.equal(response.plan?.status, expectedStatus === "approved" ? "confirmed" : "simulated");
@@ -255,7 +264,8 @@ async function exerciseContinuationIntegrity() {
     confirmation: { action: "decline" },
   })));
   const replayReply = payload(await replayed.handler({ plan: replayed.plan }, replayed.context(replayState, approval)));
-  assert.equal(firstReply.confirmationStatus, "declined");
+  assert.equal(firstReply.confirmationStatus, "not_confirmed");
+  assert.match(firstReply.summary ?? "", /cannot verify whether a confirmation form was shown/i);
   assert.equal(replayReply.confirmationStatus, "invalid_response");
   assert.equal(replayed.registry.requireExact(replayed.plan, "simulated").status, "simulated");
 
@@ -286,7 +296,7 @@ async function exerciseContinuationIntegrity() {
 }
 
 await exerciseModernConfirmation("approve", "approve", "approved");
-await exerciseModernConfirmation("decline", "decline", "declined");
+await exerciseModernConfirmation("decline", "decline", "not_confirmed");
 await exerciseModernConfirmation("cancel", "cancel", "cancelled");
 await exerciseUnsupportedHostFailsClosed();
 const continuationIntegrity = await exerciseContinuationIntegrity();

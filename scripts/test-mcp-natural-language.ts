@@ -55,7 +55,10 @@ try {
   });
   const content = (result.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
   assert.ok(content, "MCP must return a text response");
-  const payload = JSON.parse(content) as {
+  assert.match(content!, /^市场解读：/);
+  assert.doesNotMatch(content!, /研究简报 ·|发行方比较|代币观测价格/);
+  assert.ok(result.structuredContent, "the complete evidence report remains available to the research panel");
+  const payload = result.structuredContent as {
     resolvedQuery?: string;
     assets?: Array<{ chainId?: string; platformId?: string; contractAddress?: string; market?: { tokenPriceUpdatedAt?: number; provenance?: Array<{ provider?: string; endpoint?: string; responseTimestampMs?: number; assetUpdatedAtMs?: number }> }; metadata?: { underlyingLogoUrl?: string; issuerLogoUrl?: string }; issuer?: { logoUrl?: string }; dataQuality?: { missingFields?: string[]; warnings?: string[] } }>;
     outcome?: { status?: string; sideEffects?: string; nextAction?: string };
@@ -72,7 +75,6 @@ try {
       totalMs?: number;
     };
   };
-  assert.deepEqual(result.structuredContent, payload, "live MCP structuredContent must exactly match the parsed text research payload");
   assert.equal(payload.resolvedQuery, "NVDA", `natural-language research did not resolve NVDA: ${JSON.stringify(payload)}`);
   assert.ok((payload.assets?.length ?? 0) >= 2, "expected issuer representations for NVDA");
   assert.ok(payload.assets?.every((asset) => Number.isFinite(asset.market?.tokenPriceUpdatedAt)), "each live representation must carry the dedicated price endpoint's update timestamp");
@@ -89,6 +91,10 @@ try {
   assert.ok(payload.assets?.every((asset) => asset.metadata?.underlyingLogoUrl && asset.metadata.issuerLogoUrl && asset.issuer?.logoUrl), "research must preserve market-context underlying/issuer logos");
   assert.notEqual(payload.outcome?.status, "error");
   assert.equal(payload.outcome?.sideEffects, "none");
+  assert.match(payload.presentation ?? "", /市场状态：\*\*未知\*\*/, "Chinese MCP text keeps the unknown market status compact");
+  assert.match(payload.presentation ?? "", /研究简报 · Binance Web3 · BSC/, "the Chinese research brief names the Binance Web3 BSC scope");
+  assert.doesNotMatch(payload.presentation ?? "", /市场状态：\*\*市场状态未知（上游报告开放标记，但未确认）\*\*/, "the provider caveat must not remain inside the inline status label");
+  assert.match(payload.presentation ?? "", /上游报告底层市场当前可交易/, "the evidence preserves the provider's explicit tradability signal");
   assert.ok(payload.timing && [payload.timing.searchMs, payload.timing.marketContextMs, payload.timing.comparisonMs, payload.timing.presentationMs, payload.timing.totalMs].every((value) => typeof value === "number" && Number.isFinite(value) && value >= 0));
   const resolverCalls = payload.timing?.searchResolution?.calls;
   assert.equal(resolverCalls?.directSearch, 1);
@@ -104,7 +110,7 @@ try {
   assert.match(payload.outcome?.nextAction ?? "", /未请求任何交易后续操作/);
   assert.ok(payload.nextSteps?.every((step) => step.id !== "request_read_only_quote"));
   assert.ok(payload.nextSteps?.every((step) => step.id !== "read_wallet_exposure"));
-  assert.match(payload.presentation ?? "", /建议的下一步：\*\*查看证据和数据缺口\*\*/);
+  assert.match(payload.presentation ?? "", /建议的下一步：\*\*查看证据和数据缺口；决定继续后再明确创建购买计划\*\*/);
   assert.doesNotMatch(payload.presentation ?? "", /request a quote/i, "no-trade research brief must not contain quote CTAs in nested sections");
   assert.match(payload.executionBoundary ?? "", /此流程仅进行只读研究/);
   assert.match(payload.presentation ?? "", /数据来源：\*\*Binance Web3 \/api\/v1\/dex\/market\/rwa\/price/);
@@ -136,7 +142,9 @@ try {
   });
   const englishText = (englishResult.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
   assert.ok(englishText, "live English natural-language research must return text");
-  const englishPayload = JSON.parse(englishText!) as {
+  assert.match(englishText!, /^Market read:/);
+  assert.doesNotMatch(englishText!, /Cross-issuer comparison|Observed price:/);
+  const englishPayload = englishResult.structuredContent as {
     resolvedQuery?: string;
     assets?: Array<{ chainId?: string; platformId?: string; contractAddress?: string }>;
     outcome?: { status?: string; sideEffects?: string; nextAction?: string };
@@ -144,18 +152,72 @@ try {
     presentation?: string;
     executionBoundary?: string;
   };
-  assert.deepEqual(englishResult.structuredContent, englishPayload, "English live MCP text and structured content must match");
   assert.equal(englishPayload.resolvedQuery, "NVDA");
   assert.ok((englishPayload.assets?.length ?? 0) >= 2, "English live MCP should return both NVDA issuer representations");
   assert.equal(englishPayload.outcome?.sideEffects, "none");
+  assert.match(englishPayload.presentation ?? "", /Market status: \*\*Unknown\*\*/, "English MCP text keeps the unknown market status compact");
+  assert.doesNotMatch(englishPayload.presentation ?? "", /Market status: \*\*Market status unknown \(provider open flag is unconfirmed\)\*\*/i, "the provider caveat must not remain inside the inline status label");
+  assert.match(englishPayload.presentation ?? "", /Provider reports the underlying market is currently tradable/, "the evidence preserves the provider's explicit tradability signal");
   assert.match(englishPayload.outcome?.nextAction ?? "", /no trading follow-up was requested/i);
   assert.match(englishPayload.presentation ?? "", /Ariadne research brief/);
+  assert.match(englishPayload.presentation ?? "", /research brief · Binance Web3 · BSC/i, "the English research brief names the Binance Web3 BSC scope");
   assert.match(englishPayload.presentation ?? "", /Observed price:/);
   assert.doesNotMatch(englishPayload.presentation ?? "", /request a quote/i, "explicit English no-trade intent must suppress quote CTAs throughout the live brief");
   assert.ok(englishPayload.nextSteps?.every((step) => step.id !== "request_read_only_quote" && step.id !== "read_wallet_exposure"));
   assert.match(englishPayload.executionBoundary ?? "", /read-only/);
 
-  console.log(JSON.stringify({ mode: "live", standaloneSdkJourney: true, sdkMcpIdentityParity: true, sourceAndTimestampProvenance: true, liveTextStructuredParity: true, liveAppResourceLinked: true, chineseNaturalLanguageResearch: true, englishNaturalLanguageResearch: true, liveAssetDiscovery: true, resolvedQuery: payload.resolvedQuery, representations: payload.assets?.length, status: payload.outcome?.status, sideEffects: payload.outcome?.sideEffects, passed: true }, null, 2));
+  const broadIssuerResult = await client.callTool({
+    name: "research_tokenized_stock",
+    arguments: { query: "Research NVDA tokenized-stock issuer options; compare all available representations." }
+  });
+  const broadIssuerText = (broadIssuerResult.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
+  assert.ok(broadIssuerText, "issuer-unspecified research must return a text result");
+  assert.match(broadIssuerText!, /^Market read:/);
+  const broadIssuerPayload = broadIssuerResult.structuredContent as {
+    resolvedQuery?: string;
+    assets?: Array<{ chainId?: string; platformId?: string; market?: { tokenPriceUpdatedAt?: number }; dataQuality?: { coverage?: { marketContext?: string } } }>;
+    timing?: { marketContextBatchCalls?: number; marketContextFailedGroups?: number };
+    outcome?: { nextAction?: string; sideEffects?: string };
+    nextSteps?: Array<{ id: string }>;
+    presentation?: string;
+  };
+  assert.ok(broadIssuerPayload.nextSteps?.every((step) => step.id !== "request_read_only_quote"), "ordinary issuer research must never advertise an unavailable standalone quote step");
+  assert.doesNotMatch(broadIssuerPayload.presentation ?? "", /request a quote|read-only quote/i);
+  assert.match(broadIssuerPayload.outcome?.nextAction ?? "", /create a purchase plan only after deciding to continue/i);
+  assert.equal(broadIssuerPayload.resolvedQuery, "NVDA");
+  assert.ok((broadIssuerPayload.assets?.length ?? 0) >= 2, "an issuer-unspecified query must retain multiple returned representations");
+  assert.ok(broadIssuerPayload.assets?.every((asset) => asset.chainId === "56"), "the competition research result must contain BSC records only");
+  const bscRepresentations = broadIssuerPayload.assets?.filter((asset) => asset.chainId === "56") ?? [];
+  assert.ok(bscRepresentations.some((asset) => asset.platformId === "ondo") && bscRepresentations.some((asset) => asset.platformId === "bstock"), "a broad NVDA query must preserve both returned BSC issuers unless the user chose one");
+  assert.ok(bscRepresentations.every((asset) => asset.dataQuality?.coverage?.marketContext === "fetched" && Number.isFinite(asset.market?.tokenPriceUpdatedAt)), "a market-context failure on another chain must not erase the valid BSC issuer quotes");
+  const broadChains = new Set(broadIssuerPayload.assets?.map((asset) => asset.chainId));
+  assert.deepEqual([...broadChains], ["56"], "the broad research result is scoped to BSC");
+  assert.equal(broadIssuerPayload.timing?.marketContextBatchCalls, 1, "BSC issuer comparison uses one BSC-only market-context batch");
+  assert.equal(broadIssuerPayload.outcome?.sideEffects, "none");
+
+  const wrapperComparisonResult = await client.callTool({
+    name: "compare_stock_wrappers",
+    arguments: { query: "NVDA" }
+  });
+  const wrapperComparisonText = (wrapperComparisonResult.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
+  assert.ok(wrapperComparisonText, "the issuer comparison tool returns its result");
+  const wrapperComparison = JSON.parse(wrapperComparisonText!) as { count?: number; groups?: Record<string, Array<{ chainId?: string; platformId?: string }>> };
+  const wrapperAssets = Object.values(wrapperComparison.groups ?? {}).flat();
+  assert.ok((wrapperComparison.count ?? 0) >= 2, "the comparison tool includes multiple BSC issuer representations");
+  assert.ok(wrapperAssets.every((asset) => asset.chainId === "56"), "the direct wrapper-comparison tool is also scoped to BSC by default");
+
+  const unsupportedChainResult = await client.callTool({
+    name: "research_tokenized_stock",
+    arguments: { query: "Research NVDA on Ethereum; compare issuer options.", chainId: "1" }
+  });
+  const unsupportedChainText = (unsupportedChainResult.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
+  assert.ok(unsupportedChainText, "an explicitly requested non-BSC chain returns an explanation");
+  const unsupportedChainPayload = JSON.parse(unsupportedChainText!) as { summary?: string; assets?: unknown[]; outcome?: { status?: string } };
+  assert.equal(unsupportedChainPayload.outcome?.status, "blocked");
+  assert.match(unsupportedChainPayload.summary ?? "", /BSC only/i);
+  assert.equal(unsupportedChainPayload.assets, undefined, "an unsupported chain request must not silently return BSC identities as if they were Ethereum data");
+
+  console.log(JSON.stringify({ mode: "live", standaloneSdkJourney: true, sdkMcpIdentityParity: true, sourceAndTimestampProvenance: true, shortResearchTextFullStructuredReport: true, liveAppResourceLinked: true, chineseNaturalLanguageResearch: true, englishNaturalLanguageResearch: true, issuerUnspecifiedBscComparison: true, nonBscResearchRejected: true, liveAssetDiscovery: true, resolvedQuery: payload.resolvedQuery, representations: payload.assets?.length, broadRepresentations: broadIssuerPayload.assets?.length, supportedChainIds: [...broadChains], status: payload.outcome?.status, sideEffects: payload.outcome?.sideEffects, passed: true }, null, 2));
 } finally {
   await client.close();
 }

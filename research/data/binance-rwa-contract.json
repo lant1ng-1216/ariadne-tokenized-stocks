@@ -57,9 +57,9 @@
   },
   "implementationFidelity": {
     "assetType": "The SDK retains the documented numeric asset type from search and token-list results; unknown integer codes remain visible rather than being relabeled.",
-    "marketState": "The SDK preserves the provider's detailed market status and documented reason/open/close context alongside a conservative normalized state used by safety checks.",
+    "marketState": "The SDK preserves the provider's detailed market-status category and open/close context separately. An unrecognized category remains unknown; the documented openState boolean independently reports whether the underlying market is currently tradable.",
     "timestamps": "Envelope and per-asset price timestamps retain distinct provenance. Missing timestamps are not synthesized, and timestamp presence is not treated as a freshness guarantee.",
-    "safety": "Provider pause, unknown state, invalid time values, and contradictory open-state fields do not become evidence that a market is safely open."
+    "safety": "Provider pause, an unknown category without an explicit true openState, invalid time values, and contradictory marketStatus/openState fields do not become evidence that a market is safely tradable. An unknown category with openState=true remains visibly unknown and passes only the tradability check with a warning."
   },
   "boundedConclusion": "This record summarizes the rendered official documentation and local source review. It does not establish complete catalog coverage, runtime pagination behavior, or a quote-freshness service level agreement."
 }

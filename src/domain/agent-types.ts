@@ -100,7 +100,7 @@ export type ResearchTiming = {
 };
 
 export type ResearchNextStep = {
-  id: "inspect_representation" | "request_read_only_quote" | "read_wallet_exposure" | "review_data_gaps";
+  id: "inspect_representation" | "read_wallet_exposure" | "review_data_gaps";
   title: string;
   description: string;
   sideEffects: "none";

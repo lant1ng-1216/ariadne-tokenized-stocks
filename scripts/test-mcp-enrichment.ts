@@ -29,21 +29,22 @@ const makeContext = (asset: StockAsset, timestamp: number): MarketContext => ({
 });
 
 let batchCalls = 0;
-let received: StockAsset[] = [];
+const received: StockAsset[][] = [];
 let successfulDiagnostics: Parameters<NonNullable<Parameters<typeof enrichAgentAssets>[3]>>[0] | undefined;
 const enriched = await enrichAgentAssets({
   async marketContexts(assets) {
     batchCalls += 1;
-    received = assets;
-    return [makeContext(otherChain, 300), makeContext(second, 200), makeContext(first, 100)];
+    received.push(assets);
+    return [...assets].reverse().map((asset) => makeContext(asset, asset.chainId === "1" ? 300 : asset.contractAddress === second.contractAddress ? 200 : 100));
   }
 }, [first, second, otherChain], true, (diagnostics) => { successfulDiagnostics = diagnostics; });
-assert.equal(batchCalls, 1, "a multi-representation MCP workflow makes one service batch call");
-assert.deepEqual(received.map((asset) => asset.assetId), [first.assetId, second.assetId, otherChain.assetId]);
+assert.equal(batchCalls, 2, "multi-chain research makes one service batch call per chain so one provider failure is isolated");
+assert.deepEqual(received.map((group) => group.map((asset) => asset.assetId)), [[first.assetId, second.assetId], [otherChain.assetId]]);
 assert.deepEqual(enriched.map((asset) => asset.market?.tokenPriceUpdatedAt), [100, 200, 300], "results remain attached to exact chain/contract/platform identity despite reordered responses");
 assert.ok(enriched.every((asset) => asset.dataQuality.coverage.marketContext === "fetched"));
-assert.equal(successfulDiagnostics?.batchCalls, 1);
+assert.equal(successfulDiagnostics?.batchCalls, 2);
 assert.equal(successfulDiagnostics?.assetsRequested, 3);
+assert.equal(successfulDiagnostics?.failedGroups, undefined);
 assert.ok(Number.isFinite(successfulDiagnostics?.durationMs));
 assert.equal(enriched[0]?.metadata.underlyingLogoUrl, "https://example.test/ondo-token.svg");
 assert.equal(enriched[0]?.metadata.issuerLogoUrl, "https://example.test/ondo-issuer.svg");
@@ -78,6 +79,23 @@ const unexpectedFailure = await enrichAgentAssets({
 }, [first]);
 assert.equal(unexpectedFailure[0]?.dataQuality.marketContextFailureCategory, "unexpected_failure");
 assert.ok(!JSON.stringify(unexpectedFailure).includes("internal detail"), "unexpected raw errors must remain private");
+
+let isolatedCalls = 0;
+let isolatedDiagnostics: MarketContextEnrichmentDiagnostics | undefined;
+const isolatedFailure = await enrichAgentAssets({
+  async marketContexts(assets) {
+    isolatedCalls += 1;
+    if (assets[0]?.chainId === "1") throw new BinanceWeb3Error("unsupported chain response", 400, 400, false);
+    return assets.map((asset) => makeContext(asset, 250));
+  }
+}, [first, second, otherChain], true, (diagnostics) => { isolatedDiagnostics = diagnostics; });
+assert.equal(isolatedCalls, 2);
+assert.equal(isolatedFailure[0]?.dataQuality.coverage.marketContext, "fetched", "a failing chain must not discard successful market data from another chain");
+assert.equal(isolatedFailure[1]?.dataQuality.coverage.marketContext, "fetched");
+assert.equal(isolatedFailure[2]?.dataQuality.coverage.marketContext, "unavailable");
+assert.equal(isolatedFailure[2]?.dataQuality.marketContextFailureCategory, "provider_failure");
+assert.equal(isolatedDiagnostics?.failedGroups, 1);
+assert.equal(isolatedDiagnostics?.failureCategory, "provider_failure");
 
 const mismatch = await enrichAgentAssets({
   async marketContexts() { return [makeContext(first, 100), makeContext({ ...second, platformId: "other" }, 200)]; }

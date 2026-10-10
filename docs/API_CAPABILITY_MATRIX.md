@@ -22,7 +22,7 @@
 1. The same underlying stock may have multiple platform, chain and contract identities.
 2. RWA routes require explicit RFQ handling and external EIP-712 signing.
 3. Missing liquidity must not be interpreted as zero liquidity.
-4. Unknown market status must not be silently treated as open.
+4. An unknown market-status category must remain visibly unknown. Only an explicit provider `openState: true` separately confirms reported tradability; missing, false, or contradictory signals must not pass the tradability check.
 5. Quote success does not guarantee swap construction or execution success.
 6. Side-effecting actions require a plan, safety checks, simulation, explicit confirmation and an externally signed payload.
 7. Business code `50000` must not be converted into an empty position response; official rate-limit code `42900` is handled separately.

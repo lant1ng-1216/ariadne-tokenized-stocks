@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { privateKeyToAccount } from "viem/accounts";
 import type { ActionPlan } from "../src/domain/types.js";
-import { assessSignedTransactionFee, assertNativeBalanceCoversFee, requireReviewedGasBudget } from "../src/domain/gas-safety.js";
+import { assessSignedTransactionFee, requireReviewedGasBudget } from "../src/domain/gas-safety.js";
 
 // Public deterministic fixture key; never use with funds.
 const account = privateKeyToAccount(`0x${"11".repeat(32)}`);
@@ -19,9 +19,6 @@ const base = { chainId: 56, to: target, value: 7n, data: "0x1234" as const, nonc
 const legacy = await account.signTransaction({ ...base, type: "legacy", gasPrice: 1_000_000_000n });
 const legacyFee = assessSignedTransactionFee(plan, legacy);
 assert.equal(legacyFee.maxGasCostWei, 80_000_000_000_000n);
-assert.equal(legacyFee.totalNativeCostWei, 80_000_000_000_007n);
-assert.doesNotThrow(() => assertNativeBalanceCoversFee(80_000_000_000_007n, legacyFee));
-assert.throws(() => assertNativeBalanceCoversFee(80_000_000_000_006n, legacyFee), /BNB balance is insufficient/);
 
 const eip1559 = await account.signTransaction({ ...base, type: "eip1559", maxFeePerGas: 2_000_000_000n, maxPriorityFeePerGas: 1_000_000_000n });
 assert.equal(assessSignedTransactionFee(plan, eip1559).maxGasCostWei, 160_000_000_000_000n);
@@ -32,4 +29,4 @@ assert.throws(() => assessSignedTransactionFee(plan, highFee), /exceeds confirme
 assert.throws(() => requireReviewedGasBudget({ ...plan, intent: { ...plan.intent, maxGasCostBnb: undefined } }), /missing a user-reviewed maxGasCostBnb/);
 assert.throws(() => assessSignedTransactionFee({ ...plan, intent: { ...plan.intent, maxGasCostBnb: undefined } }, legacy), /missing a user-reviewed maxGasCostBnb/);
 assert.throws(() => assessSignedTransactionFee({ ...plan, intent: { ...plan.intent, maxGasCostBnb: "0.0000000000000000001" } }, legacy), /precision/);
-console.log(JSON.stringify({ legacyEip2930AndEip1559: true, feeCapAndNativeBalanceRejection: true, broadcasted: false, passed: true }, null, 2));
+console.log(JSON.stringify({ legacyEip2930AndEip1559: true, reviewedFeeCapEnforced: true, walletFundsNotPrechecked: true, broadcasted: false, passed: true }, null, 2));
