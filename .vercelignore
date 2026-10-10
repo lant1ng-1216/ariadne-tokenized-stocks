@@ -1,0 +1,15 @@
+.artifacts
+.git
+.github
+dist
+node_modules
+records
+research
+scripts
+examples
+*.png
+*.jpg
+*.jpeg
+*.pdf
+*.docx
+*.tgz

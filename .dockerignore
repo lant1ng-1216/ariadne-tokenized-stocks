@@ -1,0 +1,11 @@
+.git
+.env
+.env.*
+!.env.example
+.artifacts
+node_modules
+dist
+dist-package
+records
+research
+*.tgz

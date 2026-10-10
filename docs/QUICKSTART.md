@@ -1,6 +1,6 @@
 # Ariadne Quickstart
 
-This guide assumes Node.js `>=22.19.0` and a local Ariadne source checkout. If you have not cloned the repository yet:
+This guide assumes Node.js `>=22.19.0`. During local development, prepare the repository with:
 
 ```bash
 git clone https://github.com/lant1ng-1216/ariadne-tokenized-stocks.git
@@ -10,17 +10,27 @@ npm ci
 
 There are two core ways to use Ariadne: connect its MCP server to an existing Agent, or consume the TypeScript SDK directly from your own Node.js application. This page starts with the Agent path; the [standalone SDK installation and usage guide](SDK_USAGE.md) covers the independent developer path.
 
+For the independently packaged local MCP executable, follow the [MCP package guide](MCP_USAGE.md). It is the recommended competition path and does not require the Agent host to run from a source checkout.
+
 ## Demo Mode — no API credentials
 
 Demo Mode provides deterministic, read-only tokenized-equity exploration so a user can test the AI-native interaction without Binance credentials or wallet funds.
 
-```bash
-npm run mcp:config:demo
+```json
+{
+  "mcpServers": {
+    "ariadne-tokenized-stocks": {
+      "command": "npx",
+      "args": ["-y", "ariadne-tokenized-stocks-mcp@0.1.0"],
+      "env": { "ARIADNE_MODE": "demo" }
+    }
+  }
+}
 ```
 
-Paste the generated JSON into your MCP client's server configuration. The client will launch `npm run mcp:demo` with the repository as its working directory. No Binance account, API key or wallet is needed for this first run.
+Paste the JSON into your MCP client's server configuration and reload the host. `npx` launches the published local stdio MCP package. No Binance account, API key or wallet is needed for this first run.
 
-The generated JSON contains the current absolute working directory. Do not copy the credentialed Live Mode example for this Demo setup.
+From a source checkout, `npm run mcp:config:demo` remains an equivalent fallback; its generated JSON contains the current absolute working directory.
 
 For Live Mode, use `npm run mcp:config:live` after creating `.env` from `.env.example` and adding your own credentials.
 
@@ -54,8 +64,10 @@ For live read-only data and quote preparation:
 cp .env.example .env
 ```
 
-Set your own Binance Web3 API credentials in `.env`, then run `npm run mcp:config:live` and copy its output into your MCP client's server configuration. Keep `.env` local; do not commit credentials. Real signing and broadcasting remain separate user-wallet operations.
+Set your own Binance Web3 API credentials through the MCP host's local secret or environment facility and remove `ARIADNE_MODE=demo`. From a source checkout, `npm run mcp:config:live` prints an equivalent configuration. Keep credentials local and never commit them. Real signing and broadcasting remain separate user-wallet operations.
 
 In Live Mode, use the same natural-language prompts in a host that supports MCP tool selection. Whether the host selects the appropriate catalog or research capability automatically depends on that host and its configuration. The server may expose dedicated MCP App catalog and research panels; other hosts can display the same results as structured content and text. Any purchase plan, signature, transaction or broadcast remains an explicit later boundary.
 
 To use the SDK without an Agent host, follow the [standalone SDK guide](SDK_USAGE.md). It documents local package building and a clean-room consumer check.
+
+The deployed Remote MCP transport is not the recommended Live evaluation path: Binance Web3 currently rejects its Vercel and Cloudflare cloud egress with compliance code `40304`. Remote Live access remains on the product roadmap; the local stdio package is the supported submission path.

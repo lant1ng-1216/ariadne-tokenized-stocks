@@ -4,7 +4,7 @@ import { ARIADNE_RELIEF_MARK } from "./ariadne-brand-asset.js";
 import { BNB_CHAIN_OFFICIAL_YELLOW_SYMBOL } from "./official-brand-assets.js";
 
 const entryPoint = fileURLToPath(
-  new URL("./external-wallet-approval-page.ts", import.meta.url),
+  new URL(import.meta.url.endsWith(".js") ? "./external-wallet-approval-page.js" : "./external-wallet-approval-page.ts", import.meta.url),
 );
 
 export async function buildExternalWalletApprovalPageHtml(language: "zh-CN" | "en" = "zh-CN"): Promise<string> {

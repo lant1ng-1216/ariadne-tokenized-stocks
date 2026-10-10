@@ -54,7 +54,7 @@ try {
   assert.ok(tarballName?.endsWith(".tgz"), `Unexpected npm pack output: ${pack.stdout}`);
   const tarball = join(tempRoot, tarballName);
   await writeFile(join(tempRoot, "package.json"), JSON.stringify({ name: "ariadne-cleanroom-consumer", private: true, type: "module" }, null, 2));
-  await run("npm", ["install", "--ignore-scripts", "--no-package-lock", "--no-audit", "--no-fund", "--fetch-retries=0", "--fetch-timeout=30000", "--cache", npmCache, tarball], tempRoot, 180_000);
+  await run("npm", ["install", "--ignore-scripts", "--no-package-lock", "--no-audit", "--no-fund", "--fetch-retries=0", "--fetch-timeout=30000", "--cache", npmCache, tarball], tempRoot, 300_000);
 
   const runtime = `import assert from "node:assert/strict";
 import { createServer } from "node:http";

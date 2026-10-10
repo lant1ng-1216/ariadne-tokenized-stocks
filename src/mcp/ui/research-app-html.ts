@@ -2,7 +2,7 @@ import { build } from "esbuild";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
-const entryPoint = fileURLToPath(new URL("./research-app.ts", import.meta.url));
+const entryPoint = fileURLToPath(new URL(import.meta.url.endsWith(".js") ? "./research-app.js" : "./research-app.ts", import.meta.url));
 
 export async function buildResearchAppHtml(): Promise<string> {
   const bundle = await build({

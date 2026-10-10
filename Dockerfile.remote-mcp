@@ -1,0 +1,23 @@
+FROM node:22.19.0-bookworm-slim AS build
+WORKDIR /src
+COPY package.json package-lock.json tsconfig.json tsconfig.mcp-package.json ./
+RUN npm ci --ignore-scripts
+COPY src ./src
+COPY scripts/stage-mcp-package.mjs ./scripts/stage-mcp-package.mjs
+COPY README.md LICENSE ./
+COPY docs/MCP_USAGE.md ./docs/MCP_USAGE.md
+RUN npm run build:mcp-package \
+  && npm pack .artifacts/mcp-package --pack-destination /tmp \
+  && mkdir -p /opt/ariadne \
+  && cd /opt/ariadne \
+  && npm init -y >/dev/null \
+  && npm install --omit=dev --ignore-scripts --no-audit --no-fund /tmp/ariadne-tokenized-stocks-mcp-*.tgz
+
+FROM node:22.19.0-bookworm-slim
+ENV NODE_ENV=production HOST=0.0.0.0 PORT=8787
+RUN groupadd --system ariadne && useradd --system --gid ariadne --home-dir /opt/ariadne ariadne
+WORKDIR /opt/ariadne
+COPY --from=build --chown=ariadne:ariadne /opt/ariadne ./
+USER ariadne
+EXPOSE 8787
+CMD ["node", "node_modules/ariadne-tokenized-stocks-mcp/dist/mcp/remote-server.js"]

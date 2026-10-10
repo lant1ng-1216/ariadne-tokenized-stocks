@@ -8,6 +8,8 @@ export type BinanceWeb3Config = {
   apiSecret: string;
   baseUrl?: string;
   proxyUrl?: string;
+  /** Optional token for an Ariadne HTTPS egress gateway configured as baseUrl. */
+  gatewayToken?: string;
   maxRetries?: number;
   /** Stop retrying when Retry-After/backoff would exceed this wait budget (default 10 seconds). */
   maxRetryDelayMs?: number;
@@ -137,6 +139,7 @@ export class BinanceWeb3Client {
         "X-OC-SIGN": signature,
         "X-OC-NONCE": nonce,
         "X-OC-RECV-WINDOW": "60000",
+        ...(this.config.gatewayToken ? { "X-Ariadne-Gateway-Token": this.config.gatewayToken } : {}),
         ...(body ? { "Content-Type": "application/json" } : {})
       },
         body: body || undefined,

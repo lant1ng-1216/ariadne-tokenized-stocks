@@ -2,7 +2,7 @@ import { build } from "esbuild";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
-const entryPoint = fileURLToPath(new URL("./purchase-approval-app.ts", import.meta.url));
+const entryPoint = fileURLToPath(new URL(import.meta.url.endsWith(".js") ? "./purchase-approval-app.js" : "./purchase-approval-app.ts", import.meta.url));
 
 export function normalizeReownProjectId(value: string | undefined): string | undefined {
   const projectId = value?.trim();

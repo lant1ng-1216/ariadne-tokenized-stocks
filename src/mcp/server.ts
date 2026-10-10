@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/server";
 import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import { z } from "zod";
@@ -45,15 +46,16 @@ type McpServerDependencies = {
 
 export function buildMcpServer(dependencies: McpServerDependencies = {}): McpServer {
 const demoMode = process.env.ARIADNE_MODE === "demo";
-const apiKey = process.env.BINANCE_WEB3_API_KEY;
-const apiSecret = process.env.BINANCE_WEB3_API_SECRET;
+const apiKey = process.env.BINANCE_WEB3_API_KEY?.trim();
+const apiSecret = process.env.BINANCE_WEB3_API_SECRET?.trim();
 if (!demoMode && !dependencies.stocks && (!apiKey || !apiSecret)) throw new Error("Missing Binance Web3 credentials in .env. Set ARIADNE_MODE=demo for credential-free read-only exploration.");
 
 const client = dependencies.client ?? new BinanceWeb3Client({
   apiKey: apiKey ?? "demo",
   apiSecret: apiSecret ?? "demo",
   baseUrl: process.env.BINANCE_WEB3_BASE_URL,
-  proxyUrl: process.env.BINANCE_WEB3_PROXY_URL
+  proxyUrl: process.env.BINANCE_WEB3_PROXY_URL,
+  gatewayToken: process.env.ARIADNE_GATEWAY_TOKEN?.trim()
 });
 const stocks = dependencies.stocks ?? (demoMode ? new DemoTokenizedStocksService(client) : new TokenizedStocksService(client));
 const wallet = dependencies.wallet ?? new WalletService(client);

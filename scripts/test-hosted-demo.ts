@@ -30,9 +30,8 @@ try {
   const tools = await client.listTools();
   assert.ok(tools.tools.some((tool) => tool.name === "research_tokenized_stock"));
   const result = await client.callTool({ name: "research_tokenized_stock", arguments: { query: "NVDA", chainId: "56" } });
-  const text = (result.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text")?.text;
-  assert.ok(text);
-  const payload = JSON.parse(text!);
+  const payload = result.structuredContent ?? JSON.parse((result.content as Array<{ type: string; text?: string }>).find((item) => item.type === "text" && item.text?.trimStart().startsWith("{"))?.text ?? "null");
+  assert.ok(payload && typeof payload === "object");
   assert.equal(payload.assets.length, 2);
   assert.equal(payload.outcome.sideEffects, "none");
   assert.equal(payload.timing.agentReasoningExcluded, true);

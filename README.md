@@ -13,7 +13,27 @@ The MCP server supports credential-free Demo configuration and authenticated Liv
 - For Live API use: Binance Web3 API credentials
 - For wallet workflows: a compatible external wallet; Ariadne never stores private keys
 
-## Install and try the MCP Demo
+## Try the MCP Demo
+
+The primary competition path is the local stdio MCP package. It runs on the evaluator's machine, works with compatible MCP Agent hosts, and avoids the documented cloud-egress limitation of the experimental Remote MCP deployment.
+
+Add this configuration to your MCP host:
+
+```json
+{
+  "mcpServers": {
+    "ariadne-tokenized-stocks": {
+      "command": "npx",
+      "args": ["-y", "ariadne-tokenized-stocks-mcp@0.1.0"],
+      "env": { "ARIADNE_MODE": "demo" }
+    }
+  }
+}
+```
+
+Demo Mode is deterministic, read-only, and credential-free. Restart or reload the MCP host after saving the configuration, then ask it to browse BSC tokenized stocks or compare issuer representations.
+
+### Source-checkout fallback
 
 ```bash
 git clone https://github.com/lant1ng-1216/ariadne-tokenized-stocks.git
@@ -22,7 +42,7 @@ npm ci
 npm run mcp:config:demo
 ```
 
-Add the generated configuration to an MCP-capable Agent host. The command uses the current local checkout path. Demo Mode is deterministic, read-only, and uses synthetic examples; it needs no Binance credentials or wallet.
+Add the generated configuration to an MCP-capable Agent host. The command uses the current local checkout path and needs no Binance credentials or wallet.
 
 For an undecided user, try browsing the BSC catalog first. After choosing a company, ask the Agent to research or compare its returned issuer representations. Host-side tool selection depends on the Agent; tools can also be invoked explicitly.
 
@@ -38,15 +58,13 @@ Copy the generated configuration to your Agent host. Keep `.env` local and never
 
 ## TypeScript SDK
 
-The SDK is currently distributed as a local package tarball; it has not been published to npm.
+Install the standalone SDK in a Node.js application:
 
 ```bash
-npm ci
-npm run build
-npm pack
+npm install ariadne-tokenized-stocks@0.1.0
 ```
 
-Install the tarball path printed by `npm pack` in a consuming Node.js project. See [SDK usage](docs/SDK_USAGE.md) for imports, explicit issuer selection, data provenance, ActionPlan preparation, and the guarded BSC EVM execution boundary. `npm run test:cleanroom` builds the tarball and verifies it in an isolated consumer without publishing it.
+See [SDK usage](docs/SDK_USAGE.md) for imports, explicit issuer selection, data provenance, ActionPlan preparation, and the guarded BSC EVM execution boundary. A source-checkout tarball workflow remains documented for offline review and release verification.
 
 ## Documentation
 
@@ -57,6 +75,7 @@ Install the tarball path printed by `npm pack` in a consuming Node.js project. S
 - [Product architecture](docs/PRODUCT_SURFACE_ARCHITECTURE.md) — SDK, MCP, Agent, and wallet responsibilities
 - [API capability matrix](docs/API_CAPABILITY_MATRIX.md) — mapped API and product capabilities
 - [Third-party notices](docs/THIRD_PARTY_NOTICES.md) — dependency and license notices
+- [Remote MCP deployment](docs/REMOTE_MCP_DEPLOYMENT.md) — experimental HTTP delivery and the current cloud Live-data limitation
 
 ## Development checks
 
@@ -72,4 +91,4 @@ Some Live checks require credentials and contact Binance Web3 read or quote endp
 
 ## Project boundary
 
-Ariadne is an integration layer, not an autonomous Agent or wallet. The Agent host interprets natural language and chooses MCP tools; Ariadne provides the domain tools and structured results. MCP App rendering depends on host support. The SDK and MCP do not hold private keys, and local test success does not prove provider completeness, production hosting, cross-host behavior, or funded execution for every asset and issuer.
+Ariadne is an integration layer, not an autonomous Agent or wallet. The Agent host interprets natural language and chooses MCP tools; Ariadne provides the domain tools and structured results. MCP App rendering depends on host support. The SDK and MCP do not hold private keys, and local test success does not prove provider completeness, universal cross-host behavior, or funded execution for every asset and issuer. The Vercel Remote MCP transport is deployed, but Binance Web3 currently rejects its cloud egress with compliance code `40304`; it is a product-roadmap path and is not the recommended Live evaluation route.

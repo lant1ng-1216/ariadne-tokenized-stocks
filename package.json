@@ -6,7 +6,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/lant1ng-1216/ariadne-tokenized-stocks.git"
+    "url": "git+https://github.com/lant1ng-1216/ariadne-tokenized-stocks.git"
   },
   "homepage": "https://github.com/lant1ng-1216/ariadne-tokenized-stocks",
   "files": [
@@ -96,6 +96,16 @@
     "audit:experiments": "node scripts/audit-experiment-records.mjs",
     "audit:developer-report": "node scripts/audit-developer-report.mjs",
     "build": "tsc -p tsconfig.build.json",
+    "build:sdk-package": "npm run build && node scripts/stage-sdk-package.mjs",
+    "build:mcp-package": "tsc -p tsconfig.mcp-package.json && node scripts/stage-mcp-package.mjs",
+    "build:remote-mcp": "npm run build:mcp-package",
+    "pack:sdk": "npm run build:sdk-package && npm pack .artifacts/sdk-package --pack-destination .artifacts",
+    "pack:mcp": "npm run build:mcp-package && npm pack .artifacts/mcp-package --pack-destination .artifacts",
+    "test:sdk-package": "node scripts/test-sdk-package.mjs",
+    "test:mcp-package": "node scripts/test-mcp-package.mjs",
+    "test:remote-mcp": "node scripts/test-remote-mcp.mjs",
+    "test:vercel-mcp": "node --import tsx scripts/test-vercel-mcp.ts",
+    "test:cloudflare-gateway": "node --import tsx scripts/test-cloudflare-gateway.ts",
     "pack:check": "npm run build && npm pack --dry-run",
     "example:sdk": "node --env-file=.env --import tsx examples/sdk-usage.ts",
     "probe:post-transaction": "node --env-file=.env --import tsx scripts/probe-post-transaction.ts",
@@ -134,6 +144,16 @@
     "qrcode": "^1.5.4",
     "three": "^0.180.0",
     "undici": "^8.10.2",
-    "viem": "^2.56.9"
+    "viem": "^2.56.9",
+    "zod": "^4.6.5"
+  },
+  "directories": {
+    "doc": "docs",
+    "example": "examples"
+  },
+  "keywords": [],
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/lant1ng-1216/ariadne-tokenized-stocks/issues"
   }
 }

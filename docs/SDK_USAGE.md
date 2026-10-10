@@ -28,21 +28,26 @@ For an undecided user, start with `browse_tokenized_stock_catalog`, then use `re
 
 ## Install the standalone SDK
 
-The SDK can be consumed independently of the MCP server and any Agent host. It is **not published to npm** yet; install a local tarball from a source checkout:
+The SDK can be consumed independently of the MCP server and any Agent host. Install the public `0.1.0` release with:
+
+```bash
+npm install ariadne-tokenized-stocks@0.1.0
+```
+
+For source review or pre-publication verification, build the standalone staged package and install its local tarball:
 
 ```bash
 # Obtain and prepare the Ariadne source checkout
 git clone https://github.com/lant1ng-1216/ariadne-tokenized-stocks.git
 cd ariadne-tokenized-stocks
 npm ci
-npm run build
-npm pack
+npm run pack:sdk
 
-# In the consuming Node.js project, use the tarball path printed by `npm pack`
+# In the consuming Node.js project, use the tarball under .artifacts/
 npm install /absolute/path/to/ariadne-tokenized-stocks-0.1.0.tgz
 ```
 
-The supported runtime is Node.js `>=22.19.0` (required by the current HTTP transport dependency). The package currently exposes an **ES module** entry point; use `import` syntax (CommonJS `require()` is not exported). `npm run build` emits JavaScript and TypeScript declarations under `dist-package/`; the package root resolves to `dist-package/index.js` and `dist-package/index.d.ts`. `npm run pack:check` builds and inspects a tarball without publishing. `npm run test:cleanroom` goes further: it builds, installs that tarball in a disposable consumer project, and verifies runtime imports and declarations. Neither command publishes the package.
+The supported runtime is Node.js `>=22.19.0`. The standalone package exposes an **ES module** entry point; use `import` syntax (CommonJS `require()` is not exported). `npm run build:sdk-package` creates a lean package tree under `.artifacts/sdk-package/` with only the SDK runtime dependencies (`undici` and `viem`). `npm run pack:sdk` creates the local tarball. `npm run test:sdk-package` installs that staged tarball in a disposable consumer and exercises issuer-aware search and market context against a loopback fixture. `npm run test:cleanroom` independently verifies the repository package surface, runtime imports, declarations, and the same explicit issuer-selection boundary. These verification commands do not publish the package.
 
 ## Minimal SDK use
 

@@ -2,7 +2,7 @@ import { build } from "esbuild";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
-const entryPoint = fileURLToPath(new URL("./catalog-app.ts", import.meta.url));
+const entryPoint = fileURLToPath(new URL(import.meta.url.endsWith(".js") ? "./catalog-app.js" : "./catalog-app.ts", import.meta.url));
 export async function buildCatalogAppHtml(): Promise<string> {
   const bundle = await build({ entryPoints: [entryPoint], bundle: true, write: false, platform: "browser", format: "esm", target: ["es2022"], legalComments: "none", minify: true, logLevel: "silent" });
   const javascript = bundle.outputFiles[0]?.text;
