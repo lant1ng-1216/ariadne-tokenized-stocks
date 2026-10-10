@@ -120,7 +120,9 @@
     "mcp:config:demo": "node scripts/print-mcp-config.mjs demo",
     "mcp:config:live": "node scripts/print-mcp-config.mjs live",
     "typecheck": "tsc --noEmit",
-    "test:repository-scope": "node scripts/test-repository-scope.mjs"
+    "test:repository-scope": "node scripts/test-repository-scope.mjs",
+    "website:lint": "npm --prefix website run lint",
+    "website:build": "npm --prefix website run build"
   },
   "devDependencies": {
     "@types/node": "^26.6.2",
