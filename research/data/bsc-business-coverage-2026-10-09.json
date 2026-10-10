@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "recordType": "bsc-issuer-readiness-summary",
+  "observedAt": "2026-10-09T07:41:53.762Z",
+  "source": "Binance Web3 read-only BSC directory and quote audit",
+  "scope": {
+    "chainId": "56",
+    "inputAmount": "6 USDT",
+    "representationsReturned": 488,
+    "signed": false,
+    "broadcast": false
+  },
+  "issuers": {
+    "bStocks": {
+      "representations": 46,
+      "researchReady": 46,
+      "timestampedMarketDataAvailable": 46,
+      "quoteReady": 46,
+      "unsignedBuildReady": 46,
+      "providerOrRouteLimitations": 0,
+      "adapterOrContractFailures": 0
+    },
+    "Ondo": {
+      "representations": 442,
+      "researchReady": 442,
+      "timestampedMarketDataAvailable": 442,
+      "quoteReady": 239,
+      "unsignedBuildReady": 239,
+      "providerOrRouteLimitations": 203,
+      "adapterOrContractFailures": 0,
+      "limitationBreakdown": {
+        "nonTradingSession": 176,
+        "insufficientLiquidity": 25,
+        "invalidResponseEnvelope": 2
+      }
+    }
+  },
+  "method": "One bounded read-only audit counted provider-returned BSC representations by issuer, then recorded whether identity research, timestamped market data, quote retrieval, and unsigned transaction construction were available for a 6 USDT input at the observation time.",
+  "limitations": [
+    "The directory response is a returned-match snapshot, not a verified complete catalog.",
+    "Quote and build readiness are point-in-time and specific to the audited 6 USDT input; they do not establish future availability or tradability at other amounts.",
+    "Provider/route limitations are kept separate from Ariadne adapter or contract failures.",
+    "This aggregate is derived from the local audit record; individual representations and raw provider payloads are not published here."
+  ],
+  "walletAddressIncluded": false,
+  "rowLevelIdentitiesIncluded": false,
+  "rawProviderPayloadIncluded": false
+}

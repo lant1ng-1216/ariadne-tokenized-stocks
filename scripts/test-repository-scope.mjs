@@ -34,7 +34,7 @@ const requiredProductPaths = [
   "docs/QUICKSTART.md",
   "docs/SDK_USAGE.md",
   "docs/PRODUCT_SURFACE_ARCHITECTURE.md",
-  "docs/TECHNICAL_RESEARCH_REPORT.md",
+  "docs/DEVELOPER_EXPERIENCE_REPORT.md",
   "docs/PRODUCT_EXPERIENCE_REPORT.md",
   "docs/DEVELOPMENT_LOG.md",
   "examples/sdk-usage.ts",
@@ -156,14 +156,14 @@ assert.ok(packageJson.scripts["test:repository-scope"]);
 const readme = await readFile("README.md", "utf8");
 assert.match(readme, /TypeScript SDK/);
 assert.match(readme, /MCP server/);
-assert.match(readme, /technical research/);
+assert.match(readme, /Developer Experience Report/);
 assert.doesNotMatch(readme, /npm run web:|apps\/web|src\/web/i);
 
 const publicDocs = [
   "docs/QUICKSTART.md",
   "docs/SDK_USAGE.md",
   "docs/PRODUCT_SURFACE_ARCHITECTURE.md",
-  "docs/TECHNICAL_RESEARCH_REPORT.md",
+  "docs/DEVELOPER_EXPERIENCE_REPORT.md",
   "docs/PRODUCT_EXPERIENCE_REPORT.md",
   "docs/DEVELOPMENT_LOG.md",
   "docs/PRODUCT_LIMITATIONS.md",

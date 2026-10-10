@@ -1,6 +1,6 @@
 # Ariadne 产品开发记录
 
-本记录只描述 Ariadne SDK/MCP 产品本身的能力演进、验证范围和仍未证实的边界。研究数据与可复现命令分别见 [`TECHNICAL_RESEARCH_REPORT.md`](TECHNICAL_RESEARCH_REPORT.md) 和 [`research/`](../research/)。
+本记录只描述 Ariadne SDK/MCP 产品本身的能力演进、验证范围和仍未证实的边界。开发者体验评估见 [`DEVELOPER_EXPERIENCE_REPORT.md`](DEVELOPER_EXPERIENCE_REPORT.md)；研究数据与可复现命令见 [`research/`](../research/)。
 
 ## 2026-09 — SDK 与上游 API 基础
 
@@ -97,6 +97,6 @@
 ## 2026-10-09 — 创始人真实资金 bStocks NVDAB pilot 与交易后核验入口
 
 - owner 在外部 Edge 购买复核页中看到 MetaMask 自动弹出的精确购买请求，并亲自确认一笔 7 USDT 的 bStocks NVDAB BSC 主网交易。主购买交易 `0xfecb1e0eaa526d9dbc845c7c964307200d8fa38e47e4dd5e34aa8c89c95c7cd6` 成功，Transfer 日志显示到账 `0.029960179248028382 NVDAB`；MetaMask 导入后显示约 `0.0300 NVDAB`。
-- `0x32222508cf321b61727b569e16ad4077be550890e943910e6ca95f6ff0b41764` 是 MetaMask Gas Station 辅助交易，不是购买主体。结构化记录与 owner 指定的两张截图存放在 `records/ariadne-workflow/evidence/`。
+- `0x32222508cf321b61727b569e16ad4077be550890e943910e6ca95f6ff0b41764` 是 MetaMask Gas Station 辅助交易，不是购买主体。结构化记录与 owner 指定的两张截图保存在本地工作流档案中，未纳入公开仓库。
 - 购买页在得到有效购买哈希后显示精确 BscScan 链接，并用计划中的输出合约、符号、精度和可用 HTTPS 图标构造用户触发的 `wallet_watchAsset`。helper 不按 bStocks、Ondo 或具体股票写死；确定性测试覆盖 bStocks NVDAB、Ondo NVDAon 和 allowance 不显示该操作。
 - 证据边界：真实资金只验证了这一条 bStocks NVDAB 标准 BSC EVM 路线。Ondo/RFQ、其他股票、钱包与宿主未做 funded pilot。购买计划现已附带后台 MCP App 监听；它会登记钱包哈希、核验 BSC 最终性和余额，并用持久化抢占/完成标记避免重复终局消息。该新版主动回报需在下一次 owner 真实购买中验证；本轮没有请求钱包、签名、广播或花费资金。

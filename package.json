@@ -94,6 +94,7 @@
     "test:mcp-config": "node --import tsx scripts/check-mcp-config.ts",
     "test:sdk-example": "node --import tsx scripts/check-sdk-example.ts",
     "audit:experiments": "node scripts/audit-experiment-records.mjs",
+    "audit:developer-report": "node scripts/audit-developer-report.mjs",
     "build": "tsc -p tsconfig.build.json",
     "pack:check": "npm run build && npm pack --dry-run",
     "example:sdk": "node --env-file=.env --import tsx examples/sdk-usage.ts",

@@ -59,7 +59,7 @@ SDK 可独立集成，无需运行 MCP 服务或依赖特定 Agent。开发者�
 
 **Owner-only 定性输入（非代表性用户研究）。** 用户提供的重载后截图确认，当前连接的 Codex MCP App 中，`Unknown` 状态徽标与报价时间不再重叠；这只覆盖一个宿主和一个视图。用户还明确要求工作报告标出当前阶段、具体任务、通过/未通过项及原因。这是项目 owner 对协作与单次宿主体验的反馈，不是可推广的用户评分或可用性研究样本。
 
-最终复核中，Live MCP 测试确认 18 个工具可列出，并验证发现、比较、若干 Live 工具响应及未注册广播在本地 registry 被拒绝。复核脚本的 `create_stock_action_plan` 断言接受 `awaiting_confirmation` **或** `failed`，使用零地址且没有传入可确认所需的 Gas 预算；因此只证明收到了计划响应，不证明 Live 计划可执行。此前脚本把这个响应误标为 `planSucceeded`，现改为输出真实 `planStatus` 和 `planAwaitingConfirmation`。其 `simulate_stock_action_plan` 使用未注册的合成计划并断言拒绝；独立 `simulate_stock_action` 发送的是零值占位交易，也没有断言一份真实 ActionPlan 的模拟成功，现仅报告收到了零值模拟响应。钱包暴露和订单状态调用同样使用零地址。Demo 测试独立验证七个固定合成 ticker、issuer 比较和安全拦截。确认流程、执行防护与签名载荷测试使用进程内夹具或确定性测试密钥；它们证明本地状态机和拒绝条件，不证明真实钱包签名、资金广播或链上结算成功。完整命令与边界见 [`TECHNICAL_RESEARCH_REPORT.md`](TECHNICAL_RESEARCH_REPORT.md) 和 [`QUICKSTART.md`](QUICKSTART.md)。
+最终复核中，Live MCP 测试确认 18 个工具可列出，并验证发现、比较、若干 Live 工具响应及未注册广播在本地 registry 被拒绝。复核脚本的 `create_stock_action_plan` 断言接受 `awaiting_confirmation` **或** `failed`，使用零地址且没有传入可确认所需的 Gas 预算；因此只证明收到了计划响应，不证明 Live 计划可执行。此前脚本把这个响应误标为 `planSucceeded`，现改为输出真实 `planStatus` 和 `planAwaitingConfirmation`。其 `simulate_stock_action_plan` 使用未注册的合成计划并断言拒绝；独立 `simulate_stock_action` 发送的是零值占位交易，也没有断言一份真实 ActionPlan 的模拟成功，现仅报告收到了零值模拟响应。钱包暴露和订单状态调用同样使用零地址。Demo 测试独立验证七个固定合成 ticker、issuer 比较和安全拦截。确认流程、执行防护与签名载荷测试使用进程内夹具或确定性测试密钥；它们证明本地状态机和拒绝条件，不证明真实钱包签名、资金广播或链上结算成功。完整研究结论见 [`DEVELOPER_EXPERIENCE_REPORT.md`](DEVELOPER_EXPERIENCE_REPORT.md)，复现步骤与边界见 [`QUICKSTART.md`](QUICKSTART.md)。
 
 ## 真实资金交易闭环审查（2026-10-05）
 
@@ -99,7 +99,7 @@ Ariadne 的体验差异点不是一个孤立的“聊天机器人”或通用行
 
 owner 在当前 Codex + 外部 Edge + MetaMask 环境中亲自走完了以下路径：研究和比较 BSC 上的 NVDA 表示，明确选择 bStocks `NVDAB`，创建 7 USDT 购买计划，通过 Agent 返回的外部浏览器链接进入购买复核页，页面主动唤起 MetaMask，owner 核对并确认交易，随后在 BscScan 查看主购买交易并在 MetaMask 导入 NVDAB。
 
-主购买交易是 `0xfecb1e0eaa526d9dbc845c7c964307200d8fa38e47e4dd5e34aa8c89c95c7cd6`，链上状态成功，实际到账 `0.029960179248028382 NVDAB`。MetaMask Gas Station 的 `0x32222508cf321b61727b569e16ad4077be550890e943910e6ca95f6ff0b41764` 是辅助交易，不能作为购买主体展示。完整结构化证据见 [`founder-funded-bsc-purchase-2026-10-09.json`](../records/ariadne-workflow/evidence/founder-funded-bsc-purchase-2026-10-09.json)。本次报告仅采用 owner 指定的 [MetaMask 资产截图](../records/ariadne-workflow/evidence/media/2026-10-09-founder-funded-nvdab-metamask.png)和 [BscScan 主交易截图](../records/ariadne-workflow/evidence/media/2026-10-09-founder-funded-nvdab-bscscan.png)。
+主购买交易是 [`0xfecb1e0eaa526d9dbc845c7c964307200d8fa38e47e4dd5e34aa8c89c95c7cd6`](https://bscscan.com/tx/0xfecb1e0eaa526d9dbc845c7c964307200d8fa38e47e4dd5e34aa8c89c95c7cd6)，链上状态成功，实际到账 `0.029960179248028382 NVDAB`。MetaMask Gas Station 的 `0x32222508cf321b61727b569e16ad4077be550890e943910e6ca95f6ff0b41764` 是辅助交易，不能作为购买主体展示。owner 指定的 MetaMask 与 BscScan 截图保存在本地工作流档案中，未纳入公开仓库。
 
 这次体验证明了当前受测 bStocks NVDAB 路线能够从自然语言研究推进到 owner 钱包确认和链上到账。它不证明 Ondo 或其他股票已经过真实资金购买测试；BSC 研究范围仍同时包含 bStocks 与 Ondo。该次广播没有触发 Agent 主动终局报告；购买计划现已接入同一 handoff 的后台监听、精确核验与去重消息回报，等待下一次 owner 真实购买验证宿主闭环。
 
