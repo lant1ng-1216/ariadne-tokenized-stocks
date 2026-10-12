@@ -60,8 +60,8 @@ RFQ 和其他路线存在各自的外部签名边界。2026-10-09 的单笔 owne
 | 行情上下文与来源 | 保留来源字段、时间戳与数据警告 | 无已验证的新鲜度 SLA；上游目录缺少部分时间戳、流动性或状态 |
 | Agent 意图研究 | 提供高层 MCP 工具，中文和英文有本地覆盖 | 自动选工具取决于宿主，不由 Ariadne 保证 |
 | MCP App 研究卡 | 提供只读原生 UI 资源并有确定性本地渲染测试 | 不等于所有 Agent 宿主上的视觉一致性验证 |
-| SDK 分发 | 可本地构建 npm tarball 并通过隔离消费者测试 | 尚未发布到 npm |
-| Hosted MCP | 有本地 Streamable HTTP Demo | 不是线上服务；公开部署还需认证、隔离、运维与凭证方案 |
+| SDK 分发 | npm `ariadne-tokenized-stocks@0.1.0` 已发布；本地源码有后续改动 | 发布包不自动包含未发布的源码修复 |
+| Hosted MCP | 独立 Vercel Streamable HTTP 服务，OAuth 登录；Live 研究及非广播审查链接经干净客户端验证 | 钱包绑定报价、签名、广播和远程结算尚未完成端到端实测；MCP App 视觉呈现取决于宿主 |
 | 交易执行 | 计划、模拟、确认、单次受保护的标准 EVM 路径，以及购买计划后的后台哈希登记/终局回报已实现；一笔 owner-funded bStocks NVDAB 主网购买成功 | Ondo/RFQ、跨资产可靠性和新版 Agent 自动终局回报的 owner-host 实测未验证 |
 
 ## 本仓库范围

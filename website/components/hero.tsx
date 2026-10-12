@@ -8,7 +8,7 @@ import { copyText } from "./copy-text";
 import { HeroBackground } from "./hero-background";
 
 const commands = {
-  MCP: "npx -y ariadne-tokenized-stocks-mcp@0.1.0",
+  MCP: "https://ariadne-remote-mcp.vercel.app/api/mcp",
   SDK: "npm install ariadne-tokenized-stocks@0.1.0",
 } as const;
 
@@ -39,10 +39,10 @@ export function Hero() {
           </div>
         </div>
         <div className="hero-command">
-          <code title={command}><span aria-hidden="true">$</span> {command}</code>
-          <button type="button" onClick={copyCommand} aria-label={`Copy ${surface} command`}>{copied ? "Copied" : "Copy"}</button>
+          <code title={command}>{surface === "SDK" ? <><span aria-hidden="true">$</span> </> : null}{command}</code>
+          <button type="button" onClick={copyCommand} aria-label={`Copy ${surface === "MCP" ? "remote MCP URL" : "SDK install command"}`}>{copied ? "Copied" : "Copy"}</button>
         </div>
-        <p className="install-note" aria-live="polite">{copied ? "Copied to clipboard" : surface === "MCP" ? "Local stdio MCP · Live or Demo" : "TypeScript SDK · Live API · server-side credentials"}</p>
+        <p className="install-note" aria-live="polite">{copied ? "Copied to clipboard" : surface === "MCP" ? "Remote MCP · Live data · sign in through your MCP client" : "TypeScript SDK · Live API · server-side credentials"}</p>
       </div>
       <div className="hero-signature" aria-label="Ariadne brand mark">
         <span className="signature-thread" />

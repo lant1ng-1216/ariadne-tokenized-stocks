@@ -385,6 +385,7 @@ function renderPlan(value: Record<string, unknown>) {
   const display = value.display as Record<string, unknown> | undefined;
   const request = value.request as Record<string, unknown> | undefined;
   const isPlanReview = value.reviewMode === "purchase_plan";
+  const isPurchaseIntent = value.reviewMode === "purchase_intent";
   const details = document.querySelector<HTMLElement>("#plan");
   if (!details || !display) return;
   const allowance = display.operation === "allowance_approval";
@@ -399,7 +400,12 @@ function renderPlan(value: Record<string, unknown>) {
   const assetLogoFallback = document.querySelector<HTMLElement>("#asset-logo-fallback");
   const issuerLogo = document.querySelector<HTMLImageElement>("#issuer-logo");
   const marketSymbol = document.querySelector<HTMLElement>("#market-symbol");
-  if (isPlanReview) {
+  if (isPurchaseIntent) {
+    if (title) title.textContent = ui("先看清标的，再连接钱包", "Review the asset before connecting your wallet");
+    if (eyebrow) eyebrow.textContent = ui("BSC 股票购买意向", "BSC stock purchase intent");
+    if (lede) lede.textContent = ui("标的与金额已保存。连接 MetaMask 后，Ariadne 才会为你的账户获取精确报价、授权情况和网络费；此时没有交易请求。", "The asset and amount are saved. Only after MetaMask provides your account will Ariadne request an exact quote, allowance and network fee. No transaction request exists yet.");
+    if (section) section.textContent = ui("购买意向 → 钱包绑定报价", "Purchase intent → Wallet-bound quote");
+  } else if (isPlanReview) {
     if (title) title.textContent = ui("沿着这条线，继续你的买入", "Continue this purchase intent");
     if (eyebrow) eyebrow.textContent = ui("同一份 BSC 买入计划", "One BSC purchase intent");
     if (lede) lede.textContent = ui("原计划不会因报价更新而消失。Ariadne 会继续沿用同一钱包、标的、金额和限制，对照 Binance Web3 的最新行情与执行报价。", "Quote updates do not erase your intent. Ariadne keeps the same wallet, asset, amount and limits while comparing current Binance Web3 market and execution data.");
@@ -423,7 +429,7 @@ function renderPlan(value: Record<string, unknown>) {
   const originalExpected = purchaseBaseline
     ? formatBaseUnits(purchaseBaseline.expectedOutput, purchaseBaseline.outputDecimals)
     : "—";
-  const currentExpected = allowance
+  const currentExpected = isPurchaseIntent ? ui("连接钱包后计算", "After wallet connection") : allowance
     ? originalExpected
     : escapeText(display.expectedOutput);
   const currentChange = !allowance && purchaseBaseline
@@ -487,7 +493,7 @@ function renderPlan(value: Record<string, unknown>) {
   setCompactValue(expectedNode, `${compactDecimal(currentExpected)} ${outputSymbol}`);
   if (orderOutputNode) orderOutputNode.textContent = `${currentExpected} ${outputSymbol}`;
   if (outputChangeNode) outputChangeNode.textContent = currentChange;
-  const minimumText = allowance
+  const minimumText = isPurchaseIntent ? ui("连接钱包后计算", "After wallet connection") : allowance
     ? `${formatBaseUnits(purchaseBaseline?.minimumOutput, purchaseBaseline?.outputDecimals)} ${outputSymbol}`
     : `${escapeText(display.minimumOutput)} ${outputSymbol}`;
   const baselineMinimumText = purchaseBaseline
@@ -506,7 +512,7 @@ function renderPlan(value: Record<string, unknown>) {
   if (executionRequestNode) executionRequestNode.textContent = allowance
     ? `${escapeText(display.issuer)} · ${ui("授权", "allow")} ${escapeText(display.inputSymbol)}`
     : `${escapeText(display.issuer)} · ${outputSymbol}`;
-  if (executionWalletNode) executionWalletNode.textContent = `${escapeText(value.account).slice(0, 6)}…${escapeText(value.account).slice(-4)}`;
+  if (executionWalletNode) executionWalletNode.textContent = isPurchaseIntent ? ui("尚未连接", "Not connected") : `${escapeText(value.account).slice(0, 6)}…${escapeText(value.account).slice(-4)}`;
   if (executionBoundaryNode) executionBoundaryNode.textContent = `${ui("滑点", "Slippage")} ≤ ${(Number(display.slippageBps) / 100).toFixed(2)}%`;
   const allowanceCurrent = typeof display.allowanceCurrent === "string" ? display.allowanceCurrent : undefined;
   const allowanceRequired = typeof display.allowanceRequired === "string" ? display.allowanceRequired : escapeText(display.inputAmount);
@@ -522,7 +528,7 @@ function renderPlan(value: Record<string, unknown>) {
     ? `${currentNetworkFee} BNB`
     : allowance
       ? `≤ ${escapeText(display.maxGasCostBnb)} BNB`
-      : ui("本次未能估算", "Unavailable"), 10);
+    : isPurchaseIntent ? ui("连接钱包后估算", "After wallet connection") : ui("本次未能估算", "Unavailable"), 10);
   if (baselineNetworkFeeNode) setCompactValue(baselineNetworkFeeNode, baselineNetworkFee ? `${baselineNetworkFee} BNB` : ui("原计划未提供", "Not available in intent"), 10);
   const networkFeeChange = currentNetworkFee && baselineNetworkFee
     ? outputChangePercent(decimalToBaseUnits(currentNetworkFee, 18), decimalToBaseUnits(baselineNetworkFee, 18)) ?? "无法比较"
@@ -539,7 +545,16 @@ function renderPlan(value: Record<string, unknown>) {
   if (baselineNote) baselineNote.textContent = allowance ? ui("授权后会复核同一份计划", "Intent is rechecked after allowance") : ui("计划确认时", "At intent confirmation");
   if (amountNode) amountNode.setAttribute("aria-label", inputAmount);
   void renderChartForToken(display);
-  const rows: Array<[string, unknown]> = allowance ? [
+  const rows: Array<[string, unknown]> = isPurchaseIntent ? [
+    ["买入金额", `${escapeText(display.inputAmount)} ${escapeText(display.inputSymbol)}`],
+    ["发行方与标的", `${escapeText(display.issuer)} · ${escapeText(display.ticker)} · ${outputSymbol}`],
+    ["股票代币合约", escapeText(display.outputContract)],
+    ["钱包地址", ui("尚未连接", "Not connected")],
+    ["预计到账", ui("连接钱包后计算", "After wallet connection")],
+    ["最大滑点", `${(Number(display.slippageBps) / 100).toFixed(2)}%`],
+    ["网络费上限", ui("连接钱包后估算", "After wallet connection")],
+    ["计划有效期", new Date(Number(value.expiresAt)).toLocaleString()]
+  ] : allowance ? [
     ["本次授权", `允许使用 ${escapeText(display.inputAmount)} ${escapeText(display.inputSymbol)}`],
     ["确认的买入计划", `${escapeText(display.inputAmount)} ${escapeText(display.inputSymbol)} → ${escapeText(display.ticker)} · ${escapeText(display.outputSymbol)}`],
     ["计划预计到账", purchaseBaseline ? `${formatBaseUnits(purchaseBaseline.expectedOutput, purchaseBaseline.outputDecimals)} ${escapeText(display.outputSymbol)}` : "原计划未提供，不能自动继续"],
@@ -830,7 +845,7 @@ async function reportClientStage(stage: ClientStage, detail?: string) {
   if (!handoffId || !capability) return;
   try {
     snapshot = await relay(`/api/handoffs/${encodeURIComponent(handoffId)}/client-stage`, {
-      method: "POST", body: JSON.stringify({ stage, detail })
+      method: "POST", body: JSON.stringify({ stage, detail }), signal: AbortSignal.timeout(5_000)
     });
   } catch {
     // The visible stage remains useful even if the local relay cannot persist diagnostics.
@@ -1100,7 +1115,10 @@ async function initialize() {
   await reportClientStage("page_loaded");
   snapshot = await relay(`/api/handoffs/${encodeURIComponent(handoffId)}`);
   if (snapshot.reviewMode === "purchase_intent") {
-    setIntroStatus(ui("购买意向已载入，正在读取当前 MetaMask 账户…", "Purchase intent loaded. Reading the current MetaMask account…"));
+    renderPlan(snapshot);
+    await revealDashboard();
+    setWalletStage("account", ui("购买意向已载入。请在 MetaMask 中选择账户；精确报价和交易请求尚未创建。", "Purchase intent loaded. Select an account in MetaMask; no exact quote or transaction request exists yet."));
+    void updateMarketUntilDone();
     await reportClientStage("provider_discovery_started");
     const selected = await discoverWallet();
     await reportClientStage("provider_selected", selected.source);

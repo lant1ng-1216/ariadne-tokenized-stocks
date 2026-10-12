@@ -56,6 +56,12 @@ const liveNoMatch = await searchAssetIntent({
   },
 }, "我想了解 BNB Chain 上英伟达股票代币有哪些发行方版本，不要交易。", { chainId: "56" });
 assert.equal(liveNoMatch.resolvedQuery, "NVDA");
+const searchEndpointDown = await searchAssetIntent({
+  ...source,
+  async search() { throw new BinanceWeb3Error("Binance Web3 API 200: Internal server error, please retry later", 200, 200, false); },
+}, "NVDA", { chainId: "56" });
+assert.equal(searchEndpointDown.assets.length, 1);
+assert.match(searchEndpointDown.assets[0]?.collectionWarnings?.join(" ") ?? "", /Provider search was unavailable/);
 await assert.rejects(searchAssetIntent({
   ...source,
   async search() { throw new BinanceWeb3Error("upstream unavailable", 503, 503, true); },

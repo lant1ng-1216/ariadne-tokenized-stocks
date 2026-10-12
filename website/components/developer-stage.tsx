@@ -5,18 +5,16 @@ import { copyText } from "./copy-text";
 
 const examples = {
   MCP: {
-    file: "agent-config.json",
-    package: "https://www.npmjs.com/package/ariadne-tokenized-stocks-mcp",
-    language: "JSON",
-    code: `{
-  "mcpServers": {
-    "ariadne-tokenized-stocks": {
-      "command": "npx",
-      "args": ["-y", "ariadne-tokenized-stocks-mcp@0.1.0"],
-      "env": { "ARIADNE_MODE": "demo" }
-    }
-  }
-}`,
+    file: "remote-mcp.txt",
+    language: "URL",
+    code: `Add a remote MCP server in your client
+Name: Ariadne
+Transport: Streamable HTTP
+URL: https://ariadne-remote-mcp.vercel.app/api/mcp
+Sign in when your client opens the authorization page.
+
+Explore BSC tokenized stocks, compare issuers,
+and review a purchase intent before using a wallet.`,
   },
   SDK: {
     file: "research.ts",
@@ -36,7 +34,7 @@ const assets = await stocks.search("NVDA", { chainId: "56" });`,
 } as const;
 
 type Integration = keyof typeof examples;
-const tokenPattern = /(\/(?:\/).*$|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\b(?:import|from|const|new|await|process|env|true|false)\b|\b\d+\b|[{}[\](),.:;])/g;
+const tokenPattern = /(^\s*\/\/.*$|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\b(?:import|from|const|new|await|process|env|true|false)\b|\b\d+\b|[{}[\](),.:;])/g;
 
 function colorizeLine(line: string) {
   return line.split(tokenPattern).filter((part) => part !== undefined && part !== "").map((part, index) => {
@@ -65,10 +63,10 @@ export function DeveloperStage() {
     <div className="developer-intro">
       <p className="eyebrow">For agent builders</p>
       <h2 id="developer-title">Built for<br /><span>market agents.</span></h2>
-      <p className="developer-lede">Start with the local MCP server inside your agent host, or import the TypeScript SDK into your own application. Use the surface that fits the product you are making.</p>
-      <div className="integration-types"><span><b>MCP</b> agent-native</span><span><b>SDK</b> app-native</span><span><b>Demo</b> start locally</span></div>
+      <p className="developer-lede">Connect your agent to Ariadne's remote MCP service, or import the TypeScript SDK into your own application. Choose the surface that fits what you are building.</p>
+      <div className="integration-types"><span><b>MCP</b> remote service</span><span><b>SDK</b> app-native</span><span><b>Live</b> BSC research</span></div>
       <div className="developer-links">
-        <a href="https://www.npmjs.com/package/ariadne-tokenized-stocks-mcp" target="_blank" rel="noreferrer">MCP package</a>
+        <a href="https://github.com/lant1ng-1216/ariadne-tokenized-stocks/blob/main/docs/QUICKSTART.md" target="_blank" rel="noreferrer">Connect remote MCP</a>
         <a href="https://www.npmjs.com/package/ariadne-tokenized-stocks" target="_blank" rel="noreferrer">SDK package</a>
       </div>
     </div>
@@ -82,7 +80,7 @@ export function DeveloperStage() {
         {(["MCP", "SDK"] as const).map((name) => <button type="button" key={name} role="tab" aria-selected={active === name} onClick={() => { setActive(name); setCopied(false); }}>{name}</button>)}
       </div>
       <pre aria-label={`${active} integration example`}><code>{example.code.split("\n").map((line, index) => <span className="code-line" key={index}><span className="code-line-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span><span>{line ? colorizeLine(line) : " "}</span></span>)}</code></pre>
-      <div className="terminal-foot"><span>{example.language} · {example.file}</span><span>{active === "MCP" ? "LOCAL STDIO · LIVE OR DEMO" : "TYPED CLIENT · SERVER SIDE"}</span></div>
+      <div className="terminal-foot"><span>{example.language} · {example.file}</span><span>{active === "MCP" ? "REMOTE MCP · OAUTH SIGN-IN" : "TYPED CLIENT · SERVER SIDE"}</span></div>
     </div>
   </section>;
 }

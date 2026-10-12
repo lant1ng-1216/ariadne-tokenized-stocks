@@ -41,7 +41,7 @@ export async function searchAssetIntent(
   } catch (error) {
     // The live API reports a no-match search as a business error rather than [].
     // Preserve every other upstream failure instead of disguising it as an empty result.
-    if (!(error instanceof BinanceWeb3Error && error.status === 200 && /No matching RWA assets found for keyword:/i.test(error.message))) throw error;
+    if (!(error instanceof BinanceWeb3Error && error.status === 200 && (/No matching RWA assets found for keyword:/i.test(error.message) || /Internal server error, please retry later/i.test(error.message)))) throw error;
     direct = [];
   } finally {
     diagnostics.durationsMs.directSearch = elapsedMs(directSearchStartedAt);
@@ -70,7 +70,16 @@ export async function searchAssetIntent(
   const resolvedQuery = matchedTickers[0];
   diagnostics.calls.resolvedSearch += 1;
   const resolvedSearchStartedAt = performance.now();
-  const assets = await source.search(resolvedQuery, options);
+  let assets: StockAsset[];
+  try {
+    assets = await source.search(resolvedQuery, options);
+  } catch (error) {
+    if (!(error instanceof BinanceWeb3Error && error.status === 200 && /Internal server error, please retry later/i.test(error.message))) throw error;
+    assets = catalog.filter((item) => item.underlyingTicker === resolvedQuery).map((item) => ({
+      ...item,
+      collectionWarnings: [...(item.collectionWarnings ?? []), "Provider search was unavailable; identity was resolved from the current provider directory"]
+    }));
+  }
   diagnostics.durationsMs.resolvedSearch = elapsedMs(resolvedSearchStartedAt);
   return { assets, resolvedQuery, diagnostics };
 }

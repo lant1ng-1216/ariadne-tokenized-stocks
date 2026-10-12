@@ -1,24 +1,30 @@
 # Ariadne
 
-**A TypeScript SDK and Model Context Protocol (MCP) server for issuer-aware research and guarded workflows for tokenized stocks and real-world assets on BNB Chain.**
+**Issuer-aware tokenized-stock research and user-reviewed purchase preparation on BNB Chain.** Use Ariadne through a hosted MCP service, a local stdio MCP package, or a TypeScript SDK.
 
-Ariadne preserves the identity of each provider-returned representation—issuer, chain, contract, and token symbol—while exposing market context, data provenance, warnings, and explicit action boundaries. It integrates with existing MCP-capable Agent hosts or can be used directly from a Node.js application through the SDK.
+[Product website](https://ariadne-taupe.vercel.app) · [Remote MCP connection guide](docs/REMOTE_MCP_USAGE.md)
 
-The MCP server supports credential-free Demo configuration and authenticated Live configuration; the SDK can be integrated independently.
+Ariadne keeps issuer, chain, contract and token identity attached to each provider-returned representation. Research results include provenance and warnings; an agent can prepare a purchase for review, but the user controls wallet access and any transaction.
 
-## Requirements
+## Connect to the remote MCP service
 
-- Node.js `>=22.19.0`
-- npm
-- For Live API calls: Binance Web3 API key and secret, supplied to the local MCP process or Node.js application
-- For purchase-plan browser handoff: a configured, reachable Ariadne wallet-handoff relay; read-only research does not require it
-- A wallet is needed only if a user chooses to continue through the wallet-confirmation flow; Ariadne never stores private keys
+In an MCP client that supports **Streamable HTTP and OAuth**, add a remote server named `ariadne-tokenized-stocks` with this URL:
 
-## Try the MCP package (Demo quick start)
+```text
+https://ariadne-remote-mcp.vercel.app/api/mcp
+```
 
-The published `ariadne-tokenized-stocks-mcp` package is the full local stdio MCP server. It supports both Live provider calls and a credential-free Demo mode; this first-run example explicitly selects Demo mode and uses a limited synthetic sample. The local stdio package is the recommended competition path because it runs on the evaluator's machine and avoids the observed cloud-egress limitation of the experimental Remote MCP deployment.
+Follow the client's sign-in and authorization flow. You do **not** need to install the MCP npm package, supply a Binance API key, or run a local relay to use this hosted service. The hosted service performs Live BSC research; it is not the synthetic Demo mode. Client menus and configuration formats vary, so choose the client's remote/HTTP MCP option rather than its local-command or stdio option.
 
-Add this configuration to your MCP host:
+Once connected, try: “Show me the BSC tokenized stocks currently returned for NVDA. Compare the issuers, explain the data limits, and keep this read-only.” If your client supports MCP Apps, it may show Ariadne's native views; other clients can use the structured/text tool results. The agent host still decides whether to invoke a tool, so inspect its tool activity when evaluating the connection.
+
+The remote service has been verified for Live discovery, issuer-aware research and a **non-broadcast** purchase-intent review link. A user wallet connection, wallet-bound quote, signature, broadcast and final settlement have not been established as a generally working hosted flow. A MetaMask risk warning was observed during the clean-host wallet test; do not bypass a wallet warning to complete a demo. [Remote MCP usage and status](docs/REMOTE_MCP_USAGE.md) records the exact boundary.
+
+## Use the local MCP package
+
+The published `ariadne-tokenized-stocks-mcp` package is the full **local stdio** MCP server, with Live and optional Demo modes. It is useful if your client cannot connect to remote OAuth MCP or if you want to run the server yourself. It requires Node.js `>=22.19.0` and an MCP host that can launch a local process.
+
+For a credential-free *synthetic Demo* only:
 
 ```json
 {
@@ -32,67 +38,49 @@ Add this configuration to your MCP host:
 }
 ```
 
-Demo Mode is deterministic, read-only, and credential-free. It is only a quick product walkthrough; it is not Live market data and is not evidence that provider calls work. Restart or reload the MCP host after saving the configuration, then ask it to browse BSC tokenized stocks or compare issuer representations. For Live package setup, including safe credential and optional proxy configuration, follow [MCP Package Usage](docs/MCP_USAGE.md).
+For **local Live** data, configure `BINANCE_WEB3_API_KEY` and `BINANCE_WEB3_API_SECRET` in the MCP child process. Set `BINANCE_WEB3_PROXY_URL` only if your network requires an HTTP proxy. Read-only research needs no wallet or relay. Creating a browser purchase handoff locally has additional relay configuration. The package does not automatically read this repository's `.env`; follow the [local MCP package guide](docs/MCP_USAGE.md) for exact setup and limits.
 
-### Source-checkout fallback
+## Use the TypeScript SDK
 
-```bash
-git clone https://github.com/lant1ng-1216/ariadne-tokenized-stocks.git
-cd ariadne-tokenized-stocks
-npm ci
-npm run mcp:config:demo
-```
-
-Add the generated configuration to an MCP-capable Agent host. The command uses the current local checkout path and needs no Binance credentials or wallet.
-
-For an undecided user, try browsing the BSC catalog first. After choosing a company, ask the Agent to research or compare its returned issuer representations. Host-side tool selection depends on the Agent; tools can also be invoked explicitly.
-
-## Live MCP configuration
-
-```bash
-cp .env.example .env
-# Set BINANCE_WEB3_API_KEY and BINANCE_WEB3_API_SECRET in the local .env file.
-# Set BINANCE_WEB3_PROXY_URL only if this network requires an HTTP proxy.
-npm run mcp:config:live
-```
-
-Run this from a source checkout after `npm ci`. The generated MCP configuration uses the checkout's `.env` through Node's `--env-file` option and embeds the current checkout path. Keep `.env` local and never commit credential values. The Live stdio package requires the two Binance variables; the proxy is optional and is passed as `proxyUrl` when configured. Read-only research needs no relay or wallet. Creating a browser purchase handoff additionally requires the relay variables documented in [API Configuration](API_CONFIGURATION.md) and [Wallet Host Bridge](docs/ARIADNE_WALLET_HOST_BRIDGE.md), followed by explicit user review and wallet confirmation.
-
-## TypeScript SDK
-
-Install the standalone SDK in a Node.js application:
+In a Node.js application (Node.js `>=22.19.0`):
 
 ```bash
 npm install ariadne-tokenized-stocks@0.1.0
 ```
 
-See [SDK usage](docs/SDK_USAGE.md) for imports, explicit issuer selection, data provenance, ActionPlan preparation, and the guarded BSC EVM execution boundary. A source-checkout tarball workflow remains documented for offline review and release verification.
+The SDK makes authenticated Binance Web3 calls from your application. Supply your own Binance Web3 API key and secret server-side, explicitly select the issuer representation returned by research, then request market context or prepare a guarded action. The SDK has no hosted OAuth shortcut. See [SDK usage](docs/SDK_USAGE.md) for imports and the supported execution boundary.
+
+## Repository map
+
+| Path | Purpose |
+| --- | --- |
+| `src/` | SDK, domain model and local MCP implementation |
+| `remote-mcp/` | Hosted MCP, OAuth and wallet-review application |
+| `website/` | Next.js product site |
+| `examples/` | Standalone SDK example |
+| `docs/` | Developer setup, API configuration and product limits |
+| `scripts/` | Build and verification scripts |
+
+The hosted service and website are separate deployments. The remote source must remain with the public project for reproducibility; moving it to an internal archive would break that relationship. Internal research artifacts are being reviewed separately from product code.
 
 ## Documentation
 
-- [Quickstart](docs/QUICKSTART.md) — Demo and Live MCP setup
-- [MCP package usage](docs/MCP_USAGE.md) — public stdio package, Live environment, relay prerequisites, and host boundaries
-- [SDK usage](docs/SDK_USAGE.md) — standalone SDK integration and execution boundary
-- [API configuration](API_CONFIGURATION.md) — environment-variable meanings and where each one is required
-- [Developer Experience Report](docs/DEVELOPER_EXPERIENCE_REPORT.md) — English, evidence-based evaluation of onboarding, documentation, API behavior, Agent integration, market observations, and engineering recommendations
-- [Product limitations](docs/PRODUCT_LIMITATIONS.md) — provider, host, route, distribution, and evidence boundaries
-- [Product architecture](docs/PRODUCT_SURFACE_ARCHITECTURE.md) — SDK, MCP, Agent, and wallet responsibilities
-- [API capability matrix](docs/API_CAPABILITY_MATRIX.md) — mapped API and product capabilities
-- [Third-party notices](docs/THIRD_PARTY_NOTICES.md) — dependency and license notices
-- [Remote MCP deployment](docs/REMOTE_MCP_DEPLOYMENT.md) — experimental HTTP delivery and the current cloud Live-data limitation
+- [Quickstart](docs/QUICKSTART.md) — remote MCP first, then local MCP and SDK
+- [Remote MCP usage and status](docs/REMOTE_MCP_USAGE.md) — connection, authentication, verified capabilities and limits
+- [Local MCP package usage](docs/MCP_USAGE.md) — stdio Live and Demo configuration
+- [SDK usage](docs/SDK_USAGE.md) — direct TypeScript integration
+- [API configuration](API_CONFIGURATION.md) — local environment variables and relay prerequisites
+- [Developer Experience Report](docs/DEVELOPER_EXPERIENCE_REPORT.md)
+- [Product limitations](docs/PRODUCT_LIMITATIONS.md)
+- [Third-party notices](docs/THIRD_PARTY_NOTICES.md)
 
-## Development checks
+## Development
 
 ```bash
+npm ci
 npm run typecheck
-npm run test:domain
-npm run test:demo-mode
-npm run test:repository-scope
-npm run audit:experiments
 ```
 
-Some Live checks require credentials and contact Binance Web3 read or quote endpoints. Consult each command's script before running it.
+Some scripts contact Live provider endpoints; inspect their commands and provide credentials only when needed. Ariadne never asks for or stores a wallet private key. Source checks, fixture results and a historic BSC pilot do not prove that every issuer route or the current hosted wallet journey completes a funded transaction.
 
-## Project boundary
-
-Ariadne is an integration layer, not an autonomous Agent or wallet. The Agent host interprets natural language and chooses MCP tools; Ariadne provides the domain tools and structured results. MCP App rendering depends on host support. The SDK and MCP do not hold private keys, and local test success does not prove provider completeness, universal cross-host behavior, or funded execution for every asset and issuer. The experimental Vercel Remote MCP transport is deployed, but the verified cloud-egress path returned Binance compliance code `40304`; Remote MCP Live is not the recommended competition evaluation route. Use local stdio for the supported evaluator path.
+Licensed under [MIT](LICENSE).

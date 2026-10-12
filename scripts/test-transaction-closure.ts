@@ -418,6 +418,24 @@ assert.equal(approvalPlan.nativeBalanceBnb, undefined, "approval preparation lea
 assert.equal(approvalPlan.unsignedTransaction?.gas, "0x186a0");
 assert.equal(approvalPlan.unsignedTransaction?.gasPrice, "0x5f5e100");
 assert.equal(approvalPlan.gasBudgetSource, "provider_high_tier_estimate");
+const approvalAttestationKey = "remote-allowance-test-secret-with-32-chars-minimum";
+approvalService.configureDurableApprovalAttestation(approvalAttestationKey);
+const approvalAttestation = approvalService.attestPreparedApprovalPlan(approvalPlan);
+const restartedApprovalService = new TokenizedStocksService(
+  mockClient as any, async () => allowanceAfterWalletApproval,
+  async () => 3_000_000_000_000_000_000n, metadataReader,
+  async () => approvalReceipt, async () => approvalTransaction,
+  async () => approvalFinalizedBlock, async () => 1_000_000_000_000_000n
+);
+restartedApprovalService.configureDurableApprovalAttestation(approvalAttestationKey);
+const restoredApprovalPlan = JSON.parse(JSON.stringify(approvalPlan));
+const restoredWithoutAttestation = await restartedApprovalService.refreshBscPurchaseAfterApproval({ approvalPlan: restoredApprovalPlan, txHash: `0x${"cd".repeat(32)}` });
+assert.equal(restoredWithoutAttestation.status, "blocked", "a restored allowance cannot bypass the server attestation");
+const restoredWithAttestation = await restartedApprovalService.refreshBscPurchaseAfterApproval({ approvalPlan: restoredApprovalPlan, txHash: `0x${"cd".repeat(32)}`, durableAttestation: approvalAttestation });
+assert.equal(restoredWithAttestation.status, "pending", "an unchanged allowance survives a fresh service instance without treating an absent receipt as success");
+const tamperedRestoredApprovalPlan = { ...restoredApprovalPlan, spender: router };
+const tamperedRestored = await restartedApprovalService.refreshBscPurchaseAfterApproval({ approvalPlan: tamperedRestoredApprovalPlan, txHash: `0x${"cd".repeat(32)}`, durableAttestation: approvalAttestation });
+assert.equal(tamperedRestored.status, "blocked", "a mutated restored allowance invalidates the attestation");
 const noGasService = new TokenizedStocksService(
   mockClient as any, async () => 0n, async () => 3_000_000_000_000_000_000n, metadataReader,
   undefined, undefined, undefined, async () => 0n

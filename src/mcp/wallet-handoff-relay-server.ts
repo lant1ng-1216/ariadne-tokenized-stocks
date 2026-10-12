@@ -14,11 +14,12 @@ import { buildExternalWalletApprovalPageHtml } from "./ui/external-wallet-approv
 import { WalletHandoffStore, type ExternalWalletAllowancePreparation, type ExternalWalletCandle, type ExternalWalletCandleInterval, type ExternalWalletClientStage, type ExternalWalletFailureStage, type ExternalWalletHandoffCreate, type ExternalWalletHandoffSnapshot, type ExternalWalletMarketSnapshot, type ExternalWalletPurchaseIntent, type ExternalWalletPurchaseRefresh } from "../services/wallet-handoff-relay.js";
 import type { ActionPlan, AllowanceApprovalPlan } from "../domain/types.js";
 
-type RelayServerOptions = {
+export type RelayServerOptions = {
   host?: string;
   port?: number;
   portalOrigin: string;
   serviceSecret: string;
+  pageHtml?: { zhCN: string; en: string };
   storagePath?: string;
   openExternalBrowser?: (url: string) => Promise<void>;
   readMarketSnapshot?: (identity: { chainId: "56"; platformId: string; contractAddress: string }) => Promise<Omit<ExternalWalletMarketSnapshot, "source" | "fetchedAt">>;
@@ -29,6 +30,7 @@ type RelayServerOptions = {
     handoffId: string;
     originalPlan: ActionPlan;
     approvalPlan: AllowanceApprovalPlan;
+    approvalAttestation?: string;
     txHash: string;
   }) => Promise<
     | { status: "pending"; reason?: string }
@@ -144,25 +146,30 @@ async function openWithSystemBrowser(url: string): Promise<void> {
   });
 }
 
-export async function createWalletHandoffRelayServer(options: RelayServerOptions): Promise<{ server: Server; store: WalletHandoffStore; html: string }> {
+export async function createWalletHandoffRelayHandler(options: RelayServerOptions, suppliedStore?: WalletHandoffStore): Promise<{
+  handler: (request: IncomingMessage, response: ServerResponse) => Promise<void>;
+  store: WalletHandoffStore;
+  html: string;
+}> {
   if (!options.serviceSecret || options.serviceSecret.length < 32) throw new Error("Wallet handoff relay service secret must contain at least 32 characters");
   const portalUrl = new URL(options.portalOrigin);
   const canonicalOrigin = portalUrl.origin;
-  const store = new WalletHandoffStore({ portalOrigin: `${canonicalOrigin}/`, storagePath: options.storagePath });
-  const [html, englishHtml] = await Promise.all([
-    buildExternalWalletApprovalPageHtml("zh-CN"),
-    buildExternalWalletApprovalPageHtml("en")
-  ]);
+  const store = suppliedStore ?? new WalletHandoffStore({ portalOrigin: `${canonicalOrigin}/`, storagePath: options.storagePath });
+  const [html, englishHtml] = options.pageHtml
+    ? [options.pageHtml.zhCN, options.pageHtml.en]
+    : await Promise.all([
+      buildExternalWalletApprovalPageHtml("zh-CN"),
+      buildExternalWalletApprovalPageHtml("en")
+    ]);
   const serviceSecret = options.serviceSecret;
   const openExternalBrowser = options.openExternalBrowser ?? openWithSystemBrowser;
   const marketCache = new Map<string, { at: number; value: ExternalWalletMarketSnapshot }>();
   const candleCache = new Map<string, { at: number; candles: ExternalWalletCandle[] }>();
-  // Preserve the exact SDK-prepared object identity used by its mutation guard.
-  // If the relay restarts between approval preparation and finality, the stored
-  // clone remains inspectable but continuation fails closed and requests a new review.
+  // Local relays preserve SDK object identity. Hosted relays additionally persist
+  // a server-side attestation so an unchanged approval can survive a restart.
   const liveAllowancePlans = new Map<string, AllowanceApprovalPlan>();
 
-  const server = createServer(async (request, response) => {
+  const handler = async (request: IncomingMessage, response: ServerResponse) => {
     const url = new URL(request.url ?? "/", "http://relay.local");
     const path = url.pathname;
     const authorization = request.headers.authorization;
@@ -312,8 +319,8 @@ export async function createWalletHandoffRelayServer(options: RelayServerOptions
           return sendJson(response, 409, { error: "allowance_submission_not_ready" });
         }
         if (!options.finalizeAllowancePurchase) return sendJson(response, 503, { error: "allowance_finality_unavailable" });
-        const preparedApproval = liveAllowancePlans.get(finalizeAllowanceId);
-        if (!preparedApproval) {
+        const preparedApproval = liveAllowancePlans.get(finalizeAllowanceId) ?? current.allowancePlan;
+        if (!preparedApproval || (!liveAllowancePlans.has(finalizeAllowanceId) && !current.allowanceAttestation)) {
           const reason = "The relay restarted after preparing this allowance. Its transaction status remains visible, but purchase continuation needs a fresh reviewed plan.";
           const failed = store.setVerification(finalizeAllowanceId, {
             state: "failed",
@@ -326,6 +333,7 @@ export async function createWalletHandoffRelayServer(options: RelayServerOptions
           handoffId: finalizeAllowanceId,
           originalPlan: current.originalPlan,
           approvalPlan: preparedApproval,
+          ...(current.allowanceAttestation ? { approvalAttestation: current.allowanceAttestation } : {}),
           txHash: current.txHash
         });
         if (result.status === "pending") {
@@ -495,7 +503,14 @@ export async function createWalletHandoffRelayServer(options: RelayServerOptions
       const status = /not found|invalid|expired|already been used|already started|only a/i.test(message) ? 409 : 400;
       return sendJson(response, status, { error: message });
     }
-  });
+  };
+
+  return { handler, store, html };
+}
+
+export async function createWalletHandoffRelayServer(options: RelayServerOptions): Promise<{ server: Server; store: WalletHandoffStore; html: string }> {
+  const { handler, store, html } = await createWalletHandoffRelayHandler(options);
+  const server = createServer(handler);
 
   server.listen(options.port ?? 0, options.host ?? "127.0.0.1");
   await new Promise<void>((resolve, reject) => {
@@ -639,10 +654,10 @@ function purchaseIntentBaselineDisplay(plan: ActionPlan): ExternalWalletHandoffC
   };
 }
 
-export async function startWalletHandoffRelayFromEnvironment(
+export function walletHandoffRelayOptionsFromEnvironment(
   env: NodeJS.ProcessEnv = process.env,
-  overrides: { host?: string; port?: number } = {}
-): Promise<{ server: Server; store: WalletHandoffStore; html: string; host: string; port: number }> {
+  overrides: { host?: string; port?: number; storagePath?: string } = {}
+): RelayServerOptions {
   const secret = env.ARIADNE_WALLET_HANDOFF_RELAY_SECRET ?? "";
   const configuredOrigin = env.ARIADNE_WALLET_HANDOFF_PORTAL_ORIGIN ?? env.ARIADNE_WALLET_HANDOFF_RELAY_URL ?? "";
   const host = overrides.host ?? env.HOST ?? "127.0.0.1";
@@ -654,10 +669,11 @@ export async function startWalletHandoffRelayFromEnvironment(
     maxRetries: 1, maxRetryDelayMs: 2_000, timeoutMs: 8_000
   }) : undefined;
   const liveStocks = liveClient ? new TokenizedStocksService(liveClient) : undefined;
+  if (liveStocks && env.ARIADNE_APPROVAL_ATTESTATION_KEY) liveStocks.configureDurableApprovalAttestation(env.ARIADNE_APPROVAL_ATTESTATION_KEY);
   const liveTransactions = liveClient ? new TransactionService(liveClient) : undefined;
-  const relay = await createWalletHandoffRelayServer({
+  return {
     host, port, portalOrigin: configuredOrigin, serviceSecret: secret,
-    storagePath: resolve(env.ARIADNE_WALLET_HANDOFF_STORE_PATH ?? "data/ariadne-wallet-handoff/sessions.json"),
+    ...(overrides.storagePath !== undefined ? { storagePath: overrides.storagePath } : { storagePath: resolve(env.ARIADNE_WALLET_HANDOFF_STORE_PATH ?? "data/ariadne-wallet-handoff/sessions.json") }),
     readMarketCandles: (identity, interval, limit) => fetchBinanceWeb3Klines(identity, interval, limit, { proxyUrl: env.BINANCE_WEB3_PROXY_URL }),
     ...(liveClient ? {
       readMarketSnapshot: async (identity) => {
@@ -775,6 +791,7 @@ export async function startWalletHandoffRelayFromEnvironment(
           };
           return {
             approvalPlan,
+            ...(env.ARIADNE_APPROVAL_ATTESTATION_KEY ? { approvalAttestation: stocks.attestPreparedApprovalPlan(approvalPlan) } : {}),
             request: {
               from: approvalTx.from,
               to: approvalTx.to,
@@ -788,8 +805,8 @@ export async function startWalletHandoffRelayFromEnvironment(
         }
         return prepareExecutablePurchaseRefresh(originalPlan, fresh, transactions);
       },
-      finalizeAllowancePurchase: async ({ originalPlan, approvalPlan, txHash }) => {
-        const result = await liveStocks.refreshBscPurchaseAfterApproval({ approvalPlan, txHash });
+      finalizeAllowancePurchase: async ({ originalPlan, approvalPlan, approvalAttestation, txHash }) => {
+        const result = await liveStocks.refreshBscPurchaseAfterApproval({ approvalPlan, txHash, ...(approvalAttestation ? { durableAttestation: approvalAttestation } : {}) });
         if (result.status !== "ready" || !result.plan) {
           if (result.status === "pending") return { status: "pending" as const, ...(result.reason ? { reason: result.reason } : {}) };
           return {
@@ -809,10 +826,18 @@ export async function startWalletHandoffRelayFromEnvironment(
         };
       }
     } : {})
-  });
+  };
+}
+
+export async function startWalletHandoffRelayFromEnvironment(
+  env: NodeJS.ProcessEnv = process.env,
+  overrides: { host?: string; port?: number } = {}
+): Promise<{ server: Server; store: WalletHandoffStore; html: string; host: string; port: number }> {
+  const options = walletHandoffRelayOptionsFromEnvironment(env, overrides);
+  const relay = await createWalletHandoffRelayServer(options);
   const address = relay.server.address();
-  const actualPort = typeof address === "object" && address ? address.port : port;
-  return { ...relay, host, port: actualPort };
+  const actualPort = typeof address === "object" && address ? address.port : options.port ?? 0;
+  return { ...relay, host: options.host ?? "127.0.0.1", port: actualPort };
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {

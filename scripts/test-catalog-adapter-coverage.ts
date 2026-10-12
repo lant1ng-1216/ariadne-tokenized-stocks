@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import { walletWatchAssetRequest } from "../src/mcp/ui/post-transaction-actions.js";
 import { buildExternalWalletApprovalPageHtml } from "../src/mcp/ui/external-wallet-approval-page-html.js";
 import { TokenizedStocksService } from "../src/services/tokenized-stocks.js";
+import { BinanceWeb3Error } from "../src/errors.js";
 
 const root = resolve(import.meta.dirname, "..");
 const serverSource = readFileSync(resolve(root, "src/mcp/server.ts"), "utf8");
@@ -72,6 +73,25 @@ const currentApple = await reconciliationService.searchCurrentDirectory("AAPL", 
 assert.equal(currentApple.assets.length, 1);
 assert.equal(currentApple.assets[0]?.contractAddress, currentAppleContract, "the exact current directory identity drives the plan path");
 assert.equal(currentApple.assets[0]?.tokenSymbol, "AAPLon");
+const fallbackService = new TokenizedStocksService({
+  async get(path: string) {
+    if (path.endsWith("/rwa/search")) throw new BinanceWeb3Error("Binance Web3 API 200: Internal server error, please retry later", 200, 200, false);
+    if (path.endsWith("/rwa/tokens")) return { data: [{
+      binanceChainId: "56", platformId: "ondo", tokenContractAddress: currentAppleContract,
+      tokenSymbol: "AAPLon", underlyingTicker: "AAPL", underlyingName: "Apple Inc."
+    }] };
+    if (path.endsWith("/rwa/platforms")) return { data: [{ platformId: "ondo" }] };
+    throw new Error(`Unexpected request: ${path}`);
+  }
+} as any);
+const fallbackApple = await fallbackService.searchCurrentDirectory("AAPL", { chainId: "56", platformId: "ondo" });
+assert.equal(fallbackApple.assets[0]?.contractAddress, currentAppleContract);
+assert.match(fallbackApple.assets[0]?.collectionWarnings?.join(" ") ?? "", /Provider search was unavailable/);
+const naturalPurchase = await fallbackService.searchCurrentDirectory("Review 1 USDT of Apple AAPL on BNB Chain", { chainId: "56", platformId: "ondo" });
+assert.equal(naturalPurchase.assets[0]?.contractAddress, currentAppleContract);
+const symbolPurchase = await fallbackService.searchCurrentDirectory("Review 1 USDT of Apple (AAPLon) on BNB Chain", { chainId: "56", platformId: "ondo" });
+assert.equal(symbolPurchase.assets[0]?.contractAddress, currentAppleContract);
+await assert.rejects(fallbackService.searchCurrentDirectory("Apple", { chainId: "56" }), /Internal server error/, "fallback must not guess from company fragments");
 assert.match(serverSource, /searchCurrentDirectory\(input\.query/, "purchase preparation reconciles provider search against the current directory");
 
 console.log("Catalog adapter coverage passed: arbitrary identities, both issuer families, and current-directory reconciliation drive plan-page and post-transaction metadata without per-stock hardcoding.");

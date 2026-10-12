@@ -3,11 +3,16 @@ import { CLIENT_CAPABILITIES_META_KEY, inputRequired, inputResponse, McpServer, 
 import { confirmPlan } from "../domain/action-plan.js";
 import { formatTokenAmount } from "../domain/amount.js";
 import type { ActionPlan } from "../domain/types.js";
-import { PlanRegistry } from "./plan-registry.js";
+import type { PlanRegistry } from "./plan-registry.js";
+import type { DurablePlanRegistry } from "../remote/durable-plan-registry.js";
 import { errorOutcome, outcome, textResult } from "./response.js";
 import { z } from "zod";
 
 type ConfirmationStatus = "approved" | "declined" | "not_confirmed" | "cancelled" | "unavailable" | "invalid_response";
+export type ConfirmationContinuationStore = {
+  create(id: string, planId: string, expiresAt: number): Promise<void> | void;
+  consume(id: string, planId: string): Promise<boolean> | boolean;
+};
 
 /**
  * Register an explicit, host-rendered confirmation step for one exact
@@ -17,8 +22,9 @@ type ConfirmationStatus = "approved" | "declined" | "not_confirmed" | "cancelled
  */
 export function registerActionPlanConfirmationTool(
   server: McpServer,
-  plans: PlanRegistry,
+  plans: PlanRegistry | DurablePlanRegistry,
   validate?: (plan: ActionPlan) => void,
+  continuationStore?: ConfirmationContinuationStore,
 ): void {
   // requestState is a one-time, unguessable continuation handle. Keeping the
   // binding server-side means any edited, expired, unknown, or replayed state
@@ -32,7 +38,7 @@ export function registerActionPlanConfirmationTool(
   }, async ({ plan }, ctx) => {
     try {
       const stage = (plan as ActionPlan).status === "wallet_review" ? "wallet_review" : "simulated";
-      const trusted = plans.requireExact(plan as ActionPlan, stage);
+      const trusted = await plans.requireExact(plan as ActionPlan, stage);
       validate?.(trusted);
 
       if (!supportsFormElicitation(clientCapabilitiesForRequest(ctx, server))) {
@@ -47,8 +53,11 @@ export function registerActionPlanConfirmationTool(
 
         const continuation = randomUUID();
         const expiresAt = Math.min(trusted.expiresAt ?? Date.now(), Date.now() + 5 * 60_000);
-        continuations.set(continuation, { planId: trusted.planId, expiresAt });
-        for (const [key, value] of continuations) if (value.expiresAt <= Date.now()) continuations.delete(key);
+        if (continuationStore) await continuationStore.create(continuation, trusted.planId, expiresAt);
+        else {
+          continuations.set(continuation, { planId: trusted.planId, expiresAt });
+          for (const [key, value] of continuations) if (value.expiresAt <= Date.now()) continuations.delete(key);
+        }
 
         return inputRequired({
           requestState: continuation,
@@ -75,9 +84,10 @@ export function registerActionPlanConfirmationTool(
         });
       }
 
-      const continuation = continuations.get(state);
-      continuations.delete(state);
-      if (!continuation || continuation.expiresAt <= Date.now() || continuation.planId !== trusted.planId) {
+      const validContinuation = continuationStore
+        ? await continuationStore.consume(state, trusted.planId)
+        : (() => { const continuation = continuations.get(state); continuations.delete(state); return Boolean(continuation && continuation.expiresAt > Date.now() && continuation.planId === trusted.planId); })();
+      if (!validContinuation) {
         return blocked("invalid_response", trusted, "The confirmation request expired, changed, or was already used. The plan remains available for review.");
       }
 
@@ -94,10 +104,10 @@ export function registerActionPlanConfirmationTool(
 
       // Re-fetch and validate the registered object immediately before the
       // single allowed transition; the continuation cannot substitute a plan.
-      const exactPlan = plans.requireExact(plan as ActionPlan, stage);
+      const exactPlan = await plans.requireExact(plan as ActionPlan, stage);
       validate?.(exactPlan);
       const confirmed = confirmPlan(exactPlan);
-      plans.advance(exactPlan, stage, confirmed, "confirmed");
+      await plans.advance(exactPlan, stage, confirmed, "confirmed");
       return textResult(outcome({
         summary: stage === "wallet_review"
           ? "The MCP host confirmed the exact plan with a wallet-funds warning; the wallet will decide whether it can submit. No transaction was signed or broadcast."

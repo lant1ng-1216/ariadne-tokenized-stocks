@@ -40,12 +40,7 @@ These counts describe this controlled development experiment only; they are not 
 
 ## Reproducible figures
 
-The audited experiment figures are stored in `figures/nature-sample/` in editable SVG/PDF and 600 dpi PNG/TIFF formats:
-
-- `experiment-latency-ecdf.*` — empirical latency distributions by scenario.
-- `experiment-handling-heatmap.*` — observed response classifications by scenario.
-
-Each figure has a contract describing its claim, evidence source and limitations. Values are generated from recorded observations rather than manually entered into the artwork.
+The public figures used by the Developer Experience Report are in `figures/developer-experience/`. Exploratory figure exports are retained in the private development archive.
 
 ## Founder-funded pilot evidence
 

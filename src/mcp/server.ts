@@ -19,6 +19,7 @@ import { DemoTokenizedStocksService } from "../services/demo-tokenized-stocks.js
 import { AmbiguousAssetQueryError, explicitlyRequestsNoTrade, searchAssetIntent } from "../services/asset-intent-query.js";
 import { performance } from "node:perf_hooks";
 import { PlanRegistry } from "./plan-registry.js";
+import type { DurablePlanRegistry } from "../remote/durable-plan-registry.js";
 import { assertSignedTransactionMatchesPlan } from "../domain/signed-transaction.js";
 import { assessSignedTransactionFee, requireReviewedGasBudget } from "../domain/gas-safety.js";
 import { assertAllowanceCoversPlan } from "../domain/balance-safety.js";
@@ -29,7 +30,13 @@ import { registerAppResource, registerAppTool, RESOURCE_MIME_TYPE } from "@model
 import { buildResearchAppHtml } from "./ui/research-app-html.js";
 import { buildCatalogAppHtml } from "./ui/catalog-app-html.js";
 import { buildPurchaseApprovalAppHtml } from "./ui/purchase-approval-app-html.js";
-import { registerActionPlanConfirmationTool } from "./user-confirmation.js";
+
+// The remote bundle embeds these at build time. Local stdio builds the views
+// from the source files as before.
+declare const __ARIADNE_RESEARCH_HTML__: string | undefined;
+declare const __ARIADNE_CATALOG_HTML__: string | undefined;
+declare const __ARIADNE_PURCHASE_APPROVAL_HTML__: string | undefined;
+import { registerActionPlanConfirmationTool, type ConfirmationContinuationStore } from "./user-confirmation.js";
 import { inferOutputLanguage, localizeEvidenceMessage } from "../presentation/language.js";
 import { PurchasePlanStageError, purchasePlanStageLabel } from "../services/purchase-plan-error.js";
 import { buildCatalogBrowsePayload } from "./catalog-browse.js";
@@ -42,6 +49,9 @@ type McpServerDependencies = {
   stocks?: TokenizedStocksService | DemoTokenizedStocksService;
   wallet?: WalletService;
   transactions?: TransactionService;
+  plans?: PlanRegistry | DurablePlanRegistry;
+  confirmationContinuations?: ConfirmationContinuationStore;
+  ownerId?: string;
 };
 
 export function buildMcpServer(dependencies: McpServerDependencies = {}): McpServer {
@@ -72,7 +82,7 @@ const externalAllowanceHandoffCapabilities = new Map<string, string>();
 const allowancePlanHandoffIds = new Map<string, string>();
 const allowanceApprovalPlans = new Map<string, AllowanceApprovalPlan>();
 const allowanceWalletPages = new Map<string, { handoffId: string; browserOpenUrl: string; expiresAt: number }>();
-const plans = new PlanRegistry();
+const plans = dependencies.plans ?? new PlanRegistry();
 const elapsedMs = (startedAt: number) => Math.max(0, Math.round((performance.now() - startedAt) * 100) / 100);
 const BSC_CHAIN_ID = "56";
 
@@ -151,9 +161,9 @@ const CATALOG_UI_URI = "ui://ariadne/catalog-view-v1.html";
 const RESEARCH_UI_URI = "ui://ariadne/research-view-v2.html";
 const PURCHASE_APPROVAL_UI_URI = "ui://ariadne/purchase-approval-v9.html";
 const PURCHASE_APPROVAL_UI_DOMAIN = "https://web-sandbox.oaiusercontent.com";
-const researchUiHtml = buildResearchAppHtml();
-const catalogUiHtml = buildCatalogAppHtml();
-const purchaseApprovalUiHtml = buildPurchaseApprovalAppHtml({ reownProjectId: process.env.ARIADNE_REOWN_PROJECT_ID });
+const researchUiHtml = typeof __ARIADNE_RESEARCH_HTML__ !== "undefined" ? __ARIADNE_RESEARCH_HTML__ : buildResearchAppHtml();
+const catalogUiHtml = typeof __ARIADNE_CATALOG_HTML__ !== "undefined" ? __ARIADNE_CATALOG_HTML__ : buildCatalogAppHtml();
+const purchaseApprovalUiHtml = typeof __ARIADNE_PURCHASE_APPROVAL_HTML__ !== "undefined" ? __ARIADNE_PURCHASE_APPROVAL_HTML__ : buildPurchaseApprovalAppHtml({ reownProjectId: process.env.ARIADNE_REOWN_PROJECT_ID });
 const purchaseApprovalUiCsp = {
   connectDomains: [
     "wss://relay.walletconnect.org",
@@ -178,7 +188,7 @@ function walletHandoffRelay(): WalletHandoffRelayClient {
   const baseUrl = process.env.ARIADNE_WALLET_HANDOFF_RELAY_URL;
   const secret = process.env.ARIADNE_WALLET_HANDOFF_RELAY_SECRET;
   if (!baseUrl || !secret) throw new Error("The branded wallet approval portal is not configured. Set ARIADNE_WALLET_HANDOFF_RELAY_URL and ARIADNE_WALLET_HANDOFF_RELAY_SECRET on the Ariadne MCP server.");
-  return new WalletHandoffRelayClient({ baseUrl, secret });
+  return new WalletHandoffRelayClient({ baseUrl, secret, ...(dependencies.ownerId ? { ownerId: dependencies.ownerId } : {}) });
 }
 
 async function prepareAllowanceWalletPage(plan: AllowanceApprovalPlan): Promise<{ handoffId: string; browserOpenUrl: string; expiresAt: number }> {
@@ -266,7 +276,7 @@ async function prepareAllowanceWalletPage(plan: AllowanceApprovalPlan): Promise<
 }
 
 async function reserveWalletSubmission(planId: string, walletRequest: unknown) {
-  const trusted = plans.requireById(planId, "confirmed");
+  const trusted = await plans.requireById(planId, "confirmed");
   if (isPlanExpired(trusted)) throw new Error("The purchase quote has expired; prepare and confirm a fresh plan");
   const { request, expected } = buildWalletSubmissionRequest(trusted);
   if (!walletSubmissionRequestsMatch(request, walletRequest)) throw new Error("The wallet transaction request differs from the exact confirmed plan; no wallet attempt was reserved");
@@ -279,7 +289,7 @@ async function reserveWalletSubmission(planId: string, walletRequest: unknown) {
     chainId: trusted.intent.toAsset.chainId, walletAddress: trusted.intent.walletAddress,
     inputToken: trusted.verifiedTokens.input, outputToken: trusted.verifiedTokens.output
   });
-  plans.reserveBroadcast(trusted);
+  await plans.reserveBroadcast(trusted);
   settlementRecords.set(trusted.planId, { before, expectedTransaction: expected });
   return { trusted, request: request as ExternalWalletTransaction, expected, before };
 }
@@ -704,7 +714,7 @@ server.registerTool("prepare_action_from_intent", {
       maxGasCostBnb: input.maxGasCostBnb,
       toAsset: selected
     });
-    if (plan.status === "awaiting_confirmation") plans.registerPrepared(plan);
+    if (plan.status === "awaiting_confirmation") await plans.registerPrepared(plan);
     const status = plan.status === "failed" ? "blocked" : plan.assetContext?.dataWarnings.length ? "warning" : "success";
     return textResult(outcome({ summary: plan.status === "failed" ? "ActionPlan preparation was blocked by a readiness or safety condition" : "ActionPlan prepared; no signing or broadcast occurred", selectedAsset: selected, plan }, status, plan.status === "failed" ? "Resolve the blocking reasons before simulation" : "Simulate the ActionPlan before requesting confirmation", { warnings: plan.assetContext?.dataWarnings ?? [], sideEffects: "none" }));
   } catch (error) {
@@ -854,7 +864,7 @@ if (process.env.ARIADNE_TEST_FIXTURE === "1") server.registerTool("prepare_bsc_s
     maxSlippageBps: input.maxSlippageBps,
     maxGasCostBnb: input.maxGasCostBnb
   });
-  if (plan.status === "awaiting_confirmation") plans.registerPrepared(plan);
+  if (plan.status === "awaiting_confirmation") await plans.registerPrepared(plan);
   return textResult(outcome({ summary: "Fixture exact BSC plan prepared", plan }, plan.status === "failed" ? "blocked" : "success", "Continue deterministic closure checks", { warnings: plan.assetContext?.dataWarnings ?? [], sideEffects: "none" }));
 });
 
@@ -865,7 +875,7 @@ server.registerTool("prepare_bsc_stock_allowance_approval", {
 }, async ({ planId }) => {
   try {
     if (!(stocks instanceof TokenizedStocksService)) throw new Error("Verified BSC allowance planning is available only in Live mode");
-    const confirmedPurchasePlan = plans.captureConfirmedContinuation(planId);
+    const confirmedPurchasePlan = await plans.captureConfirmedContinuation(planId);
     if (confirmedPurchasePlan.intent.toAsset.chainId !== "56" || !confirmedPurchasePlan.intent.toAsset.platformId.trim() ||
       confirmedPurchasePlan.verifiedTokens?.input.symbol !== "USDT" || !confirmedPurchasePlan.intent.maxGasCostBnb) {
       throw new Error("Same-page allowance continuation requires a confirmed Binance Web3 BSC stock purchase with an explicit issuer, USDT amount and gas cap");
@@ -918,7 +928,7 @@ server.registerTool("refresh_bsc_stock_purchase_after_approval", {
     const approvalPlan = allowanceApprovalPlans.get(approvalPlanId);
     if (!approvalPlan) throw new Error("Approval plan is unknown, expired or belongs to another MCP session");
     const result = await stocks.refreshBscPurchaseAfterApproval({ approvalPlan, txHash });
-    if (result.plan?.status === "awaiting_confirmation") plans.registerPrepared(result.plan);
+    if (result.plan?.status === "awaiting_confirmation") await plans.registerPrepared(result.plan);
     if (result.status === "ready") allowanceApprovalPlans.delete(approvalPlanId);
     return textResult(outcome({
       summary: result.status === "ready" ? "Approval receipt and allowance verified; a fresh stock quote and plan are ready" : `Approval completion is ${result.status}`,
@@ -1073,14 +1083,14 @@ server.registerTool("simulate_stock_action_plan", {
   inputSchema: { plan: z.any() }
 }, async ({ plan }) => {
   try {
-    const trusted = plans.requireExact(plan as ActionPlan, "awaiting_confirmation");
+    const trusted = await plans.requireExact(plan as ActionPlan, "awaiting_confirmation");
     const action = trusted.unsignedActions?.[0] as any;
     const tx = action?.payload?.tx;
     if (!tx) throw new Error("Plan has no unsigned EVM transaction");
     const simulation = await transactions.simulateEvm(trusted.intent.toAsset.chainId, tx);
     const updated = attachSimulation(trusted, simulation);
     if (updated.status === "simulated" || updated.status === "wallet_review") {
-      plans.advance(plan as ActionPlan, "awaiting_confirmation", updated, updated.status);
+      await plans.advance(plan as ActionPlan, "awaiting_confirmation", updated, updated.status);
     }
     const simulationWarnings = (updated.simulation as { warnings?: string[] } | undefined)?.warnings ?? [];
     const resultStatus = updated.status === "simulated" ? "success" : updated.status === "wallet_review" ? "warning" : "blocked";
@@ -1124,7 +1134,7 @@ server.registerTool("create_stock_action_plan", {
     maxGasCostBnb,
     toAsset: asset
   });
-  if (plan.status === "awaiting_confirmation") plans.registerPrepared(plan);
+  if (plan.status === "awaiting_confirmation") await plans.registerPrepared(plan);
   return textResult(outcome({
     summary: plan.status === "failed" ? "Action plan could not be created" : "Action plan created; no transaction executed",
     plan
@@ -1134,7 +1144,7 @@ server.registerTool("create_stock_action_plan", {
 registerActionPlanConfirmationTool(server, plans, (plan) => {
   const action = plan.unsignedActions?.[0] as { kind?: string } | undefined;
   if (action?.kind === "evm_transaction") requireReviewedGasBudget(plan);
-});
+}, dependencies.confirmationContinuations);
 
 server.registerTool("submit_signed_rfq_order", {
   description: "Submit an externally signed RFQ order only with an unchanged, confirmed plan from this MCP session. No private keys are handled.",
@@ -1148,13 +1158,13 @@ server.registerTool("submit_signed_rfq_order", {
   }
 }, async (input) => {
   try {
-    const trusted = plans.requireExact(input.plan as ActionPlan, "confirmed");
+    const trusted = await plans.requireExact(input.plan as ActionPlan, "confirmed");
     assertExecutable(trusted);
     const action = trusted.unsignedActions?.[0] as any;
     const rfq = action?.payload?.rfq;
     if (action?.kind !== "rfq_order" || trusted.quoteId !== input.quoteId || rfq?.vendor !== input.vendor ||
       (rfq?.signingScheme && rfq.signingScheme !== input.signingScheme)) throw new Error("RFQ signature request does not match the confirmed plan");
-    plans.reserveBroadcast(input.plan as ActionPlan);
+    await plans.reserveBroadcast(input.plan as ActionPlan);
     const { plan: _plan, ...signedOrder } = input;
     const order = await stocks.submitRfqOrder(signedOrder);
     return textResult(outcome({ summary: "Signed RFQ submitted; poll status for settlement", order, privateKeyHandled: false }, "success", "Poll RFQ order status; do not replay the signed order blindly", { sideEffects: "broadcast_possible" }));
@@ -1181,7 +1191,7 @@ server.registerTool("broadcast_confirmed_transaction", {
   }
 }, async ({ plan, signedTransaction, address, enableMevProtection }) => {
   try {
-    const trusted = plans.requireExact(plan as ActionPlan, "confirmed");
+    const trusted = await plans.requireExact(plan as ActionPlan, "confirmed");
     await assertSignedTransactionMatchesPlan(trusted, signedTransaction, address);
     assessSignedTransactionFee(trusted, signedTransaction);
     const currentAllowance = await transactions.erc20Allowance(
@@ -1200,7 +1210,7 @@ server.registerTool("broadcast_confirmed_transaction", {
         outputToken: trusted.verifiedTokens.output
       });
     }
-    plans.reserveBroadcast(plan as ActionPlan);
+    await plans.reserveBroadcast(plan as ActionPlan);
     if (before) settlementRecords.set(trusted.planId, { before });
     const result = await transactions.broadcastSigned(trusted.intent.toAsset.chainId, signedTransaction, address, enableMevProtection ?? false);
     const txHash = extractTransactionHash(result);
@@ -1239,7 +1249,7 @@ registerAppTool(server, "prepare_stock_purchase_wallet_request", {
   inputSchema: { plan: z.any() }
 }, async ({ plan }) => {
   try {
-    const trusted = plans.requireExact(plan as ActionPlan, "confirmed");
+    const trusted = await plans.requireExact(plan as ActionPlan, "confirmed");
     const { request } = buildWalletSubmissionRequest(trusted);
     if (!trusted.verifiedTokens || !trusted.minimumOutput) throw new Error("The confirmed plan lacks verified token identities or a reviewed minimum output");
     if (isPlanExpired(trusted)) throw new Error("The purchase quote has expired; prepare and confirm a fresh plan");
@@ -1276,7 +1286,7 @@ registerAppTool(server, "create_external_stock_purchase_handoff", {
   let createdId: string | undefined;
   try {
     const relay = walletHandoffRelay();
-    const trusted = plans.requireById(planId, "confirmed");
+    const trusted = await plans.requireById(planId, "confirmed");
     if (isPlanExpired(trusted) || !trusted.expiresAt || trusted.expiresAt <= Date.now()) throw new Error("The purchase quote has expired; prepare, simulate and confirm a fresh plan");
     if (!trusted.verifiedTokens || !trusted.minimumOutput || !trusted.expectedOutput || trusted.intent.maxSlippageBps === undefined || !trusted.intent.maxGasCostBnb) {
       throw new Error("The confirmed purchase is missing verified token, output, slippage or gas details");
@@ -1310,15 +1320,15 @@ registerAppTool(server, "create_external_stock_purchase_handoff", {
 
 registerAppTool(server, "reconcile_external_stock_purchase_handoff", {
   title: "Monitor and reconcile the external wallet purchase",
-  description: "App-only. Retrieve the one-time wallet result, bind its returned hash to the reserved plan, and check exact transaction fields, BSC finality and before/after token balances. Only fully reconciled results are marked confirmed.",
-  _meta: { ui: { visibility: ["app"] } },
+  description: "Read-only status and reconciliation for the same one-time handoff. Works in ordinary MCP hosts as well as MCP Apps. Check exact transaction fields, BSC finality and before/after token balances; only fully reconciled results are confirmed. Never submit another purchase while this handoff is uncertain or pending.",
+  _meta: { ui: { visibility: dependencies.ownerId ? ["model", "app"] : ["app"] } },
   inputSchema: { handoffId: z.string().regex(/^[a-f0-9]{32}$/) }
 }, async ({ handoffId }) => {
   try {
-    const attachedIntentId = externalHandoffIds.get(handoffId);
-    if (!attachedIntentId) throw new Error("This handoff is not attached to the current Ariadne MCP session");
     const relay = walletHandoffRelay();
     let snapshot = await relay.read(handoffId);
+    const attachedIntentId = dependencies.ownerId ? snapshot.purchaseIntent?.intentId ?? snapshot.planId : externalHandoffIds.get(handoffId);
+    if (!attachedIntentId) throw new Error("This handoff is not attached to the current Ariadne MCP session");
     if (snapshot.planId !== attachedIntentId && snapshot.purchaseIntent?.intentId !== attachedIntentId) {
       throw new Error("Returned wallet handoff does not match the current purchase intent");
     }
@@ -1333,7 +1343,7 @@ registerAppTool(server, "reconcile_external_stock_purchase_handoff", {
         latestExecutionPlan?: ActionPlan;
         beforeBalances?: BalanceSnapshot;
       };
-      const original = stored.originalPlan ?? plans.readStoredPlan(snapshot.planId);
+      const original = stored.originalPlan ?? await plans.readStoredPlan(snapshot.planId);
       const fresh = stored.latestExecutionPlan;
       if (!original || !fresh || fresh.status !== "confirmed" || fresh.requiresUserConfirmation || !fresh.minimumOutput || !fresh.verifiedTokens) {
         throw new Error("The returned wallet result is missing its verified same-plan refreshed quote");
@@ -1387,7 +1397,7 @@ registerAppTool(server, "reconcile_external_stock_purchase_handoff", {
         reconciliation.success ? "Report the confirmed purchase and balance changes to the user" : "Report the terminal failure or mismatch; do not call this a successful purchase",
         { warnings: reconciliation.mismatches }));
     }
-    const trusted = plans.requireBroadcasted(snapshot.planId);
+    const trusted = await plans.requireBroadcasted(snapshot.planId);
     const record = settlementRecords.get(snapshot.planId);
     if (!record?.expectedTransaction || !record.before) throw new Error("The session no longer has its verified before-purchase balance snapshot");
     const transaction = await transactions.transactionByHash(trusted.intent.toAsset.chainId, snapshot.txHash);
@@ -1436,7 +1446,7 @@ registerAppTool(server, "claim_external_stock_purchase_report", {
   inputSchema: { handoffId: z.string().regex(/^[a-f0-9]{32}$/) }
 }, async ({ handoffId }) => {
   try {
-    if (!externalHandoffIds.has(handoffId)) throw new Error("This handoff is not attached to the current Ariadne MCP session");
+    if (!dependencies.ownerId && !externalHandoffIds.has(handoffId)) throw new Error("This handoff is not attached to the current Ariadne MCP session");
     const claim = await walletHandoffRelay().claimAgentReport(handoffId);
     return textResult(outcome({ ...claim, summary: claim.claimed
       ? "The terminal purchase result is reserved for one Agent report."
@@ -1458,7 +1468,7 @@ registerAppTool(server, "complete_external_stock_purchase_report", {
   }
 }, async ({ handoffId, delivered }) => {
   try {
-    if (!externalHandoffIds.has(handoffId)) throw new Error("This handoff is not attached to the current Ariadne MCP session");
+    if (!dependencies.ownerId && !externalHandoffIds.has(handoffId)) throw new Error("This handoff is not attached to the current Ariadne MCP session");
     const snapshot = await walletHandoffRelay().finishAgentReport(handoffId, delivered);
     return textResult(outcome({ snapshot, delivered, summary: delivered
       ? "The Agent accepted the proactive terminal purchase report."
@@ -1520,7 +1530,7 @@ registerAppTool(server, "reconcile_external_stock_allowance_handoff", {
     let continuationReason = result.reason;
     if (result.status === "ready" && result.plan?.status === "awaiting_confirmation" && approvalPlan.confirmedPurchasePlan) {
       try {
-        plans.registerPrepared(result.plan);
+        await plans.registerPrepared(result.plan);
         const action = result.plan.unsignedActions?.[0] as { payload?: { tx?: Parameters<typeof transactions.simulateEvm>[1] } } | undefined;
         const tx = action?.payload?.tx;
         if (!tx) throw new Error("The fresh quote has no standard EVM transaction to review");
@@ -1529,10 +1539,10 @@ registerAppTool(server, "reconcile_external_stock_allowance_handoff", {
         if (simulated.status !== "simulated" && simulated.status !== "wallet_review") {
           throw new Error(simulation.warnings.join("; ") || "The refreshed purchase transaction failed its simulation");
         }
-        plans.advance(result.plan, "awaiting_confirmation", simulated, simulated.status);
+        await plans.advance(result.plan, "awaiting_confirmation", simulated, simulated.status);
         const confirmedContinuation = confirmPlan(simulated);
-        plans.advance(simulated, simulated.status, confirmedContinuation, "confirmed");
-        plans.registerConfirmedContinuation(approvalPlan.confirmedPurchasePlan.planId, confirmedContinuation);
+        await plans.advance(simulated, simulated.status, confirmedContinuation, "confirmed");
+        await plans.registerConfirmedContinuation(approvalPlan.confirmedPurchasePlan.planId, confirmedContinuation);
         continuationPlan = confirmedContinuation;
       } catch (error) {
         continuationReason = error instanceof Error ? error.message : "The refreshed purchase could not be prepared within the confirmed plan";
@@ -1597,7 +1607,7 @@ registerAppTool(server, "claim_stock_purchase_wallet_submission", {
   }
 }, async ({ planId, walletRequest }) => {
   try {
-    const trusted = plans.requireById(planId, "confirmed");
+    const trusted = await plans.requireById(planId, "confirmed");
     if (isPlanExpired(trusted)) throw new Error("The purchase quote has expired; prepare and confirm a fresh plan");
     const { request, expected } = buildWalletSubmissionRequest(trusted);
     if (!walletSubmissionRequestsMatch(request, walletRequest)) throw new Error("The panel transaction request differs from the exact confirmed plan; no wallet attempt was reserved");
@@ -1610,7 +1620,7 @@ registerAppTool(server, "claim_stock_purchase_wallet_submission", {
       chainId: trusted.intent.toAsset.chainId, walletAddress: trusted.intent.walletAddress,
       inputToken: trusted.verifiedTokens.input, outputToken: trusted.verifiedTokens.output
     });
-    plans.reserveBroadcast(trusted);
+    await plans.reserveBroadcast(trusted);
     settlementRecords.set(trusted.planId, { before, expectedTransaction: expected });
     return textResult(outcome({
       planId: trusted.planId,
@@ -1634,7 +1644,7 @@ registerAppTool(server, "register_stock_purchase_wallet_hash", {
   }
 }, async ({ planId, txHash }) => {
   try {
-    const trusted = plans.requireBroadcasted(planId);
+    const trusted = await plans.requireBroadcasted(planId);
     const record = settlementRecords.get(planId);
     if (!record?.expectedTransaction) throw new Error("No external-wallet request is registered for this plan in the current MCP session");
     const transaction = await transactions.transactionByHash(trusted.intent.toAsset.chainId, txHash);
@@ -1663,7 +1673,7 @@ server.registerTool("reconcile_stock_purchase", {
   }
 }, async ({ planId, txHash, maxPollAttempts, pollIntervalMs }) => {
   try {
-    const trusted = plans.requireBroadcasted(planId);
+    const trusted = await plans.requireBroadcasted(planId);
     const record = settlementRecords.get(planId);
     if (!record) throw new Error("No verified pre-broadcast balance snapshot exists for this plan in the current MCP session");
     if (record.expectedTransaction && !record.walletHashRegistered) {

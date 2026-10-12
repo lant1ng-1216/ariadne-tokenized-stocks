@@ -16,6 +16,6 @@ The script reads:
 
 Figure 1 renders 80 provider calls across eight conditions as empirical CDFs, with ten observations per condition. It excludes two seed lookups and places three DeFi Positions provider-error responses in a separate panel with its own truncated x-axis. Figure 2 reconstructs ten sequential loopback retry cycles from paired attempt records. The retry-dispatch marker is derived from successive response timestamps minus the retry request latency; it is not an independently timed event.
 
-Each figure is exported as 600 dpi PNG/TIFF and editable PDF/SVG. Typography, restrained color, panel annotation, and explicit axes follow the in-repository examples in `research/figures/nature-sample/` and the linked figures4papers figure-making guide.
+Each figure is exported as 600 dpi PNG/TIFF and editable PDF/SVG. Typography, restrained color, panel annotation, and explicit axes follow the linked figures4papers figure-making guide.
 
 These are bounded development experiments. Provider-call timings are not a production SLO. The retry server is deterministic and local; neither figure estimates production reliability or user-experienced end-to-end latency.

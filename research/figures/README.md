@@ -1,14 +1,5 @@
-# Figure generation
+# Developer experience figures
 
-Run from the repository root:
+The figures supporting the public [Developer Experience Report](../../docs/DEVELOPER_EXPERIENCE_REPORT.md) live in `developer-experience/`. Source records and the rendering script remain alongside the exported figures for reproducibility.
 
-```bash
-python3 research/figures/nature-sample/render_experiment_figures.py
-```
-
-The script reads the append-only experiment records under `research/experiments/records/` and writes each figure as editable SVG/PDF plus 600 dpi PNG/TIFF to this directory.
-
-- `experiment-latency-ecdf.*`
-- `experiment-handling-heatmap.*`
-
-Figures are evidence views, not decorative illustrations. Do not change a plotted value manually; update the source records and regenerate.
+Large exploratory figure collections and unused sample exports are retained in the private development archive rather than the public product repository.

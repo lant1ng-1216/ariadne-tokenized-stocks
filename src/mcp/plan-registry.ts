@@ -5,8 +5,8 @@ import { assertPlanAuthorizationMatches } from "../domain/balance-safety.js";
 import { jsonDataSnapshot } from "../domain/json-snapshot.js";
 import { parseTokenAmount } from "../domain/amount.js";
 
-type PlanStage = "awaiting_confirmation" | "simulated" | "wallet_review" | "confirmed";
-type PlanRecord = { stage: PlanStage; plan: ActionPlan; broadcastAttempted: boolean };
+export type PlanStage = "awaiting_confirmation" | "simulated" | "wallet_review" | "confirmed";
+export type PlanRecord = { stage: PlanStage; plan: ActionPlan; broadcastAttempted: boolean };
 const requiredPreflightChecks = ["asset_identity", "market_status", "quote_available", "price_impact", "authorization_visibility", "input_balance"];
 
 function snapshot(plan: ActionPlan): ActionPlan {
@@ -19,6 +19,42 @@ function snapshot(plan: ActionPlan): ActionPlan {
 export class PlanRegistry {
   private readonly records = new Map<string, PlanRecord>();
   private readonly continuationAuthorizations = new Map<string, ActionPlan>();
+
+  /** Server-owned persistence boundary. The caller must load this from authenticated, owner-scoped storage. */
+  restorePersistedRecord(planId: string, record: PlanRecord): void {
+    if (!record?.plan) throw new Error("Stored MCP plan state is malformed; refusing to restore it");
+    const copy = snapshot(record.plan);
+    if (!planId || copy.planId !== planId || !["awaiting_confirmation", "simulated", "wallet_review", "confirmed"].includes(record.stage) ||
+      copy.status !== record.stage || typeof record.broadcastAttempted !== "boolean" ||
+      (record.broadcastAttempted && record.stage !== "confirmed") || !copy.safetyReport?.passed) {
+      throw new Error("Stored MCP plan state is malformed; refusing to restore it");
+    }
+    assertPlanAuthorizationMatches(copy);
+    if (this.records.has(planId)) throw new Error("Stored MCP plan state was already restored");
+    this.records.set(planId, { stage: record.stage, plan: copy, broadcastAttempted: record.broadcastAttempted });
+  }
+
+  exportPersistedRecord(planId: string): PlanRecord | undefined {
+    const record = this.records.get(planId);
+    return record ? { stage: record.stage, plan: snapshot(record.plan), broadcastAttempted: record.broadcastAttempted } : undefined;
+  }
+
+  restorePersistedContinuation(parentPlanId: string, confirmedPlan: ActionPlan): void {
+    const copy = snapshot(confirmedPlan);
+    if (!parentPlanId || copy.planId !== parentPlanId || copy.status !== "confirmed" ||
+      copy.executionMode !== "SWAP" || !copy.safetyReport?.passed || !copy.minimumOutput ||
+      !copy.verifiedTokens || !copy.authorizationCheck?.spender) {
+      throw new Error("Stored MCP continuation is malformed; refusing to restore it");
+    }
+    assertPlanAuthorizationMatches(copy);
+    if (this.continuationAuthorizations.has(parentPlanId)) throw new Error("Stored MCP continuation was already restored");
+    this.continuationAuthorizations.set(parentPlanId, copy);
+  }
+
+  exportPersistedContinuation(parentPlanId: string): ActionPlan | undefined {
+    const plan = this.continuationAuthorizations.get(parentPlanId);
+    return plan ? snapshot(plan) : undefined;
+  }
 
   registerPrepared(plan: ActionPlan): void {
     const prepared = snapshot(plan);

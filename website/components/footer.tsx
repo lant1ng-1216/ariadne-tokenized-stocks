@@ -49,7 +49,7 @@ export function Footer() {
               <h3>Project</h3>
               <a href="https://github.com/lant1ng-1216/ariadne-tokenized-stocks" target="_blank" rel="noreferrer">GitHub repository</a>
               <a href="https://www.npmjs.com/package/ariadne-tokenized-stocks" target="_blank" rel="noreferrer">TypeScript SDK</a>
-              <a href="https://www.npmjs.com/package/ariadne-tokenized-stocks-mcp" target="_blank" rel="noreferrer">MCP server</a>
+              <a href="https://github.com/lant1ng-1216/ariadne-tokenized-stocks/blob/main/docs/QUICKSTART.md" target="_blank" rel="noreferrer">Remote MCP setup</a>
               <a href="https://github.com/lant1ng-1216/ariadne-tokenized-stocks/blob/main/LICENSE" target="_blank" rel="noreferrer">MIT License</a>
             </div>
           </nav>

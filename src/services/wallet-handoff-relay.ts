@@ -2,6 +2,7 @@ import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypt
 import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import type { ActionPlan, AllowanceApprovalPlan, StockAsset } from "../domain/types.js";
+import { jsonDataSnapshot } from "../domain/json-snapshot.js";
 
 export type ExternalWalletTransaction = {
   from: string;
@@ -141,6 +142,7 @@ type StoredHandoff = Omit<ExternalWalletHandoffSnapshot, "account"> & {
   beforeBalances?: Record<string, unknown>;
   pendingRequest?: ExternalWalletTransaction;
   allowancePlan?: AllowanceApprovalPlan;
+  allowanceAttestation?: string;
 };
 
 export type ExternalWalletHandoffInternalSnapshot = ExternalWalletHandoffSnapshot & {
@@ -148,6 +150,7 @@ export type ExternalWalletHandoffInternalSnapshot = ExternalWalletHandoffSnapsho
   latestExecutionPlan?: ActionPlan;
   beforeBalances?: Record<string, unknown>;
   allowancePlan?: AllowanceApprovalPlan;
+  allowanceAttestation?: string;
 };
 
 export type ExternalWalletPurchaseRefresh = {
@@ -159,6 +162,7 @@ export type ExternalWalletPurchaseRefresh = {
 
 export type ExternalWalletAllowancePreparation = {
   approvalPlan: AllowanceApprovalPlan;
+  approvalAttestation?: string;
   request: ExternalWalletTransaction;
   display: ExternalWalletHandoffCreate["display"];
 };
@@ -228,7 +232,7 @@ export class WalletHandoffStore {
   private readonly sessions = new Map<string, StoredHandoff>();
   private readonly portalOrigin: string;
 
-  constructor(private readonly options: { portalOrigin: string; now?: () => number; tokenBytes?: number; storagePath?: string }) {
+  constructor(private readonly options: { portalOrigin: string; now?: () => number; tokenBytes?: number; storagePath?: string; persistedSessions?: unknown }) {
     const url = new URL(options.portalOrigin);
     const isLoopback = url.hostname === "localhost" || url.hostname === "127.0.0.1" || url.hostname === "[::1]";
     if (url.protocol !== "https:" && !(url.protocol === "http:" && isLoopback)) {
@@ -236,13 +240,33 @@ export class WalletHandoffStore {
     }
     if (url.pathname !== "/" || url.search || url.hash) throw new Error("Wallet approval portal origin must not include a path, query or fragment");
     this.portalOrigin = `${url.origin}/`;
+    if (options.storagePath && options.persistedSessions !== undefined) throw new Error("Choose one wallet handoff persistence source");
     if (options.storagePath && existsSync(options.storagePath)) {
-      const decoded: unknown = JSON.parse(readFileSync(options.storagePath, "utf8"));
-      if (!Array.isArray(decoded) || decoded.some((entry) => !entry || typeof entry !== "object" || typeof entry.id !== "string" || typeof entry.capabilityHash !== "string")) {
+      this.restorePersistedSessions(JSON.parse(readFileSync(options.storagePath, "utf8")) as unknown);
+      chmodSync(options.storagePath, 0o600);
+    } else if (options.persistedSessions !== undefined) {
+      this.restorePersistedSessions(options.persistedSessions);
+    }
+  }
+
+  /** Server-owned persistence snapshot. This contains hashed capabilities and private plan evidence; never return it to a browser or Agent. */
+  exportPersistedSessions(): unknown[] {
+    return jsonDataSnapshot([...this.sessions.values()]);
+  }
+
+  private restorePersistedSessions(decoded: unknown): void {
+    if (!Array.isArray(decoded)) throw new Error("Wallet handoff store is malformed; refusing to start with ambiguous transaction state");
+    for (const entry of decoded) {
+      if (!entry || typeof entry !== "object" || Array.isArray(entry)) throw new Error("Wallet handoff store is malformed; refusing to start with ambiguous transaction state");
+      const session = entry as StoredHandoff;
+      if (!/^[a-f0-9]{32}$/.test(session.id) || !/^[a-f0-9]{64}$/.test(session.capabilityHash) ||
+        typeof session.planId !== "string" || !session.planId || !Number.isSafeInteger(session.createdAt) ||
+        !Number.isSafeInteger(session.expiresAt) || session.expiresAt <= session.createdAt ||
+        !["prepared", "active", "wallet_rejected", "wallet_uncertain", "submitted", "confirmed", "failed", "expired"].includes(session.state) ||
+        this.sessions.has(session.id)) {
         throw new Error("Wallet handoff store is malformed; refusing to start with ambiguous transaction state");
       }
-      for (const entry of decoded as StoredHandoff[]) this.sessions.set(entry.id, entry);
-      chmodSync(options.storagePath, 0o600);
+      this.sessions.set(session.id, jsonDataSnapshot(session));
     }
   }
 
@@ -467,6 +491,7 @@ export class WalletHandoffStore {
     session.display = structuredClone(prepared.display);
     session.request = structuredClone(prepared.request);
     session.allowancePlan = structuredClone(approval);
+    session.allowanceAttestation = prepared.approvalAttestation;
     session.planId = approval.approvalPlanId;
     session.quoteExpiresAt = approval.expiresAt;
     session.requiresQuoteAcceptance = false;
@@ -772,7 +797,8 @@ export class WalletHandoffStore {
       ...(session.originalPlan ? { originalPlan: structuredClone(session.originalPlan) } : {}),
       ...(session.latestExecutionPlan ? { latestExecutionPlan: structuredClone(session.latestExecutionPlan) } : {}),
       ...(session.beforeBalances ? { beforeBalances: structuredClone(session.beforeBalances) } : {}),
-      ...(session.allowancePlan ? { allowancePlan: structuredClone(session.allowancePlan) } : {})
+      ...(session.allowancePlan ? { allowancePlan: structuredClone(session.allowancePlan) } : {}),
+      ...(session.allowanceAttestation ? { allowanceAttestation: session.allowanceAttestation } : {})
     } as ExternalWalletHandoffInternalSnapshot;
   }
 
@@ -883,7 +909,8 @@ export class WalletHandoffStore {
 
   private snapshot(session: StoredHandoff): ExternalWalletHandoffSnapshot {
     const { capabilityHash: _discard, walletAttemptIdHash: _attemptDiscard, originalPlan: _originalDiscard,
-      latestExecutionPlan: _latestDiscard, beforeBalances: _beforeDiscard, pendingRequest: _pendingRequestDiscard, ...snapshot } = session;
+      latestExecutionPlan: _latestDiscard, beforeBalances: _beforeDiscard, pendingRequest: _pendingRequestDiscard,
+      allowanceAttestation: _attestationDiscard, ...snapshot } = session;
     const publicSnapshot = structuredClone(snapshot) as ExternalWalletHandoffSnapshot;
     if (session.reviewMode === "purchase_intent") delete publicSnapshot.account;
     return publicSnapshot;
@@ -893,7 +920,7 @@ export class WalletHandoffStore {
 export class WalletHandoffRelayClient {
   private readonly baseUrl: URL;
 
-  constructor(private readonly options: { baseUrl: string; secret: string; fetcher?: typeof fetch }) {
+  constructor(private readonly options: { baseUrl: string; secret: string; ownerId?: string; fetcher?: typeof fetch }) {
     this.baseUrl = new URL(options.baseUrl);
     const isLoopback = this.baseUrl.hostname === "localhost" || this.baseUrl.hostname === "127.0.0.1" || this.baseUrl.hostname === "[::1]";
     if (this.baseUrl.protocol !== "https:" && !(this.baseUrl.protocol === "http:" && isLoopback)) throw new Error("Approval relay URL must use HTTPS except for a loopback test server");
@@ -1036,7 +1063,7 @@ export class WalletHandoffRelayClient {
     try {
       response = await fetcher(new URL(path, this.baseUrl), {
         method,
-        headers: { authorization: `Bearer ${this.options.secret}`, ...(body === undefined ? {} : { "content-type": "application/json" }) },
+        headers: { authorization: `Bearer ${this.options.secret}`, ...(this.options.ownerId ? { "x-ariadne-owner-id": this.options.ownerId } : {}), ...(body === undefined ? {} : { "content-type": "application/json" }) },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
         signal: AbortSignal.timeout(8_000)
       });

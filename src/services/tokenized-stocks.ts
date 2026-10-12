@@ -1,4 +1,5 @@
 import { BinanceWeb3Client } from "../binance-web3-client.js";
+import { BinanceWeb3Error } from "../errors.js";
 import {
   makeAssetId,
   normalizeMarketContext,
@@ -13,7 +14,7 @@ import { evaluateSafety } from "../domain/safety.js";
 import { TransactionService } from "./transaction.js";
 import { formatTokenAmount, minimumOutputAfterSlippage, parseTokenAmount } from "../domain/amount.js";
 import { markSdkPreparedPlan } from "../domain/prepared-plan-provenance.js";
-import { randomUUID } from "node:crypto";
+import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { jsonDataFingerprint } from "../domain/json-snapshot.js";
 import { representationIdentityKey, type RepresentationIdentity } from "./asset-coverage-audit.js";
 import { resolveBscInputToken, verifyBscStockToken } from "./bsc-token-registry.js";
@@ -144,6 +145,7 @@ function decimalBpsDifference(left: string, right: string): bigint | undefined {
 
 export class TokenizedStocksService {
   private platformCache?: { expiresAt: number; data: RwaPlatform[]; sourceResponseTimestampMs?: number };
+  private durableApprovalKey?: string;
 
   constructor(
     private readonly client: BinanceWeb3Client,
@@ -155,6 +157,19 @@ export class TokenizedStocksService {
     private readonly readLatestFinalizedBlockNumber?: (chainId: string) => Promise<bigint>,
     _readNativeBalance?: (chainId: string, owner: string) => Promise<bigint>
   ) {}
+
+  /** A hosted relay may attest one unchanged prepared approval across process restarts. */
+  configureDurableApprovalAttestation(key: string): void {
+    if (typeof key !== "string" || key.length < 32) throw new Error("Durable approval attestation requires a server secret of at least 32 characters");
+    this.durableApprovalKey = key;
+  }
+
+  attestPreparedApprovalPlan(plan: AllowanceApprovalPlan): string {
+    if (!this.durableApprovalKey) throw new Error("Durable approval attestation is not configured");
+    const fingerprint = jsonDataFingerprint(plan);
+    if (preparedApprovalSnapshots.get(plan) !== fingerprint) throw new Error("Only the unchanged SDK-prepared allowance can be attested");
+    return createHmac("sha256", this.durableApprovalKey).update(`ariadne-allowance-v1:${fingerprint}`).digest("hex");
+  }
 
   async search(query: string, options: AssetSearchOptions = {}): Promise<StockAsset[]> {
     const keyword = typeof query === "string" ? query.trim() : "";
@@ -196,10 +211,33 @@ export class TokenizedStocksService {
     query: string,
     options: AssetSearchOptions = {},
   ): Promise<CurrentDirectoryAssetSearch> {
-    const [searchMatches, directory] = await Promise.all([
-      this.search(query, options),
+    const [searchResult, directory] = await Promise.all([
+      this.search(query, options).then((assets) => ({ assets, error: undefined as unknown })).catch((error: unknown) => ({ assets: undefined, error })),
       this.listSnapshot(options),
     ]);
+    let searchMatches = searchResult.assets;
+    let searchWarning: string | undefined;
+    if (!searchMatches) {
+      const error = searchResult.error;
+      if (!(error instanceof BinanceWeb3Error && error.status === 200 && /Internal server error, please retry later/i.test(error.message))) throw error;
+      const request = query.trim();
+      // An exact identity in the fresh provider directory is safe to use even
+      // when the separate keyword-search endpoint is temporarily unavailable.
+      // Only one explicit ticker may match a sentence; do not guess from a
+      // company fragment or stale local cache.
+      const matchedTickers = new Set(directory.listings
+        .filter((listing) => {
+          const ticker = listing.underlyingTicker.trim();
+          const matches = (symbol: string) => symbol.length >= 2 && new RegExp(`(^|[^a-z0-9])${symbol.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?=$|[^a-z0-9])`, "i").test(request);
+          return matches(ticker) || matches(listing.tokenSymbol.trim());
+        })
+        .map((listing) => listing.underlyingTicker));
+      if (matchedTickers.size !== 1) throw error;
+      const matchedTicker = [...matchedTickers][0];
+      searchMatches = directory.listings.filter((listing) => listing.underlyingTicker === matchedTicker);
+      if (!searchMatches.length) throw error;
+      searchWarning = "Provider search was unavailable; exact token identity was resolved from the current provider directory";
+    }
     const directoryByIdentity = new Map(directory.listings.map((listing) => [
       representationIdentityKey(listing),
       listing,
@@ -210,14 +248,16 @@ export class TokenizedStocksService {
     for (const match of searchMatches) {
       const key = representationIdentityKey(match);
       const current = directoryByIdentity.get(key);
-      if (current) assetsByIdentity.set(key, current);
+      if (current) assetsByIdentity.set(key, searchWarning
+        ? { ...current, collectionWarnings: [...(current.collectionWarnings ?? []), searchWarning] }
+        : current);
       else staleByIdentity.set(key, match);
     }
 
     return {
       assets: [...assetsByIdentity.values()],
       staleSearchMatches: [...staleByIdentity.values()],
-      directoryWarnings: directory.warnings,
+      directoryWarnings: [...directory.warnings, ...(searchWarning ? [searchWarning] : [])],
     };
   }
 
@@ -1026,6 +1066,7 @@ export class TokenizedStocksService {
   async refreshBscPurchaseAfterApproval(input: {
     approvalPlan: AllowanceApprovalPlan;
     txHash: string;
+    durableAttestation?: string;
   }): Promise<{ status: "pending" | "reverted" | "blocked" | "ready"; reason?: string; allowanceFinalized?: boolean; allowance?: string; balance?: string; balanceReadWarning?: string; plan?: ActionPlan }> {
     const approval = input.approvalPlan;
     if (approval.status !== "ready_for_wallet_review" || !approval.unsignedTransaction) {
@@ -1034,7 +1075,14 @@ export class TokenizedStocksService {
     let submittedFingerprint: string;
     try { submittedFingerprint = jsonDataFingerprint(approval); }
     catch { return { status: "blocked", reason: "Approval plan contains non-JSON or mutated data; prepare a fresh approval transaction" }; }
-    if (!preparedApprovalSnapshots.has(approval) || preparedApprovalSnapshots.get(approval) !== submittedFingerprint) {
+    const localUnchanged = preparedApprovalSnapshots.get(approval) === submittedFingerprint;
+    const expectedAttestation = this.durableApprovalKey
+      ? createHmac("sha256", this.durableApprovalKey).update(`ariadne-allowance-v1:${submittedFingerprint}`).digest()
+      : undefined;
+    const suppliedAttestation = input.durableAttestation && /^[0-9a-f]{64}$/.test(input.durableAttestation)
+      ? Buffer.from(input.durableAttestation, "hex") : undefined;
+    const durableUnchanged = Boolean(expectedAttestation && suppliedAttestation && timingSafeEqual(expectedAttestation, suppliedAttestation));
+    if (!localUnchanged && !durableUnchanged) {
       return { status: "blocked", reason: "Approval plan is not the unchanged plan prepared by this SDK instance" };
     }
     if (!Number.isFinite(approval.expiresAt) || approval.expiresAt <= Date.now()) {
